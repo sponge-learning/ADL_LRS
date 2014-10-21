@@ -4,9 +4,8 @@ import urllib
 import ast
 
 from django.conf import settings
-from django.contrib.auth import logout
+from django.contrib.auth import logout, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.core.context_processors import csrf
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -28,6 +27,8 @@ from oauth_provider.models import Consumer, Token
 from oauth2_provider.provider.scope import to_names
 from oauth2_provider.provider.oauth2.forms import ClientForm
 from oauth2_provider.provider.oauth2.models import Client, AccessToken
+
+User = get_user_model()
 
 # This uses the lrs logger for LRS specific information
 logger = logging.getLogger(__name__)

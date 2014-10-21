@@ -3,9 +3,9 @@ from datetime import datetime
 from jsonfield import JSONField
 
 from django_extensions.db.fields import UUIDField
+from django.conf import settings
 from django.db import models
 from django.db import transaction
-from django.contrib.auth.models import User
 from django.utils.timezone import utc
 
 from oauth_provider.consts import MAX_URL_LENGTH
@@ -654,7 +654,7 @@ class Statement(models.Model):
     version = models.CharField(max_length=7, default="1.0.0")
     attachments = models.ManyToManyField(StatementAttachment)
     # Used in views
-    user = models.ForeignKey(User, null=True, blank=True, db_index=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, db_index=True, on_delete=models.SET_NULL)
     full_statement = JSONField()
     
     def to_dict(self, lang=None, format='exact'):
