@@ -2,7 +2,7 @@ import StringIO
 import email
 import urllib
 
-from django.http import MultiPartParser
+from django.http.multipartparser import MultiPartParser
 from django.core.cache import get_cache
 
 from util import convert_to_dict, convert_post_body_to_dict
