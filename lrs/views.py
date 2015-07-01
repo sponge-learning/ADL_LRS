@@ -1,15 +1,14 @@
 import json
 import logging
 import urllib
-import ast
+from base64 import b64decode
 
 from django.conf import settings
-from django.contrib.auth import logout, get_user_model
+from django.contrib.auth import logout, login, authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.core.context_processors import csrf
 from django.core.exceptions import ValidationError
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
+from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -19,7 +18,7 @@ from django.views.decorators.http import require_http_methods
 
 from .exceptions import BadRequest, ParamError, Unauthorized, Forbidden, NotFound, Conflict, PreconditionFail, OauthUnauthorized, OauthBadRequest
 from .forms import ValidatorForm, RegisterForm, RegClientForm
-from .models import Statement, Verb, Agent, Activity, ActivityProfile, ActivityState
+from .models import Statement, Verb, Agent, Activity, StatementAttachment, ActivityState
 from .util import req_validate, req_parse, req_process, XAPIVersionHeaderMiddleware, accept_middleware, StatementValidator
 
 from oauth_provider.consts import ACCEPTED, CONSUMER_STATES
@@ -32,14 +31,12 @@ User = get_user_model()
 
 # This uses the lrs logger for LRS specific information
 logger = logging.getLogger(__name__)
- 
 LOGIN_URL = "/accounts/login"
 
 @decorator_from_middleware(accept_middleware.AcceptMiddleware)
 @csrf_protect
 def home(request):
     context = RequestContext(request)
-    context.update(csrf(request))
 
     stats = {}
     stats['usercnt'] = User.objects.all().count()
@@ -47,61 +44,41 @@ def home(request):
     stats['verbcnt'] = Verb.objects.all().count()
     stats['agentcnt'] = Agent.objects.filter().count()
     stats['activitycnt'] = Activity.objects.filter().count()
-    return render_to_response('home.html', {'stats':stats}, context_instance=context)
+
+    if request.method == 'GET':
+        form = RegisterForm()
+        return render_to_response('home.html', {'stats':stats, "form": form}, context_instance=context)
 
 @decorator_from_middleware(accept_middleware.AcceptMiddleware)
 @csrf_protect
 def stmt_validator(request):
     context = RequestContext(request)
-    context.update(csrf(request))
-
     if request.method == 'GET':
         form = ValidatorForm()
         return render_to_response('validator.html', {"form": form}, context_instance=context)
     elif request.method == 'POST':
         form = ValidatorForm(request.POST)
+        # Form should always be valid - only checks if field is required and that's handled client side
         if form.is_valid():
-            # Initialize validator (validates incoming data structure)
-            try:
-                validator = StatementValidator.StatementValidator(form.cleaned_data['jsondata'])
-            except (SyntaxError, ValueError):
-                return render_to_response('validator.html', {"form": form, "error_message": "Statement is not a properly formatted dictionary"},
-                context_instance=context)             
-            except Exception, e:
-                return render_to_response('validator.html', {"form": form, "error_message": e.message},
-                context_instance=context)
-
             # Once know it's valid JSON, validate keys and fields
             try:
+                validator = StatementValidator.StatementValidator(form.cleaned_data['jsondata'])
                 valid = validator.validate()
             except ParamError, e:
-                return render_to_response('validator.html', {"form": form,"error_message": e.message},
+                clean_data = form.cleaned_data['jsondata']
+                return render_to_response('validator.html', {"form": form, "error_message": e.message, "clean_data":clean_data},
                     context_instance=context)
             else:
-                return render_to_response('validator.html', {"form": form,"valid_message": valid},
+                clean_data = json.dumps(json.loads(form.cleaned_data['jsondata']), indent=4, sort_keys=True)
+                return render_to_response('validator.html', {"form": form,"valid_message": valid, "clean_data":clean_data},
                     context_instance=context)
-        else:
-            return render_to_response('validator.html', {"form": form},
-                context_instance=context)
-
-# Hosted example activites for the tests
-def actexample(request):
-    return render_to_response('actexample.json', mimetype="application/json")
-
-def actexample2(request):
-    return render_to_response('actexample2.json', mimetype="application/json")
-
-def actexample3(request):
-    return render_to_response('actexample3.json', mimetype="application/json")
-
-def actexample4(request):
-    return render_to_response('actexample4.json', mimetype="application/json")
+    return render_to_response('validator.html', {"form": form}, context_instance=context)
 
 @decorator_from_middleware(accept_middleware.AcceptMiddleware)
 def about(request):
     lrs_data = { 
         "version": [settings.XAPI_VERSION],
-        "Extensions":{
+        "extensions":{
             "xapi": {
                 "statements":
                 {
@@ -218,7 +195,6 @@ def about(request):
 @require_http_methods(["POST", "GET"])
 def register(request):
     context = RequestContext(request)
-    context.update(csrf(request))
     
     if request.method == 'GET':
         form = RegisterForm()
@@ -230,18 +206,46 @@ def register(request):
             pword = form.cleaned_data['password']
             email = form.cleaned_data['email']
             
-            try:
-                user = User.objects.get(username__exact=name)
-            except User.DoesNotExist:
-                user = User.objects.create_user(name, email, pword)
+            if not User.objects.filter(username__exact=name).count():
+                if not User.objects.filter(email__exact=email).count():
+                    user = User.objects.create_user(name, email, pword)
+                else:
+                    return render_to_response('register.html', {"form": form, "error_message": "Email %s is already registered." % email},
+                        context_instance=context)                    
             else:
                 return render_to_response('register.html', {"form": form, "error_message": "User %s already exists." % name},
                     context_instance=context)                
             
-            d = {"info_message": "Thanks for registering. You can now use your name [%s] and password to sign in." % user.username}
-            return render_to_response('reg_success.html', d, context_instance=context)
+            # If a user is already logged in, log them out
+            if request.user.is_authenticated():
+                logout(request)
+
+            new_user = authenticate(username=name, password=pword)
+            login(request, new_user)
+            return HttpResponseRedirect(reverse('lrs.views.home'))
         else:
             return render_to_response('register.html', {"form": form}, context_instance=context)
+
+@login_required(login_url=LOGIN_URL)
+@require_http_methods(["GET"])
+def admin_attachments(request, path):
+    if request.user.is_superuser:
+        try:
+            att_object = StatementAttachment.objects.get(sha2=path)
+        except StatementAttachment.DoesNotExist:
+            raise HttpResponseNotFound("File not found")
+        chunks = []
+        try:
+            # Default chunk size is 64kb
+            for chunk in att_object.payload.chunks():
+                decoded_data = b64decode(chunk)
+                chunks.append(decoded_data)
+        except OSError:
+            return HttpResponseNotFound("File not found")
+
+        response = HttpResponse(chunks, content_type=str(att_object.contentType))
+        response['Content-Disposition'] = 'attachment; filename="%s"' % path
+        return response
 
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["POST", "GET"])
@@ -263,7 +267,7 @@ def reg_client(request):
                 client = Consumer.objects.create(name=name, description=description, user=request.user,
                     status=ACCEPTED, secret=secret, rsa_signature=rsa_signature)
             else:
-                return render_to_response('regclient.html', {"form": form, "error_message": "%s alreay exists." % name}, context_instance=RequestContext(request))         
+                return render_to_response('regclient.html', {"form": form, "error_message": "Client %s already exists." % name}, context_instance=RequestContext(request))         
             
             client.generate_random_codes()
             d = {"name":client.name,"app_id":client.key, "secret":client.secret, "rsa":client.rsa_signature, "info_message": "Your Client Credentials"}
@@ -271,6 +275,7 @@ def reg_client(request):
         else:
             return render_to_response('regclient.html', {"form": form}, context_instance=RequestContext(request))
 
+@transaction.commit_on_success
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["POST", "GET"])
 def reg_client2(request):
@@ -289,7 +294,30 @@ def reg_client2(request):
             return render_to_response('regclient2.html', {"form": form}, context_instance=RequestContext(request))
 
 @login_required(login_url=LOGIN_URL)
-def me(request):
+def my_statements(request, template="my_statements.html", page_template="my_statements_holder.html"):   
+    context = {'statements': Statement.objects.filter(user=request.user).order_by('-timestamp'),'page_template': page_template}
+    
+    if request.is_ajax():
+        template = page_template
+    return render_to_response(template, context, context_instance=RequestContext(request))
+
+@login_required(login_url=LOGIN_URL)
+def my_activity_states(request, template="my_activity_states.html", page_template="my_activity_states_holder.html"):
+    try:
+        ag = Agent.objects.get(mbox="mailto:" + request.user.email)
+    except Agent.DoesNotExist:
+        ag = Agent.objects.create(mbox="mailto:" + request.user.email)
+    except Agent.MultipleObjectsReturned:
+        return HttpResponseBadRequest("More than one agent returned with email")
+
+    context = {'activity_states': ActivityState.objects.filter(agent=ag).order_by('-updated', 'activity_id'), 'page_template': page_template}
+    
+    if request.is_ajax():
+        template = page_template
+    return render_to_response(template, context, context_instance=RequestContext(request))
+
+@login_required(login_url=LOGIN_URL)
+def me(request, template='me.html'):
     client_apps = Consumer.objects.filter(user=request.user)
     access_tokens = Token.objects.filter(user=request.user, token_type=Token.ACCESS, is_approved=True)
     client_apps2 = Client.objects.filter(user=request.user)
@@ -300,217 +328,57 @@ def me(request):
         scopes = to_names(token.scope)
         access_token_scopes.append((token, scopes))
 
-    return render_to_response('me.html', {'client_apps':client_apps, 'access_tokens':access_tokens, 'client_apps2': client_apps2, 'access_tokens2':access_token_scopes},
-        context_instance=RequestContext(request))
+    context = {'client_apps':client_apps,
+                'access_tokens':access_tokens,
+                'client_apps2': client_apps2,
+                'access_tokens2':access_token_scopes}
+
+    return render_to_response(template, context, context_instance=RequestContext(request))
 
 @login_required(login_url="/accounts/login")
 @require_http_methods(["GET", "HEAD"])
-def download_statements(request):
-    stmts = models.Statement.objects.filter(user=request.user).order_by('-stored')
+def my_download_statements(request):
+    stmts = Statement.objects.filter(user=request.user).order_by('-stored')
     result = "[%s]" % ",".join([stmt.object_return() for stmt in stmts])
 
     response = HttpResponse(result, mimetype='application/json', status=200)
     response['Content-Length'] = len(result)
     return response
 
+@transaction.commit_on_success
 @login_required(login_url=LOGIN_URL)
-def my_statements(request):
-    if request.method == "DELETE":
-        Statement.objects.filter(user=request.user).delete()
-        stmts = Statement.objects.filter(user=request.user)
-        if not stmts:
-            return HttpResponse(status=204)
-        else:
-            raise Exception("unable to delete statements")
-
-    stmt_id = request.GET.get("stmt_id", None)
-    if stmt_id:
-        s = Statement.objects.get(statement_id=stmt_id, user=request.user)
-        return HttpResponse(json.dumps(s.to_dict()), mimetype="application/json",status=200)
+@require_http_methods(["DELETE"])
+def my_delete_statements(request):
+    Statement.objects.filter(user=request.user).delete()
+    stmts = Statement.objects.filter(user=request.user)
+    if not stmts:
+        return HttpResponse(status=204)
     else:
-        s = {}
-        paginator = Paginator(Statement.objects.filter(user=request.user).order_by('-timestamp').values_list('id', flat=True), 
-            settings.STMTS_PER_PAGE)
-
-        page_no = request.GET.get('page', 1)
-        try:
-            page = paginator.page(page_no)
-        except PageNotAnInteger:
-            # If page is not an integer, deliver first page.
-            page = paginator.page(1)
-        except EmptyPage:
-            # If page is out of range (e.g. 9999), deliver last page of results.
-            page = paginator.page(paginator.num_pages)
-
-        idlist = page.object_list
-        if idlist.count() > 0:
-            stmt_objs = [stmt for stmt in Statement.objects.filter(id__in=(idlist)).order_by('-timestamp')]
-        else: 
-            stmt_objs = []
-
-        slist = []
-        for stmt in stmt_objs:
-            d = {}
-            d['timestamp'] = stmt.timestamp.isoformat()
-            d['statement_id'] = stmt.statement_id
-            d['actor_name'] = stmt.actor.get_a_name()
-            d['verb'] = stmt.verb.get_display()
-            d['object'] = stmt.get_object().get_a_name()
-            slist.append(d)
-
-        s['stmts'] = slist
-        if page.has_previous():
-            s['previous'] = "%s?page=%s" % (reverse('lrs.views.my_statements'), page.previous_page_number())
-        if page.has_next():
-            s['next'] = "%s?page=%s" % (reverse('lrs.views.my_statements'), page.next_page_number())
-
-        return HttpResponse(json.dumps(s), mimetype="application/json", status=200)
+        raise Exception("Unable to delete statements")
 
 @login_required(login_url=LOGIN_URL)
-def jono(request):
+def my_activity_state(request):
     act_id = request.GET.get("act_id", None)
     state_id = request.GET.get("state_id", None)
-    agent_params = request.GET.get("agent", None)
-    if act_id and state_id and agent_params:
-        try:
-            params = ast.literal_eval(urllib.unquote(agent_params))
-            ag, create = Agent.objects.retrieve_or_create(**params)
-        except Agent.DoesNotExist:
-            return HttpResponseNotFound("Agent does not exist")
-        except Agent.MultipleObjectsReturned:
-            return HttpResponseBadRequest("More than one agent returned with email")        
-	try:        
-	    state = ActivityState.objects.get(activity_id=urllib.unquote(act_id), agent=ag, state_id=urllib.unquote(state_id))
-	except ActivityState.DoesNotExist:
-	    return HttpResponseNotFound("Activity state does not exist")        
-	return_json = []
-        state_data = json.loads(state.json_state)
-        if isinstance(state_data, list):
-            for sid in state_data:
-                # Random null in array
-                if sid:
-                    try:
-                        act_state = ActivityState.objects.get(state_id=str(urllib.unquote(sid)))
-                    except Exception, e:
-                        return HttpResponseBadRequest(e.message)
-                    return_json.append({"stateId": str(sid)}.items() + state_data.items())
-            return HttpResponse(json.dumps(return_json), content_type="application/json", status=200)
-        else:
-            return HttpResponse(state.json_state, content_type=state.content_type, status=200)
-    return HttpResponseBadRequest("Activity ID, State ID and Agent are all required")
-
-@login_required(login_url=LOGIN_URL)
-def my_activity_profiles(request):
-    act_id = request.GET.get("act_id", None)
-    if act_id:
-        profs = ActivityProfile.objects.filter(activityId=urllib.unquote(act_id))
-        p_list = []
-        for prof in profs:
-            p_list.append({"profileId":prof.profileId, "updated":str(prof.updated)})
-        return HttpResponse(json.dumps(p_list), mimetype="application/json", status=200)
-    return HttpResponseBadRequest("Activity ID required")
-
-@login_required(login_url=LOGIN_URL)
-def my_activity_profile(request): 
-    act_id = request.GET.get("act_id", None)
-    prof_id = request.GET.get("prof_id", None)
-    if act_id and prof_id:
-        prof = ActivityProfile.objects.get(activityId=urllib.unquote(act_id), profileId=urllib.unquote(prof_id))
-        if prof.profile:
-            return HttpResponse(prof.profile.read(), content_type=prof.content_type, status=200)
-        else:
-            return HttpResponse(prof.json_profile, content_type=prof.content_type, status=200)     
-    return HttpResponseBadRequest("Both Activity ID and Profile ID required")
-
-@login_required(login_url=LOGIN_URL)
-def my_activity_states(request):
-    act_id = request.GET.get("act_id", None)
-    if act_id:
+    if act_id and state_id:
         try:
             ag = Agent.objects.get(mbox="mailto:" + request.user.email)
         except Agent.DoesNotExist:
             return HttpResponseNotFound("Agent does not exist")
         except Agent.MultipleObjectsReturned:
             return HttpResponseBadRequest("More than one agent returned with email")
-        states = ActivityState.objects.filter(activity_id=urllib.unquote(act_id))    
-        s_list = []
-        for state in states:
-            s_list.append({"stateId":state.state_id, "updated":str(state.updated), "agent_name":state.agent.get_a_name(),
-                "agent":state.agent.__unicode__(), "real_data": state.json_state})
-        return HttpResponse(json.dumps(s_list), mimetype="application/json", status=200)
-    return HttpResponseBadRequest("Activity ID required")
 
-@login_required(login_url=LOGIN_URL)
-def my_activity_state(request):
-    act_id = request.GET.get("act_id", None)
-    state_id = request.GET.get("state_id", None)
-    agent_params = request.GET.get("agent", None)
-    if act_id and state_id and agent_params:
         try:
-            params = ast.literal_eval(urllib.unquote(agent_params))
-            ag = Agent.objects.get(**params)
-        except Agent.DoesNotExist:
-            return HttpResponseNotFound("Agent does not exist")
-        except Agent.MultipleObjectsReturned:
-            return HttpResponseBadRequest("More than one agent returned with email")        
-        state = ActivityState.objects.get(activity_id=urllib.unquote(act_id), agent=ag, state_id=state_id)
-        if state.state:
-            return HttpResponse(state.state.read(), content_type=state.content_type, status=200)
-        else:
-            return HttpResponse(state.json_state, content_type=state.content_type, status=200)
-    return HttpResponseBadRequest("Activity ID, State ID and Agent are all required")
+            state = ActivityState.objects.get(activity_id=urllib.unquote(act_id), agent=ag, state_id=urllib.unquote(state_id))
+        except ActivityState.DoesNotExist:
+            return HttpResponseNotFound("Activity state does not exist")
+        except ActivityState.MultipleObjectsReturned:
+            return HttpResponseBadRequest("More than one activity state was found")
+        # Really only used for the SCORM states so should only have json_state
+        return HttpResponse(state.json_state, content_type=state.content_type, status=200)
+    return HttpResponseBadRequest("Activity ID, State ID and are both required")
 
-@login_required(login_url=LOGIN_URL)
-def my_activities(request):
-    # These errors shouldn't happen...just in case
-    try:
-        ag = Agent.objects.get(mbox="mailto:" + request.user.email)
-    except Agent.DoesNotExist:
-        return HttpResponseNotFound("Agent does not exist")
-    except Agent.MultipleObjectsReturned:
-        return HttpResponseBadRequest("More than one agent returned with email")
-    act_id = request.GET.get("act_id", None)
-    if act_id:
-        a = Activity.objects.get(activity_id=urllib.unquote(act_id), authority=ag, canonical_version=True)
-        return HttpResponse(json.dumps(a.to_dict()), mimetype="application/json",status=200)
-    else:
-        a = {}
-        paginator = Paginator(Activity.objects.filter(authority=ag).values_list('id', flat=True), 
-            settings.STMTS_PER_PAGE)
-
-        page_no = request.GET.get('page', 1)
-        try:
-            page = paginator.page(page_no)
-        except PageNotAnInteger:
-            # If page is not an integer, deliver first page.
-            page = paginator.page(1)
-        except EmptyPage:
-            # If page is out of range (e.g. 9999), deliver last page of results.
-            page = paginator.page(paginator.num_pages)
-
-        idlist = page.object_list
-        if idlist.count() > 0:
-            act_objs = [act for act in Activity.objects.filter(id__in=(idlist))]
-        else: 
-            act_objs = []
-
-        alist = []
-        for act in act_objs:
-            d = {}
-            d['name'] = act.get_a_name()
-            d['activity_id'] = act.activity_id
-            d['id'] = act.id
-            alist.append(d)
-
-        a['acts'] = alist
-        if page.has_previous():
-            a['previous'] = "%s?page=%s" % (reverse('lrs.views.my_activities'), page.previous_page_number())
-        if page.has_next():
-            a['next'] = "%s?page=%s" % (reverse('lrs.views.my_activities'), page.next_page_number())
-
-        return HttpResponse(json.dumps(a), mimetype="application/json", status=200)
-
-
+@transaction.commit_on_success
 @login_required(login_url=LOGIN_URL)
 def my_app_status(request):
     try:
@@ -525,6 +393,7 @@ def my_app_status(request):
     except:
         return HttpResponse(json.dumps({"error_message":"unable to fulfill request"}), mimetype="application/json", status=400)
 
+@transaction.commit_on_success
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["DELETE"])
 def delete_token(request):
@@ -545,6 +414,7 @@ def delete_token(request):
     except:
         return HttpResponse("Unknown token", status=400)
 
+@transaction.commit_on_success
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["DELETE"])
 def delete_token2(request):
@@ -559,6 +429,7 @@ def delete_token2(request):
         return HttpResponse(e.message, status=400)
     return HttpResponse("", status=204)
 
+@transaction.commit_on_success
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["DELETE"])
 def delete_client(request):
@@ -579,12 +450,13 @@ def logout_view(request):
     return HttpResponseRedirect(reverse('lrs.views.home'))
 
 # Called when user queries GET statement endpoint and returned list is larger than server limit (10)
-#@decorator_from_middleware(XAPIVersionHeaderMiddleware.XAPIVersionHeader)
+@decorator_from_middleware(XAPIVersionHeaderMiddleware.XAPIVersionHeader)
 @require_http_methods(["GET", "HEAD"])
 def statements_more(request, more_id):
     return handle_request(request, more_id)
 
 @require_http_methods(["PUT","GET","POST", "HEAD"])
+@decorator_from_middleware(XAPIVersionHeaderMiddleware.XAPIVersionHeader)
 def statements(request):
     if request.method in ['GET', 'HEAD']:
         return doget(request)
@@ -733,14 +605,14 @@ def handle_request(request, more_id=None):
     except ValidationError as ve:
         log_exception(request.path, ve)
         return HttpResponse(ve.messages[0], status=400)
+    except OauthBadRequest as oauth_err:
+        log_exception(request.path, oauth_err)
+        return HttpResponse(oauth_err.message, status=400)
     except Unauthorized as autherr:
         log_exception(request.path, autherr)
         r = HttpResponse(autherr, status = 401)
         r['WWW-Authenticate'] = 'Basic realm="ADLLRS"'
         return r
-    except OauthBadRequest as oauth_err:
-        log_exception(request.path, oauth_err)
-        return HttpResponse(oauth_err.message, status=400)
     except OauthUnauthorized as oauth_err:
         log_exception(request.path, oauth_err)
         return HttpResponse(oauth_err.message, status=401)

@@ -11,7 +11,6 @@ from django.db.models import Q
 
 from util import convert_to_utc, convert_to_dict
 from ..models import Statement, Agent
-from ..objects.AgentManager import AgentManager
 from ..exceptions import NotFound, IDNotFoundError
 
 MORE_ENDPOINT = '/xapi/statements/more/'
@@ -56,9 +55,11 @@ def complex_get(param_dict, limit, language, format, attachments):
             data = convert_to_dict(data)
         
         try:
-            agent = AgentManager(data).Agent
+            agent = Agent.objects.retrieve_or_create(**data)[0]
+            # If agent is already a group, it can't be part of another group
             if agent.objectType == "Group":
                 groups = []
+            # Since single agent, return all groups it is in
             else:
                 groups = agent.member.all()
             agentQ = Q(actor=agent)
@@ -101,16 +102,16 @@ def complex_get(param_dict, limit, language, format, attachments):
     if 'ascending' in param_dict and param_dict['ascending']:
             stored_param = 'stored'
 
-    stmtset = Statement.objects.filter(voidQ & untilQ & sinceQ & authQ & agentQ & verbQ & activityQ & registrationQ)
+    stmtset = Statement.objects.filter(voidQ & untilQ & sinceQ & authQ & agentQ & verbQ & activityQ & registrationQ).distinct()
     
     # only find references when a filter other than
     # since, until, or limit was used 
     if reffilter:
-        stmtset = findstmtrefs(stmtset.distinct(), sinceQ, untilQ)
+        stmtset = findstmtrefs(stmtset, sinceQ, untilQ)
     
     # Calculate limit of stmts to return
     return_limit = set_limit(limit)
-    
+
     # If there are more stmts than the limit, need to break it up and return more id
     if stmtset.count() > return_limit:
         return initial_cache_return(stmtset, stored_param, return_limit, language, format, attachments)
@@ -120,15 +121,12 @@ def complex_get(param_dict, limit, language, format, attachments):
 def create_stmt_result(stmt_set, stored, language, format):
     stmt_result = {}
 
-    # blows up if the idlist is empty... so i gotta check for that
-    idlist = stmt_set.values_list('id', flat=True)
-    if idlist > 0:
+    if stmt_set.count() > 0:
         if format == 'exact':
-            stmt_result = '{"statements": [%s], "more": ""}' % ",".join([json.dumps(stmt.full_statement) for stmt in \
-                Statement.objects.filter(id__in=idlist).order_by(stored)])
+            stmt_result = '{"statements": [%s], "more": ""}' % ",".join([json.dumps(stmt.full_statement) for stmt in stmt_set.order_by(stored)])
         else:
             stmt_result['statements'] = [stmt.to_dict(language, format) for stmt in \
-                Statement.objects.filter(id__in=idlist).order_by(stored)]
+                stmt_set.order_by(stored)]
             stmt_result['more'] = ""
     else:
         stmt_result['statements'] = []

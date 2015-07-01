@@ -4,26 +4,19 @@ import base64
 import uuid
 import urllib
 import hashlib
-import os
 
 from datetime import datetime, timedelta
-from email import message_from_string
-from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
-from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.utils.timezone import utc
 from django.conf import settings
 
-from ..models import Statement, Activity, Agent, Verb, SubStatement, StatementAttachment
+from ..models import Statement, Activity, Agent, Verb, SubStatement
 from ..views import register, statements
 from ..util import retrieve_statement
-from ..util.jws import JWS
 
-class StatementsTests(TestCase):
+class StatementTests(TestCase):
     @classmethod
     def setUpClass(cls):
         print "\n%s" % __name__
@@ -34,26 +27,17 @@ class StatementsTests(TestCase):
         self.password = "test"
         self.auth = "Basic %s" % base64.b64encode("%s:%s" % (self.username, self.password))
         form = {"username":self.username, "email":self.email,"password":self.password,"password2":self.password}
-        self.client.post(reverse(register),form, X_Experience_API_Version="1.0.0")
+        self.client.post(reverse(register),form, X_Experience_API_Version=settings.XAPI_VERSION)
 
         self.username2 = "tester2"
         self.email2 = "test2@tester.com"
         self.password2 = "test2"
         self.auth2 = "Basic %s" % base64.b64encode("%s:%s" % (self.username2, self.password2))
         form2 = {"username":self.username2, "email":self.email2,"password":self.password2,"password2":self.password2}
-        self.client.post(reverse(register),form2, X_Experience_API_Version="1.0.0")
+        self.client.post(reverse(register),form2, X_Experience_API_Version=settings.XAPI_VERSION)
 
         self.firstTime = str(datetime.utcnow().replace(tzinfo=utc).isoformat())
         self.guid1 = str(uuid.uuid1())
-       
-    def tearDown(self):
-        attach_folder_path = os.path.join(settings.MEDIA_ROOT, "attachment_payloads")
-        for the_file in os.listdir(attach_folder_path):
-            file_path = os.path.join(attach_folder_path, the_file)
-            try:
-                os.unlink(file_path)
-            except Exception, e:
-                raise e
 
     def bunchostmts(self):
         self.guid2 = str(uuid.uuid1())
@@ -79,7 +63,7 @@ class StatementsTests(TestCase):
             "actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
             "authority":{"objectType":"Agent","name":"tester1","mbox":"mailto:test1@tester.com"}})
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 200)
         stmt_id = json.loads(response.content)[0]
         self.existStmt = Statement.objects.get(statement_id=stmt_id)
@@ -168,7 +152,7 @@ class StatementsTests(TestCase):
         param = {"statementId":self.guid1}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         stmt_payload = self.existStmt1
-        self.putresponse1 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        self.putresponse1 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse1.status_code, 204)
         time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=2)).replace(tzinfo=utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid1).update(stored=time)
@@ -177,7 +161,7 @@ class StatementsTests(TestCase):
         param = {"statementId":self.guid3}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         stmt_payload = self.existStmt3
-        self.putresponse3 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        self.putresponse3 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse3.status_code, 204)
         time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=3)).replace(tzinfo=utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid3).update(stored=time)
@@ -186,7 +170,7 @@ class StatementsTests(TestCase):
         param = {"statementId":self.guid4}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         stmt_payload = self.existStmt4
-        self.putresponse4 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        self.putresponse4 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse4.status_code, 204)
         time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=4)).replace(tzinfo=utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid4).update(stored=time)
@@ -196,7 +180,7 @@ class StatementsTests(TestCase):
         param = {"statementId":self.guid2}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         stmt_payload = self.existStmt2
-        self.putresponse2 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")       
+        self.putresponse2 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)       
         self.assertEqual(self.putresponse2.status_code, 204)
         time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=6)).replace(tzinfo=utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid2).update(stored=time)
@@ -205,7 +189,7 @@ class StatementsTests(TestCase):
         param = {"statementId":self.guid5}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         stmt_payload = self.existStmt5
-        self.putresponse5 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        self.putresponse5 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse5.status_code, 204)
         time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=7)).replace(tzinfo=utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid5).update(stored=time)
@@ -214,7 +198,7 @@ class StatementsTests(TestCase):
         param = {"statementId":self.guid6}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         stmt_payload = self.existStmt6
-        self.putresponse6 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        self.putresponse6 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse6.status_code, 204)
         time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=8)).replace(tzinfo=utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid6).update(stored=time)
@@ -223,7 +207,7 @@ class StatementsTests(TestCase):
         param = {"statementId":self.guid7}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         stmt_payload = self.existStmt7        
-        self.putresponse7 = self.client.put(path, stmt_payload,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        self.putresponse7 = self.client.put(path, stmt_payload,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse7.status_code, 204)
         time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=9)).replace(tzinfo=utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid7).update(stored=time)
@@ -232,7 +216,7 @@ class StatementsTests(TestCase):
         param = {"statementId":self.guid8}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         stmt_payload = self.existStmt8        
-        self.putresponse8 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        self.putresponse8 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse8.status_code, 204)
         time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=10)).replace(tzinfo=utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid8).update(stored=time)
@@ -240,7 +224,7 @@ class StatementsTests(TestCase):
         param = {"statementId": self.guid9}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         stmt_payload = self.existStmt9        
-        self.putresponse9 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        self.putresponse9 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse9.status_code, 204)
         time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=11)).replace(tzinfo=utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid9).update(stored=time)
@@ -248,7 +232,7 @@ class StatementsTests(TestCase):
         param = {"statementId": self.guid10}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         stmt_payload = self.existStmt10        
-        self.putresponse10 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        self.putresponse10 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse10.status_code, 204)
         time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=11)).replace(tzinfo=utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid10).update(stored=time)
@@ -262,7 +246,7 @@ class StatementsTests(TestCase):
             "ext:key2":"value2"}}})        
 
         resp = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.content, 'Invalid field(s) found in Result - bad, foo')
@@ -283,7 +267,7 @@ class StatementsTests(TestCase):
             "extensions":{"ext:ckey111": "cval111","ext:ckey222": "cval222"}}})        
 
         resp = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.content, 'Invalid field(s) found in Context - bad')
@@ -292,7 +276,7 @@ class StatementsTests(TestCase):
     def test_post_with_no_valid_params(self):
         # Error will be thrown in statements class
         resp = self.client.post(reverse(statements), {"feet":"yes","hands": {"id":"http://example.com/test_post"}},
-            content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 400)
 
     def test_post(self):
@@ -300,7 +284,7 @@ class StatementsTests(TestCase):
             "verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:test_post"}})
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.assertEqual(response.status_code, 200)
         act = Activity.objects.get(activity_id="act:test_post")
@@ -316,7 +300,7 @@ class StatementsTests(TestCase):
             "interactionType": "fill-in","correctResponsesPattern": "wrong"}},
             "actor":{"objectType":"Agent", "mbox":"mailto:wrong-t@t.com"}})
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, 'Activity definition correctResponsesPattern is not a properly formatted array')
@@ -332,21 +316,21 @@ class StatementsTests(TestCase):
                     "choices":"wrong"}},
             "actor":{"objectType":"Agent", "mbox":"mailto:wrong-t@t.com"}})
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, 'Activity definition choices is not a properly formatted array')
 
     def test_openid(self):
-        stmt = json.dumps({'object':{'objectType':'Agent', 'name': 'lulu', 'openID':'id:luluid'}, 
+        stmt = json.dumps({'object':{'objectType':'Agent', 'name': 'lulu', 'openid':'id:luluid'}, 
             'verb': {"id":"verb:verb/url"},'actor':{'objectType':'Agent','mbox':'mailto:t@t.com'}})
 
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.assertEqual(response.status_code, 200)
         agent = Agent.objects.get(name='lulu')
-        self.assertEqual(agent.openID, 'id:luluid')
+        self.assertEqual(agent.openid, 'id:luluid')
 
     def test_invalid_actor_fields(self):
         stmt = json.dumps({"actor":{"objectType": "Agent", "mbox":"mailto:t@t.com", "name":"bob", "bad": "blah",
@@ -354,7 +338,7 @@ class StatementsTests(TestCase):
             "verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:test_post"}})
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, 'Invalid field(s) found in Agent/Group - bad, foo')
@@ -364,7 +348,7 @@ class StatementsTests(TestCase):
             "verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:test_post", "bad":"foo", "foo":"bar"}})
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, "Invalid field(s) found in Activity - bad, foo")
@@ -377,7 +361,7 @@ class StatementsTests(TestCase):
                 'en-GB': 'testdescGB'},'type': 'type:course','interactionType': 'intType2', 'extensions': {'ext:key1': 'value1',
                 'ext:key2': 'value2','ext:key3': 'value3'}}}})
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, 'Invalid field(s) found in Activity definition - bad')
@@ -390,7 +374,7 @@ class StatementsTests(TestCase):
             'extensions':{'ext:key1': 'value1', 'ext:key2':'value2'}}})
 
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, "Error with result duration - Unable to parse duration string u'wrongduration'")
@@ -401,7 +385,7 @@ class StatementsTests(TestCase):
             "verb":{"id": "http://adlnet.gov/expapi/verbs/missed"},"object":{"objectType":"StatementRef",
             "id":"12345678-1234-5678-1234-567812345678"}})
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 404)
 
 
@@ -410,7 +394,7 @@ class StatementsTests(TestCase):
             "verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:i.pity.the.fool"}})
         
-        response = self.client.post(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        response = self.client.post(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 200)
         Agent.objects.get(mbox="mailto:mr.t@example.com")
 
@@ -420,7 +404,7 @@ class StatementsTests(TestCase):
             {"verb":{"id": "http://adlnet.gov/expapi/verbs/failed","display": {"en-GB":"failed"}},
             "object": {"id":"act:test_list_post1"}, "actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}}])
         
-        response = self.client.post(reverse(statements), stmts,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        response = self.client.post(reverse(statements), stmts,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 200)
         activity1 = Activity.objects.get(activity_id="act:test_list_post")
         activity2 = Activity.objects.get(activity_id="act:test_list_post1")
@@ -448,6 +432,28 @@ class StatementsTests(TestCase):
         stmt = json.dumps({"verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:test_put"},"actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
 
+        putResponse = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
+        self.assertEqual(putResponse.status_code, 204)
+        stmt = Statement.objects.get(statement_id=guid)
+
+        act = Activity.objects.get(activity_id="act:test_put")
+        self.assertEqual(act.activity_id, "act:test_put")
+
+        self.assertEqual(stmt.actor.mbox, "mailto:t@t.com")
+        self.assertEqual(stmt.authority.name, "tester1")
+        self.assertEqual(stmt.authority.mbox, "mailto:test1@tester.com")
+        
+        self.assertEqual(stmt.version, settings.XAPI_VERSION)
+        self.assertEqual(stmt.verb.verb_id, "http://adlnet.gov/expapi/verbs/passed")
+
+    def test_put_1_0_0(self):
+        guid = str(uuid.uuid1())
+
+        param = {"statementId":guid}
+        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        stmt = json.dumps({"verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
+            "object": {"id":"act:test_put"},"actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
+
         putResponse = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
         self.assertEqual(putResponse.status_code, 204)
         stmt = Statement.objects.get(statement_id=guid)
@@ -468,7 +474,7 @@ class StatementsTests(TestCase):
         stmt = json.dumps({"id": guid, "verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:test_put"},"actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
 
-        putResponse = self.client.put(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        putResponse = self.client.put(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(putResponse.status_code, 400)
 
     def test_put_id_in_both_same(self):
@@ -479,7 +485,7 @@ class StatementsTests(TestCase):
         stmt = json.dumps({"id": guid, "verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:test_put"},"actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
 
-        putResponse = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        putResponse = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(putResponse.status_code, 204)
         stmt = Statement.objects.get(statement_id=guid)
 
@@ -490,7 +496,7 @@ class StatementsTests(TestCase):
         self.assertEqual(stmt.authority.name, "tester1")
         self.assertEqual(stmt.authority.mbox, "mailto:test1@tester.com")
         
-        self.assertEqual(stmt.version, "1.0.0")
+        self.assertEqual(stmt.version, settings.XAPI_VERSION)
         self.assertEqual(stmt.verb.verb_id, "http://adlnet.gov/expapi/verbs/passed")
 
     def test_put_id_in_both_different(self):
@@ -502,7 +508,7 @@ class StatementsTests(TestCase):
         stmt = json.dumps({"id": guid2, "verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:test_put"},"actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
 
-        putResponse = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        putResponse = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(putResponse.status_code, 400)
         self.assertEqual(putResponse.content, "Error -- statements - method = PUT, param and body ID both given, but do not match")
 
@@ -521,11 +527,11 @@ class StatementsTests(TestCase):
             "language": "en-US", "extensions":{"ext:k1": "v1", "ext:k2": "v2"}}}})
         
         response = self.client.put(path, stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 204)
 
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
-        get_response = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        get_response = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(get_response.status_code, 200)
         rsp = get_response.content
         self.assertIn("objectType",rsp)
@@ -564,7 +570,7 @@ class StatementsTests(TestCase):
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
         stmt = json.dumps({})
 
-        putResponse = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        putResponse = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(putResponse.status_code, 400)
 
     def test_existing_stmtID_put(self):
@@ -574,7 +580,7 @@ class StatementsTests(TestCase):
             "object": {"id":"act:activity"},"actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
         path = "%s?%s" % (reverse(statements), urllib.urlencode({"statementId":guid}))
         response = self.client.put(path, exist_stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 204)
 
         param = {"statementId":guid}
@@ -582,14 +588,14 @@ class StatementsTests(TestCase):
         stmt = json.dumps({"verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object":{"id":"act:test_existing_put"}, "actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
 
-        putResponse = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        putResponse = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.assertEqual(putResponse.status_code, 409)        
 
     def test_missing_stmtID_put(self):        
         stmt = json.dumps({"verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:test_put"},"actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
-        response = self.client.put(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        response = self.client.put(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 400)
         self.assertIn(response.content, "Error -- statements - method = PUT, but no statementId parameter or ID given in statement")
 
@@ -597,7 +603,7 @@ class StatementsTests(TestCase):
         self.bunchostmts()
         param = {"statementId":self.guid1}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
-        getResponse = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        getResponse = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(getResponse.status_code, 200)
         rsp = getResponse.content
         self.assertIn(self.guid1, rsp)
@@ -605,7 +611,7 @@ class StatementsTests(TestCase):
 
     def test_get_no_params(self):
         self.bunchostmts()
-        getResponse = self.client.get(reverse(statements), X_Experience_API_Version="1.0.0",
+        getResponse = self.client.get(reverse(statements), X_Experience_API_Version=settings.XAPI_VERSION,
             Authorization=self.auth)
         self.assertEqual(getResponse.status_code, 200)
         self.assertIn('content-length', getResponse._headers)
@@ -615,7 +621,7 @@ class StatementsTests(TestCase):
 
     def test_post_no_params(self):
         self.bunchostmts()
-        getResponse = self.client.post(reverse(statements), X_Experience_API_Version="1.0.0",
+        getResponse = self.client.post(reverse(statements), X_Experience_API_Version=settings.XAPI_VERSION,
             Authorization=self.auth)
         self.assertEqual(getResponse.status_code, 200)
         self.assertIn('content-length', getResponse._headers)
@@ -627,7 +633,7 @@ class StatementsTests(TestCase):
         self.bunchostmts()
         param = {"statementId":self.guid1}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
-        head_resp = self.client.head(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        head_resp = self.client.head(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(head_resp.status_code, 200)
         self.assertEqual(head_resp.content, '')
         self.assertIn('content-length', head_resp._headers)
@@ -635,12 +641,12 @@ class StatementsTests(TestCase):
     def test_get_no_existing_ID(self):
         param = {"statementId":"aaaaaa"}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
-        getResponse = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        getResponse = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(getResponse.status_code, 404)
 
     def test_get_no_statementid(self):
         self.bunchostmts()
-        getResponse = self.client.get(reverse(statements), X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        getResponse = self.client.get(reverse(statements), X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(getResponse.status_code, 200)
         jsn = json.loads(getResponse.content)
         # Will only return 10 since that is server limit
@@ -649,7 +655,7 @@ class StatementsTests(TestCase):
 
     def test_head_no_statementid(self):
         self.bunchostmts()
-        head_resp = self.client.head(reverse(statements), X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        head_resp = self.client.head(reverse(statements), X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(head_resp.status_code, 200)
         self.assertEqual(head_resp.content, '')
         self.assertIn('content-length', head_resp._headers)
@@ -685,11 +691,11 @@ class StatementsTests(TestCase):
             "verb": {
                 "id": "http://adlnet.gov/expapi/verbs/experienced",
                 "display": {
-                    "en-us": "experienced"
+                    "en-US": "experienced"
                 }
             },
             "actor": {
-                "openID": "http://test.local/PEab76617d1d21d725d358a7ad5231bd6e",
+                "openid": "http://test.local/PEab76617d1d21d725d358a7ad5231bd6e",
                 "name": "dev2-001",
                 "objectType": "Agent"
             },
@@ -697,8 +703,8 @@ class StatementsTests(TestCase):
             })
 
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
+
         self.assertEqual(response.status_code, 200)    
 
         stmt = json.dumps({
@@ -706,6 +712,7 @@ class StatementsTests(TestCase):
             "object": {
                 "definition": {
                     "interactionType": "fill-in",
+                    "correctResponsesPattern": [],
                     "type": "http://adlnet.gov/expapi/activities/cmi.interaction",
                     "name": {
                         "ja": "SCORM20110721_12"
@@ -718,14 +725,14 @@ class StatementsTests(TestCase):
                 "objectType": "Activity"
             },
             "actor": {
-                "openID": "http://test.local/EAGLE/PEab76617d1d21d725d358a7ad5231bd6e",
+                "openid": "http://test.local/EAGLE/PEab76617d1d21d725d358a7ad5231bd6e",
                 "name": "dev2-001",
                 "objectType": "Agent"
             },
             "verb": {
                 "id": "http://adlnet.gov/expapi/verbs/answered",
                 "display": {
-                    "en-us": "answered"
+                    "en-US": "answered"
                 }
             },
             "result": {
@@ -755,8 +762,8 @@ class StatementsTests(TestCase):
             })
 
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
+
         self.assertEqual(response.status_code, 200)    
 
     def test_amsterdam_snafu(self):
@@ -784,7 +791,7 @@ class StatementsTests(TestCase):
             }
         })
         post_response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(post_response.status_code, 200)
 
     def test_nik_snafu(self):
@@ -805,7 +812,7 @@ class StatementsTests(TestCase):
             }
         })
         post_response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(post_response.status_code, 200)
 
         stmt = json.dumps({
@@ -826,7 +833,7 @@ class StatementsTests(TestCase):
             }
         })
         post_response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(post_response.status_code, 200)
 
     def test_update_activity_wrong_auth(self):
@@ -844,7 +851,7 @@ class StatementsTests(TestCase):
             "ext:ckey2": "cval2"}}})
         param = {"statementId":self.guid1}
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
-        putresponse1 = self.client.put(path, existStmt1, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        putresponse1 = self.client.put(path, existStmt1, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(putresponse1.status_code, 204)
 
         wrong_username = "tester2"
@@ -853,9 +860,9 @@ class StatementsTests(TestCase):
         wrong_auth = "Basic %s" % base64.b64encode("%s:%s" % (wrong_username, wrong_password))
         form = {"username":wrong_username, "email":wrong_email,"password":wrong_password,
             "password2":wrong_password}
-        self.client.post(reverse(register),form, X_Experience_API_Version="1.0.0")
+        self.client.post(reverse(register),form, X_Experience_API_Version=settings.XAPI_VERSION)
 
-        stmt = json.dumps({"verb":{"id":"verb:verb/uri/attempted"},"actor":{"objectType":"Agent", "mbox":"mailto:r@r.com"},
+        stmt = json.dumps({"verb":{"id":"verb:verb/iri/attempted"},"actor":{"objectType":"Agent", "mbox":"mailto:r@r.com"},
             "object": {"objectType": "Activity", "id":"act:foogie",
             "definition": {"name": {"en-US":"testname3"},"description": {"en-US":"testdesc3"},
             "type": "http://www.adlnet.gov/experienceapi/activity-types/http://adlnet.gov/expapi/activities/cmi.interaction",
@@ -868,7 +875,7 @@ class StatementsTests(TestCase):
             "ext:ckey2": "cval2"}}, "authority":{"objectType":"Agent","name":"auth","mbox":"mailto:auth@example.com"}})
 
         post_response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=wrong_auth, X_Experience_API_Version="1.0.0")
+            Authorization=wrong_auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(post_response.status_code, 200)
 
         acts = Activity.objects.filter(activity_id="act:foogie").count()
@@ -891,7 +898,7 @@ class StatementsTests(TestCase):
             "ext:ckey2": "cval2"}}, "authority":{"objectType":"Agent","name":"auth","mbox":"mailto:auth@example.com"}})
 
         post_response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(post_response.status_code, 200)
 
         act = Activity.objects.get(activity_id="act:foogie")
@@ -913,6 +920,22 @@ class StatementsTests(TestCase):
         content = {"verb":{"id":"verb:verb/url"}, "actor":{"objectType":"Agent", "mbox": "mailto:r@r.com"},
             "object": {"id":"act:test_cors_post_put"}}
         
+        bdy = "statementId=886313e1-3b8a-5372-9b90-0c9aee199e5d&content=%s&Authorization=%s&Content-Type=application/json&X-Experience-API-Version=%s" % (content, self.auth, settings.XAPI_VERSION)
+        path = "%s?%s" % (reverse(statements), urllib.urlencode({"method":"PUT"}))
+        response = self.client.post(path, bdy, content_type="application/x-www-form-urlencoded")
+        self.assertEqual(response.status_code, 204)
+
+        act = Activity.objects.get(activity_id="act:test_cors_post_put")
+        self.assertEqual(act.activity_id, "act:test_cors_post_put")
+
+        agent = Agent.objects.get(mbox="mailto:test1@tester.com")
+        self.assertEqual(agent.name, "tester1")
+        self.assertEqual(agent.mbox, "mailto:test1@tester.com")
+
+    def test_cors_post_put_1_0_0(self):
+        content = {"verb":{"id":"verb:verb/url"}, "actor":{"objectType":"Agent", "mbox": "mailto:r@r.com"},
+            "object": {"id":"act:test_cors_post_put"}}
+        
         bdy = "statementId=886313e1-3b8a-5372-9b90-0c9aee199e5d&content=%s&Authorization=%s&Content-Type=application/json&X-Experience-API-Version=1.0.0" % (content, self.auth)
         path = "%s?%s" % (reverse(statements), urllib.urlencode({"method":"PUT"}))
         response = self.client.post(path, bdy, content_type="application/x-www-form-urlencoded")
@@ -925,25 +948,44 @@ class StatementsTests(TestCase):
         self.assertEqual(agent.name, "tester1")
         self.assertEqual(agent.mbox, "mailto:test1@tester.com")
 
+    def test_cors_post_put_wrong_version(self):
+        content = {"verb":{"id":"verb:verb/url"}, "actor":{"objectType":"Agent", "mbox": "mailto:r@r.com"},
+            "object": {"id":"act:test_cors_post_put"}}
+        
+        bdy = "statementId=886313e1-3b8a-5372-9b90-0c9aee199e5b&content=%s&Authorization=%s&X-Experience-API-Version=1.0.33&Content-Type=application/json" % (content, self.auth)
+        path = "%s?%s" % (reverse(statements), urllib.urlencode({"method":"PUT"}))
+        response = self.client.post(path, bdy, content_type="application/x-www-form-urlencoded")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, "X-Experience-API-Version is not supported")
+
+    def test_cors_post_put_correct_version(self):
+        content = {"verb":{"id":"verb:verb/url"}, "actor":{"objectType":"Agent", "mbox": "mailto:r@r.com"},
+            "object": {"id":"act:test_cors_post_put"}}
+        
+        bdy = "statementId=886313e1-3b8a-5372-9b90-0c9aee199e5a&content=%s&Authorization=%s&X-Experience-API-Version=1.0.1&Content-Type=application/json" % (content, self.auth)
+        path = "%s?%s" % (reverse(statements), urllib.urlencode({"method":"PUT"}))
+        response = self.client.post(path, bdy, content_type="application/x-www-form-urlencoded")
+        self.assertEqual(response.status_code, 204)
+
     def test_issue_put(self):
         stmt_id = "33f60b35-e1b2-4ddc-9c6f-7b3f65244430" 
-        stmt = json.dumps({"verb":{"id":"verb:verb/uri"},"object":{"id":"act:scorm.com/JsTetris_TCAPI","definition":{"type":"type:media",
+        stmt = json.dumps({"verb":{"id":"verb:verb/iri"},"object":{"id":"act:scorm.com/JsTetris_TCAPI","definition":{"type":"type:media",
             "name":{"en-US":"Js Tetris - Tin Can Prototype"},"description":{"en-US":"A game of tetris."}}},
             "context":{"contextActivities":{"grouping":{"id":"act:scorm.com/JsTetris_TCAPI"}},
             "registration":"6b1091be-2833-4886-b4a6-59e5e0b3c3f4"},
             "actor":{"mbox":"mailto:tom.creighton.ctr@adlnet.gov","name":"Tom Creighton"}})
 
         path = "%s?%s" % (reverse(statements), urllib.urlencode({"statementId":stmt_id}))
-        put_stmt = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        put_stmt = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(put_stmt.status_code, 204) 
 
     def test_post_with_group(self):
         ot = "Group"
         name = "the group ST"
         mbox = "mailto:the.groupST@example.com"
-        stmt = json.dumps({"actor":{"objectType":ot, "name":name, "mbox":mbox,"member":[{"name":"agentA","mbox":"mailto:agentA@example.com"}, {"name":"agentB","mbox":"mailto:agentB@example.com"}]},"verb":{"id": "http://verb/uri/created", "display":{"en-US":"created"}},
+        stmt = json.dumps({"actor":{"objectType":ot, "name":name, "mbox":mbox,"member":[{"name":"agentA","mbox":"mailto:agentA@example.com"}, {"name":"agentB","mbox":"mailto:agentB@example.com"}]},"verb":{"id": "http://verb/iri/created", "display":{"en-US":"created"}},
             "object": {"id":"act:i.pity.the.fool"}})
-        response = self.client.post(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        response = self.client.post(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 200)
         g = Agent.objects.get(mbox="mailto:the.groupST@example.com")
         self.assertEquals(g.name, name)
@@ -953,16 +995,41 @@ class StatementsTests(TestCase):
         self.assertIn("agentA", mems)
         self.assertIn("agentB", mems)
 
+    def test_post_with_group_no_members_listed(self):
+        ot = "Group"
+        name = "the group ML"
+        mbox = "mailto:the.groupML@example.com"
+        stmt = json.dumps({"actor":{"objectType":ot, "name":name, "mbox":mbox},"verb":{"id": "http://verb/iri/created", "display":{"en-US":"created"}},
+            "object": {"id":"act:i.pity.the.fool"}})
+        response = self.client.post(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
+        self.assertEqual(response.status_code, 200)
+        g = Agent.objects.get(mbox="mailto:the.groupML@example.com")
+        self.assertEquals(g.name, name)
+        self.assertEquals(g.mbox, mbox)
+        mems = g.member.values_list("name", flat=True)
+        self.assertEquals(len(mems), 0)
+
     def test_post_with_group_member_not_array(self):
         ot = "Group"
         name = "the group ST"
         mbox = "mailto:the.groupST@example.com"
         members = "wrong"
-        stmt = json.dumps({"actor":{"objectType":ot, "name":name, "mbox":mbox,"member":members},"verb":{"id": "http://verb/uri/created", "display":{"en-US":"created"}},
+        stmt = json.dumps({"actor":{"objectType":ot, "name":name, "mbox":mbox,"member":members},"verb":{"id": "http://verb/iri/created", "display":{"en-US":"created"}},
             "object": {"id":"act:i.pity.the.fool"}})
-        response = self.client.post(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        response = self.client.post(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.content, 'Members is not a properly formatted array')
+
+    def test_post_with_group_member_empty_array(self):
+        ot = "Group"
+        name = "the group ST"
+        mbox = "mailto:the.groupST@example.com"
+        members = []
+        stmt = json.dumps({"actor":{"objectType":ot, "name":name, "mbox":mbox,"member":members},"verb":{"id": "http://verb/iri/created", "display":{"en-US":"created"}},
+            "object": {"id":"act:i.pity.the.fool"}})
+        response = self.client.post(reverse(statements), stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content, "Member property must contain agents")
 
     def test_issue_put_no_version_header(self):
         stmt_id = '33f60b35-e1b2-4ddc-9c6f-7b3f65244431'
@@ -1029,7 +1096,7 @@ class StatementsTests(TestCase):
         nested_stmt = json.dumps({"actor":{"objectType":"Agent","mbox": "mailto:tincan@adlnet.gov"},
             "verb":{"id": "http://adlnet.gov/expapi/verbs/assess","display": {"en-US":"assessed"}},
             "object":{"id":"http://example.adlnet.gov/tincan/example/simplestatement"}})
-        put_sub_stmt = self.client.put(nest_path, nested_stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        put_sub_stmt = self.client.put(nest_path, nested_stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(put_sub_stmt.status_code, 204)        
 
         stmt_id = str(uuid.uuid1())
@@ -1059,14 +1126,14 @@ class StatementsTests(TestCase):
             "extensions":{"ext:contextKey1": "contextVal1","ext:contextKey2": "contextVal2"}},
             "timestamp":self.firstTime})
 
-        put_stmt = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        put_stmt = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(put_stmt.status_code, 204)
         param = {"statementId":stmt_id}
-        get_response = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        get_response = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         
         the_returned = json.loads(get_response.content)
         self.assertEqual(the_returned['id'], stmt_id)
-        self.assertEqual(the_returned['version'], "1.0.0")
+        self.assertEqual(the_returned['version'], settings.XAPI_VERSION)
         self.assertEqual(the_returned['actor']['objectType'], 'Agent')
         self.assertEqual(the_returned['actor']['name'], 'Lou Wolford')
         self.assertEqual(the_returned['actor']['account']['name'], 'uniqueName')
@@ -1143,7 +1210,7 @@ class StatementsTests(TestCase):
         nested_stmt = json.dumps({"actor":{"objectType":"Agent","mbox": "mailto:tincan@adlnet.gov"},
             "verb":{"id": "http://adlnet.gov/expapi/verbs/assess","display": {"en-US":"assessed"}},
             "object":{"id":"http://example.adlnet.gov/tincan/example/simplestatement"}})
-        put_sub_stmt = self.client.put(nest_path, nested_stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        put_sub_stmt = self.client.put(nest_path, nested_stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(put_sub_stmt.status_code, 204)        
 
         stmt_id = str(uuid.uuid1())
@@ -1162,14 +1229,14 @@ class StatementsTests(TestCase):
             "extensions":{"ext:contextKey1": "contextVal1","ext:contextKey2": "contextVal2"}},
             "timestamp":self.firstTime})
         
-        put_stmt = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        put_stmt = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(put_stmt.status_code, 204)
         param = {"statementId":stmt_id}
-        get_response = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        get_response = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         
         the_returned = json.loads(get_response.content)
         self.assertEqual(the_returned['id'], stmt_id)
-        self.assertEqual(the_returned['version'], "1.0.0")
+        self.assertEqual(the_returned['version'], settings.XAPI_VERSION)
         self.assertEqual(the_returned['actor']['objectType'], 'Agent')
         self.assertEqual(the_returned['actor']['name'], 'Lou Wolford')
         self.assertEqual(the_returned['actor']['account']['name'], 'louUniqueName')
@@ -1216,7 +1283,7 @@ class StatementsTests(TestCase):
         nested_stmt = json.dumps({"actor":{"objectType":"Agent","mbox": "mailto:tincannest@adlnet.gov"},
             "verb":{"id": "http://adlnet.gov/expapi/verbs/assess","display": {"en-US":"assessed", "en-GB":"graded"}},
             "object":{"id":"http://example.adlnet.gov/tincan/example/simplestatement"}})
-        put_sub_stmt = self.client.put(nest_path, nested_stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        put_sub_stmt = self.client.put(nest_path, nested_stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(put_sub_stmt.status_code, 204)        
 
 
@@ -1226,7 +1293,7 @@ class StatementsTests(TestCase):
         nested_sub_stmt = json.dumps({"actor":{"objectType":"Agent","mbox": "mailto:tincannestsub@adlnet.gov"},
             "verb":{"id": "http://adlnet.gov/expapi/verbs/verb","display": {"en-US":"verb", "en-GB":"altVerb"}},
             "object":{"id":"http://example.adlnet.gov/tincan/example/simplenestedsubstatement"}})
-        put_nest_sub_stmt = self.client.put(nest_sub_path, nested_sub_stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        put_nest_sub_stmt = self.client.put(nest_sub_path, nested_sub_stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(put_nest_sub_stmt.status_code, 204)
 
 
@@ -1260,19 +1327,19 @@ class StatementsTests(TestCase):
             "result": {"score":{"scaled":.85, "raw": 85, "min":0, "max":100}, "completion": True, "success": True, "response": "Well done",
             "duration": "P3Y6M4DT12H30M5S", "extensions":{"ext:resultKey1": "resultValue1", "ext:resultKey2":"resultValue2"}},
             "context":{"registration": context_id, "contextActivities": {"other": {"id": "http://example.adlnet.gov/tincan/example/test"}},
-            "revision": "Spelling error in choices.", "platform":"Platform is web browser.","language": "en-US",
+            "language": "en-US",
             "statement":{"objectType":"StatementRef", "id":str(nested_st_id)},
             "extensions":{"ext:contextKey1": "contextVal1","ext:contextKey2": "contextVal2"}},
             "timestamp":self.firstTime})
 
-        put_stmt = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        put_stmt = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(put_stmt.status_code, 204)
         param = {"statementId":stmt_id}
-        get_response = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        get_response = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         
         the_returned = json.loads(get_response.content)
         self.assertEqual(the_returned['id'], stmt_id)
-        self.assertEqual(the_returned['version'], "1.0.0")
+        self.assertEqual(the_returned['version'], settings.XAPI_VERSION)
         self.assertEqual(the_returned['actor']['objectType'], 'Agent')
         self.assertEqual(the_returned['actor']['name'], 'Lou Wolford')
         self.assertEqual(the_returned['actor']['account']['name'], 'louUniqueName')
@@ -1357,9 +1424,7 @@ class StatementsTests(TestCase):
         self.assertEqual(the_returned['context']['extensions']['ext:contextKey1'], 'contextVal1')
         self.assertEqual(the_returned['context']['extensions']['ext:contextKey2'], 'contextVal2')
         self.assertEqual(the_returned['context']['language'], 'en-US')
-        self.assertEqual(the_returned['context']['platform'], 'Platform is web browser.')
         self.assertEqual(the_returned['context']['registration'], context_id)
-        self.assertEqual(the_returned['context']['revision'], 'Spelling error in choices.')
         self.assertEqual(the_returned['context']['statement']['id'], str(nested_st_id))
         self.assertEqual(the_returned['context']['statement']['objectType'], 'StatementRef')
 
@@ -1396,7 +1461,7 @@ class StatementsTests(TestCase):
             {"verb":{"id": "http://adlnet.gov/expapi/verbs/wrong-kicked","display": {"en-US":"wrong-kicked"}},"object": {"id":"act:test_wrong_list_post2"}},            
             {"verb":{"id": "http://adlnet.gov/expapi/verbs/wrong-kicked","display": {"en-US":"wrong-kicked"}},"object": {"id":"act:test_wrong_list_post4"}, "actor":{"objectType":"Agent", "mbox":"wrong-t@t.com"}}])
         
-        response = self.client.post(reverse(statements), stmts,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        response = self.client.post(reverse(statements), stmts,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 400)
         self.assertIn('actor is missing in Statement', response.content)
                 
@@ -1414,7 +1479,7 @@ class StatementsTests(TestCase):
     def test_post_list_rollback_part_2(self):
         self.bunchostmts()
         stmts = json.dumps([{"object": {"objectType":"Agent","name":"john","mbox":"mailto:john@john.com"},
-            "verb": {"id": "http://adlnet.gov/expapi/verbs/wrong","display": {"wrong-en-US":"wrong"}},
+            "verb": {"id": "http://adlnet.gov/expapi/verbs/wrong","display": {"en-US":"wrong"}},
             "actor":{"objectType":"Agent","mbox":"mailto:s@s.com"}},
             {"verb":{"id": "http://adlnet.gov/expapi/verbs/created"},
             "object": {"objectType": "Activity", "id":"act:foogie",
@@ -1424,7 +1489,7 @@ class StatementsTests(TestCase):
             "actor":{"objectType":"Agent", "mbox":"mailto:wrong-t@t.com"}},
             {"verb":{"id": "http://adlnet.gov/expapi/verbs/wrong-kicked"},"object": {"id":"act:test_wrong_list_post2"}}])
 
-        response = self.client.post(reverse(statements), stmts,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        response = self.client.post(reverse(statements), stmts,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 400)
         self.assertIn('actor is missing in Statement', response.content)
 
@@ -1460,7 +1525,7 @@ class StatementsTests(TestCase):
             "verb": {"id": "http://adlnet.gov/expapi/verbs/voided","display": {"en-US":"voided"}}},
             {"verb":{"id": "http://adlnet.gov/expapi/verbs/wrong-kicked"},"object": {"id":"act:test_wrong_list_post2"}}])
 
-        response = self.client.post(reverse(statements), stmts,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        response = self.client.post(reverse(statements), stmts,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 400)
         self.assertIn('actor is missing in Statement', response.content)
         voided_st = Statement.objects.get(statement_id=str(self.exist_stmt_id))
@@ -1477,10 +1542,10 @@ class StatementsTests(TestCase):
         self.bunchostmts()
         sub_context_id = str(uuid.uuid1())
         stmts = json.dumps([{"actor":{"objectType":"Agent","mbox":"mailto:wrong-s@s.com"},
-            "verb": {"id": "http://adlnet.gov/expapi/verbs/wrong","display": {"wrong-en-US":"wrong"}},
+            "verb": {"id": "http://adlnet.gov/expapi/verbs/wrong","display": {"en-US":"wrong"}},
             "object": {"objectType":"Agent","name":"john","mbox":"mailto:john@john.com"}},
             {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
-            "verb": {"id": "http://adlnet.gov/expapi/verbs/wrong-next","display": {"wrong-en-US":"wrong-next"}},
+            "verb": {"id": "http://adlnet.gov/expapi/verbs/wrong-next","display": {"en-US":"wrong-next"}},
             "object":{"objectType":"SubStatement",
             "actor":{"objectType":"Agent","mbox":"mailto:wrong-ss@ss.com"},"verb": {"id":"http://adlnet.gov/expapi/verbs/wrong-sub"},
             "object": {"objectType":"Activity", "id":"act:wrong-testex.com"}, "result":{"completion": True, "success": True,
@@ -1488,7 +1553,7 @@ class StatementsTests(TestCase):
             "contextActivities": {"other": {"id": "act:sub-wrong-ActivityID"}},"revision": "foo", "platform":"bar",
             "language": "en-US", "extensions":{"ext:wrong-k1": "v1", "ext:wrong-k2": "v2"}}}},
             {"verb":{"id": "http://adlnet.gov/expapi/verbs/wrong-kicked"},"object": {"id":"act:test_wrong_list_post2"}}])
-        response = self.client.post(reverse(statements), stmts,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        response = self.client.post(reverse(statements), stmts,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 400)
         self.assertIn('actor is missing in Statement', response.content)
 
@@ -1516,11 +1581,11 @@ class StatementsTests(TestCase):
         # Will throw error and need to rollback b/c last stmt is missing actor
         stmts = json.dumps([{
             "actor":{"objectType":"Agent","mbox":"mailto:wrong-s@s.com"},
-            "verb": {"id": "http://adlnet.gov/expapi/verbs/wrong","display": {"wrong-en-US":"wrong"}},
+            "verb": {"id": "http://adlnet.gov/expapi/verbs/wrong","display": {"en-US":"wrong"}},
             "object": {"objectType":"Agent","name":"john","mbox":"mailto:john@john.com"}},
             {
             "actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
-            "verb": {"id": "http://adlnet.gov/expapi/verbs/wrong-next","display": {"wrong-en-US":"wrong-next"}},
+            "verb": {"id": "http://adlnet.gov/expapi/verbs/wrong-next","display": {"en-US":"wrong-next"}},
             "object":{
                 "objectType":"SubStatement",
                     "actor":{"objectType":"Agent","mbox":"mailto:wrong-ss@ss.com"},
@@ -1540,7 +1605,7 @@ class StatementsTests(TestCase):
             "object": {"id":"act:test_wrong_list_post2"}}])
  
         response = self.client.post(reverse(statements), stmts,  content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 400)
         self.assertIn('actor is missing in Statement', response.content)
 
@@ -1570,11 +1635,11 @@ class StatementsTests(TestCase):
             "object": {"id":"act:test_post"}})
 
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")        
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)        
         self.assertEqual(response.status_code, 200)
 
         response2 = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth2, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth2, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response2.status_code, 200)
 
         acts = Activity.objects.filter(activity_id='act:test_post').count()
@@ -1603,13 +1668,13 @@ class StatementsTests(TestCase):
         param1 = {"statementId":stmt1_guid}
         path1 = "%s?%s" % (reverse(statements), urllib.urlencode(param1))
         stmt_payload1 = stmt1
-        resp1 = self.client.put(path1, stmt_payload1, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        resp1 = self.client.put(path1, stmt_payload1, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp1.status_code, 204)
 
         param2 = {"statementId":stmt2_guid}
         path2 = "%s?%s" % (reverse(statements), urllib.urlencode(param2))
         stmt_payload2 = stmt2
-        resp2 = self.client.put(path2, stmt_payload2, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        resp2 = self.client.put(path2, stmt_payload2, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp2.status_code, 204)
         
     def test_void(self):
@@ -1622,10 +1687,10 @@ class StatementsTests(TestCase):
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         payload = json.dumps(stmt)
 
-        r = self.client.put(path, payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        r = self.client.put(path, payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 204)
 
-        r = self.client.get(reverse(statements), Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        r = self.client.get(reverse(statements), Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 200)
 
         obj = json.loads(r.content)
@@ -1646,10 +1711,10 @@ class StatementsTests(TestCase):
         path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
         payload2 = json.dumps(stmt2)
 
-        r = self.client.put(path, payload2, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        r = self.client.put(path, payload2, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 204)
 
-        r = self.client.get(reverse(statements), Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        r = self.client.get(reverse(statements), Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 200)
         obj = json.loads(r.content)
         self.assertEqual(len(obj['statements']), 2)
@@ -1674,10 +1739,10 @@ class StatementsTests(TestCase):
         path = "%s?%s" % (reverse(statements), urllib.urlencode(paramv))
         vpayload = json.dumps(stmtv)
 
-        r = self.client.put(path, vpayload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        r = self.client.put(path, vpayload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 204)
 
-        r = self.client.get(reverse(statements), Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        r = self.client.get(reverse(statements), Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 200)
         obj = json.loads(r.content)
         self.assertEqual(len(obj['statements']), 2)
@@ -1694,7 +1759,7 @@ class StatementsTests(TestCase):
 
         # get voided statement via voidedStatementId
         path = "%s?%s" % (reverse(statements), urllib.urlencode({"voidedStatementId":stmt_guid}))
-        r = self.client.get(path, Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        r = self.client.get(path, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 200)
         obj = json.loads(r.content)
         self.assertEqual(obj['id'], stmt_guid)
@@ -1704,7 +1769,7 @@ class StatementsTests(TestCase):
 
         # make sure voided statement returns a 404 on get w/ statementId req
         path = "%s?%s" % (reverse(statements), urllib.urlencode({"statementId":stmt_guid}))
-        r = self.client.get(path, Authorization=self.auth, X_Experience_API_Version="1.0.0")
+        r = self.client.get(path, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 404)
     
     def test_act_id_iri(self):
@@ -1713,7 +1778,7 @@ class StatementsTests(TestCase):
             "verb":{"id": "http://adlnet.gov/expapi/verbs/created","display": {"en-US":"created"}},
             "object": {"id":act_id}})
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.assertEqual(response.status_code, 200)
         stmt_db = Statement.objects.get(statement_id=json.loads(response.content)[0])
@@ -1726,9 +1791,9 @@ class StatementsTests(TestCase):
             "verb":{"id": "http://adlnet.gov/expapi/verbs/created","display": {"en-US":"created"}},
             "object": {"id":act_id}})
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 400)
-        self.assertIn('not a valid URI', response.content)
+        self.assertIn('not a valid IRI', response.content)
 
     def test_tag_act_id_uri(self):
         act_id = "tag:adlnet.gov,2013:expapi:0.9:activities"
@@ -1737,1022 +1802,9 @@ class StatementsTests(TestCase):
             "object": {"id":act_id}})
 
         response = self.client.post(reverse(statements), stmt, content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.assertEqual(response.status_code, 200)
         stmt_db = Statement.objects.get(statement_id=json.loads(response.content)[0])
         act = Activity.objects.get(id=stmt_db.object_activity.id)
         self.assertEqual(act.activity_id, act_id)
-
-    def test_multipart(self):
-        stmt = {"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""}]}
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt = u"howdy.. this is a text attachment"
-        txtsha = hashlib.sha256(txt).hexdigest()
-        stmt['attachments'][0]["sha2"] = str(txtsha)
-        
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata = MIMEText(txt, 'plain', 'utf-8')
-        textdata.add_header('X-Experience-API-Hash', txtsha)
-        message.attach(stmtdata)
-        message.attach(textdata)
-        
-        r = self.client.post(reverse(statements), message.as_string(),
-            content_type='multipart/mixed', Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 200)
-
-    def test_multiple_stmt_multipart(self):
-        stmt = [{"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""}]},
-            {"actor":{"mbox":"mailto:tom2@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads2"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test2",
-            "display": {"en-US": "A test attachment2"},
-            "description": {"en-US": "A test attachment (description)2"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 23,
-            "sha2":""}]}
-            ]
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt = u"howdy.. this is a text attachment"
-        txtsha = hashlib.sha256(txt).hexdigest()
-        stmt[0]['attachments'][0]["sha2"] = str(txtsha)
-        
-        txt2 = u"This is second attachment."
-        txtsha2 = hashlib.sha256(txt2).hexdigest()
-        stmt[1]['attachments'][0]['sha2'] = str(txtsha2)
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata = MIMEText(txt, 'plain', 'utf-8')
-        textdata2 = MIMEText(txt2, 'plain', 'utf-8')
-        
-        textdata.add_header('X-Experience-API-Hash', txtsha)
-        textdata2.add_header('X-Experience-API-Hash', txtsha2)
-        message.attach(stmtdata)
-        message.attach(textdata)
-        message.attach(textdata2)
-        
-        r = self.client.post(reverse(statements), message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 200)
-        returned_ids = json.loads(r.content)
-        stmt_id1 = returned_ids[0]
-        stmt_id2 = returned_ids[1]
-        saved_stmt1 = Statement.objects.get(statement_id=stmt_id1)
-        saved_stmt2 = Statement.objects.get(statement_id=stmt_id2)
-        stmts = Statement.objects.all()
-        attachments = StatementAttachment.objects.all()
-        self.assertEqual(len(stmts), 2)
-        self.assertEqual(len(attachments), 2)
-
-        
-        self.assertEqual(saved_stmt1.attachments.all()[0].payload.read(), "howdy.. this is a text attachment")
-        self.assertEqual(saved_stmt2.attachments.all()[0].payload.read(), "This is second attachment.")
-
-    def test_multiple_stmt_multipart_same_attachment(self):
-        stmt = [{"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""}]},
-            {"actor":{"mbox":"mailto:tom2@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads2"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""}]}
-            ]
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt = u"howdy.. this is a text attachment"
-        txtsha = hashlib.sha256(txt).hexdigest()
-        stmt[0]['attachments'][0]["sha2"] = str(txtsha)        
-        stmt[1]['attachments'][0]['sha2'] = str(txtsha)
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata = MIMEText(txt, 'plain', 'utf-8')
-        
-        textdata.add_header('X-Experience-API-Hash', txtsha)
-        message.attach(stmtdata)
-        message.attach(textdata)
-        
-        r = self.client.post(reverse(statements), message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 200)
-        
-        returned_ids = json.loads(r.content)
-        stmt_id1 = returned_ids[0]
-        stmt_id2 = returned_ids[1]
-        saved_stmt1 = Statement.objects.get(statement_id=stmt_id1)
-        saved_stmt2 = Statement.objects.get(statement_id=stmt_id2)
-        stmts = Statement.objects.all()
-        attachments = StatementAttachment.objects.all()
-        self.assertEqual(len(stmts), 2)
-        self.assertEqual(len(attachments), 1)
-
-        self.assertEqual(saved_stmt1.attachments.all()[0].payload.read(), "howdy.. this is a text attachment")
-        self.assertEqual(saved_stmt2.attachments.all()[0].payload.read(), "howdy.. this is a text attachment")
-
-    def test_multiple_stmt_multipart_one_attachment_one_fileurl(self):
-        stmt = [{"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""}]},
-            {"actor":{"mbox":"mailto:tom2@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads2"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "fileUrl":"http://my/file/url"}]}]
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt = u"howdy.. this is a text attachment"
-        txtsha = hashlib.sha256(txt).hexdigest()
-        stmt[0]['attachments'][0]["sha2"] = str(txtsha)        
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata = MIMEText(txt, 'plain', 'utf-8')
-        
-        textdata.add_header('X-Experience-API-Hash', txtsha)
-        message.attach(stmtdata)
-        message.attach(textdata)
-        
-        r = self.client.post(reverse(statements), message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 200)
-        
-        returned_ids = json.loads(r.content)
-        stmt_id1 = returned_ids[0]
-        stmt_id2 = returned_ids[1]
-        saved_stmt1 = Statement.objects.get(statement_id=stmt_id1)
-        saved_stmt2 = Statement.objects.get(statement_id=stmt_id2)
-        stmts = Statement.objects.all()
-        attachments = StatementAttachment.objects.all()
-        self.assertEqual(len(stmts), 2)
-        self.assertEqual(len(attachments), 2)
-
-        self.assertEqual(saved_stmt1.attachments.all()[0].payload.read(), "howdy.. this is a text attachment")
-        self.assertEqual(saved_stmt2.attachments.all()[0].fileUrl, "http://my/file/url")
-
-    def test_multiple_stmt_multipart_multiple_attachments_each(self):
-        stmt = [{"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-                {"usageType": "http://example.com/attachment-usage/test11",
-                "display": {"en-US": "A test attachment11"},
-                "description": {"en-US": "A test attachment (description)11"},
-                "contentType": "text/plain; charset=utf-8",
-                "length": 27,
-                "sha2":""},
-                {"usageType": "http://example.com/attachment-usage/test12",
-                "display": {"en-US": "A test attachment12"},
-                "description": {"en-US": "A test attachment (description)12"},
-                "contentType": "text/plain; charset=utf-8",
-                "length": 27,
-                "sha2":""}]},
-            {"actor":{"mbox":"mailto:tom2@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads2"},
-            "attachments": [
-                {"usageType": "http://example.com/attachment-usage/test21",
-                "display": {"en-US": "A test attachment21"},
-                "description": {"en-US": "A test attachment (description)21"},
-                "contentType": "text/plain; charset=utf-8",
-                "length": 23,
-                "sha2":""},
-                {"usageType": "http://example.com/attachment-usage/test22",
-                "display": {"en-US": "A test attachment22"},
-                "description": {"en-US": "A test attachment (description)22"},
-                "contentType": "text/plain; charset=utf-8",
-                "length": 23,
-                "sha2":""}]}
-            ]
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt11 = u"This is a text attachment11"
-        txtsha11 = hashlib.sha256(txt11).hexdigest()
-        stmt[0]['attachments'][0]["sha2"] = str(txtsha11)
-        
-        txt12 = u"This is a text attachment12"
-        txtsha12 = hashlib.sha256(txt12).hexdigest()
-        stmt[0]['attachments'][1]['sha2'] = str(txtsha12)
-
-        txt21 = u"This is a text attachment21"
-        txtsha21 = hashlib.sha256(txt21).hexdigest()
-        stmt[1]['attachments'][0]['sha2'] = str(txtsha21)
-
-        txt22 = u"This is a text attachment22"
-        txtsha22 = hashlib.sha256(txt22).hexdigest()
-        stmt[1]['attachments'][1]['sha2'] = str(txtsha22)
-
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata11 = MIMEText(txt11, 'plain', 'utf-8')
-        textdata12 = MIMEText(txt12, 'plain', 'utf-8')
-        textdata21 = MIMEText(txt21, 'plain', 'utf-8')
-        textdata22 = MIMEText(txt22, 'plain', 'utf-8')
- 
-        textdata11.add_header('X-Experience-API-Hash', txtsha11)
-        textdata12.add_header('X-Experience-API-Hash', txtsha12)
-        textdata21.add_header('X-Experience-API-Hash', txtsha21)
-        textdata22.add_header('X-Experience-API-Hash', txtsha22)
-
-        message.attach(stmtdata)
-        message.attach(textdata11)
-        message.attach(textdata12)
-        message.attach(textdata21)
-        message.attach(textdata22)
-        
-        r = self.client.post(reverse(statements), message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 200)
-        
-        returned_ids = json.loads(r.content)
-        stmt_id1 = returned_ids[0]
-        stmt_id2 = returned_ids[1]
-        saved_stmt1 = Statement.objects.get(statement_id=stmt_id1)
-        saved_stmt2 = Statement.objects.get(statement_id=stmt_id2)
-
-        stmts = Statement.objects.all()
-        attachments = StatementAttachment.objects.all()
-        self.assertEqual(len(stmts), 2)
-        self.assertEqual(len(attachments), 4)
-
-        stmt1_contents = ["This is a text attachment11","This is a text attachment12"]
-        stmt2_contents = ["This is a text attachment21","This is a text attachment22"]
-        self.assertIn(saved_stmt1.attachments.all()[0].payload.read(), stmt1_contents)
-        self.assertIn(saved_stmt1.attachments.all()[1].payload.read(), stmt1_contents)
-        self.assertIn(saved_stmt2.attachments.all()[0].payload.read(), stmt2_contents)
-        self.assertIn(saved_stmt2.attachments.all()[1].payload.read(), stmt2_contents)
-
-    def test_multipart_wrong_sha(self):
-        stmt = {"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""}]}
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt = u"howdy.. this is a text attachment"
-        txtsha = hashlib.sha256(txt).hexdigest()
-        wrongtxt = u"blahblahblah this is wrong"
-        wrongsha = hashlib.sha256(wrongtxt).hexdigest()
-        stmt['attachments'][0]["sha2"] = str(wrongsha)
-        
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata = MIMEText(txt, 'plain', 'utf-8')
-        textdata.add_header('X-Experience-API-Hash', txtsha)
-        message.attach(stmtdata)
-        message.attach(textdata)
-
-        r = self.client.post(reverse(statements), message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-
-        self.assertEqual(r.status_code, 400)
-        self.assertIn("Could not find attachment payload with sha", r.content)
-
-    def test_multiple_multipart(self):
-        stmt = {"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""},
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment2"},
-            "description": {"en-US": "A test attachment (description)2"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 28,
-            "sha2":""}]}
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt = u"howdy.. this is a text attachment"
-        txtsha = hashlib.sha256(txt).hexdigest()
-        stmt['attachments'][0]["sha2"] = str(txtsha)
-        
-        txt2 = u"this is second attachment"
-        txtsha2 = hashlib.sha256(txt2).hexdigest()
-        stmt['attachments'][1]["sha2"] = str(txtsha2)
-
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata = MIMEText(txt, 'plain', 'utf-8')
-        textdata.add_header('X-Experience-API-Hash', txtsha)
-        textdata2 = MIMEText(txt2, 'plain', 'utf-8')
-        textdata2.add_header('X-Experience-API-Hash', txtsha2)
-        message.attach(stmtdata)
-        message.attach(textdata)
-        message.attach(textdata2)
-
-        r = self.client.post(reverse(statements), message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 200)
-
-    def test_multiple_multipart_wrong(self):
-        stmt = {"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""},
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment2"},
-            "description": {"en-US": "A test attachment (description)2"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 28,
-            "sha2":""}]}
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt = u"howdy.. this is a text attachment"
-        txtsha = hashlib.sha256(txt).hexdigest()
-        stmt['attachments'][0]["sha2"] = str(txtsha)
-        
-        txt2 = u"this is second attachment"
-        txtsha2 = hashlib.sha256(txt2).hexdigest()
-        wrongtxt = u"this is some wrong text"
-        wrongsha2 = hashlib.sha256(wrongtxt).hexdigest()
-        stmt['attachments'][1]["sha2"] = str(wrongsha2)
-
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata = MIMEText(txt, 'plain', 'utf-8')
-        textdata.add_header('X-Experience-API-Hash', txtsha)
-        textdata2 = MIMEText(txt2, 'plain', 'utf-8')
-        textdata2.add_header('X-Experience-API-Hash', txtsha2)
-        message.attach(stmtdata)
-        message.attach(textdata)
-        message.attach(textdata2)
-
-        r = self.client.post(reverse(statements), message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 400)
-        self.assertIn("Could not find attachment payload with sha", r.content)
-
-    def test_app_json_multipart(self):
-        stmt = {"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "fileUrl": "http://my/file/url"}]}
-        
-        response = self.client.post(reverse(statements), json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 200)
-
-
-    def test_app_json_multipart_wrong_fields(self):
-        stmt = {"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "bad": "foo",
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "fileUrl": "http://my/file/url"}]}
-        
-        response = self.client.post(reverse(statements), json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, 'Invalid field(s) found in Attachment - bad')
-
-    def test_app_json_multipart_one_fileURL(self):
-        stmt = [{"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-                {"usageType": "http://example.com/attachment-usage/test",
-                "display": {"en-US": "A test attachment"},
-                "description": {"en-US": "A test attachment (description)"},
-                "contentType": "text/plain; charset=utf-8",
-                "length": 27,
-                "fileUrl": "http://my/file/url"}]},
-            {"actor":{"mbox":"mailto:tom1@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads1"},
-            "attachments": [
-                {"usageType": "http://example.com/attachment-usage/test",
-                "display": {"en-US": "A test attachment"},
-                "description": {"en-US": "A test attachment (description)"},
-                "contentType": "text/plain; charset=utf-8",
-                "length": 27,
-                "fileUrl": "http://my/file/url"}]}
-            ]
-        
-        response = self.client.post(reverse(statements), json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 200)
-
-        returned_ids = json.loads(response.content)
-        stmt_id1 = returned_ids[0]
-        stmt_id2 = returned_ids[1]
-        saved_stmt1 = Statement.objects.get(statement_id=stmt_id1)
-        saved_stmt2 = Statement.objects.get(statement_id=stmt_id2)
-        stmts = Statement.objects.all()
-        attachments = StatementAttachment.objects.all()
-        self.assertEqual(len(stmts), 2)
-        self.assertEqual(len(attachments), 1)
-
-        self.assertEqual(saved_stmt1.attachments.all()[0].fileUrl, "http://my/file/url")
-        self.assertEqual(saved_stmt2.attachments.all()[0].fileUrl, "http://my/file/url")
-
-    def test_app_json_multipart_no_fileUrl(self):
-        stmt = {"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27}]}
-        
-        response = self.client.post(reverse(statements), json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Attachment sha2 is required when no fileUrl is given', response.content)
-
-    def test_multiple_app_json_multipart_no_fileUrl(self):
-        stmt = {"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "fileUrl":"http://some/url"},
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment2"},
-            "description": {"en-US": "A test attachment (description)2"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 28,
-            "fileUrl":""}]}
-
-        response = self.client.post(reverse(statements), json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Attachments fileUrl with value  was not a valid URI', response.content)
-
-    def test_multipart_put(self):
-        stmt_id = str(uuid.uuid1())
-        stmt = {"id":stmt_id,
-            "actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""}]}
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt = u"howdy.. this is a text attachment"
-        txtsha = hashlib.sha256(txt).hexdigest()
-        stmt['attachments'][0]["sha2"] = str(txtsha)
-        
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata = MIMEText(txt, 'plain', 'utf-8')
-        textdata.add_header('X-Experience-API-Hash', txtsha)
-        message.attach(stmtdata)
-        message.attach(textdata)
-
-        param = {"statementId":stmt_id}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
-        r = self.client.put(path, message.as_string(), content_type="multipart/mixed", Authorization=self.auth,
-            X_Experience_API_Version="1.0.0")
-
-        self.assertEqual(r.status_code, 204)
-
-    def test_multipart_wrong_sha_put(self):
-        stmt_id = str(uuid.uuid1())
-        stmt = {"id":stmt_id,
-            "actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""}]}
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt = u"howdy.. this is a text attachment"
-        txtsha = hashlib.sha256(txt).hexdigest()
-        wrongtxt = u"blahblahblah this is wrong"
-        wrongsha = hashlib.sha256(wrongtxt).hexdigest()
-        stmt['attachments'][0]["sha2"] = str(wrongsha)
-        
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata = MIMEText(txt, 'plain', 'utf-8')
-        textdata.add_header('X-Experience-API-Hash', txtsha)
-        message.attach(stmtdata)
-        message.attach(textdata)
-
-        param = {"statementId":stmt_id}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
-        r = self.client.put(path, message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-
-        self.assertEqual(r.status_code, 400)
-        self.assertIn("Could not find attachment payload with sha", r.content)
-
-    def test_multiple_multipart_put(self):
-        stmt_id = str(uuid.uuid1())
-        stmt = {"id":stmt_id,
-            "actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""},
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment2"},
-            "description": {"en-US": "A test attachment (description)2"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 28,
-            "sha2":""}]}
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt = u"howdy.. this is a text attachment"
-        txtsha = hashlib.sha256(txt).hexdigest()
-        stmt['attachments'][0]["sha2"] = str(txtsha)
-        
-        txt2 = u"this is second attachment"
-        txtsha2 = hashlib.sha256(txt2).hexdigest()
-        stmt['attachments'][1]["sha2"] = str(txtsha2)
-
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata = MIMEText(txt, 'plain', 'utf-8')
-        textdata.add_header('X-Experience-API-Hash', txtsha)
-        textdata2 = MIMEText(txt2, 'plain', 'utf-8')
-        textdata2.add_header('X-Experience-API-Hash', txtsha2)
-        message.attach(stmtdata)
-        message.attach(textdata)
-        message.attach(textdata2)
-
-        param = {"statementId":stmt_id}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
-        r = self.client.put(path, message.as_string(), content_type="multipart/mixed" , Authorization=self.auth,
-            X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 204)
-
-    def test_multiple_multipart_put_wrong_attachment(self):
-        stmt_id = str(uuid.uuid1())
-        stmt = {"id":stmt_id,
-            "actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "sha2":""},
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment2"},
-            "description": {"en-US": "A test attachment (description)2"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 28,
-            "sha2":""}]}
-
-        message = MIMEMultipart(boundary="myboundary")
-        txt = u"howdy.. this is a text attachment"
-        txtsha = hashlib.sha256(txt).hexdigest()
-        stmt['attachments'][0]["sha2"] = str(txtsha)
-        
-        txt2 = u"this is second attachment"
-        txtsha2 = hashlib.sha256(txt2).hexdigest()
-        wrongtxt = u"this is some wrong text"
-        wrongsha2 = hashlib.sha256(wrongtxt).hexdigest()
-        stmt['attachments'][1]["sha2"] = str(wrongsha2)
-
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        textdata = MIMEText(txt, 'plain', 'utf-8')
-        textdata.add_header('X-Experience-API-Hash', txtsha)
-        textdata2 = MIMEText(txt2, 'plain', 'utf-8')
-        textdata2.add_header('X-Experience-API-Hash', txtsha2)
-        message.attach(stmtdata)
-        message.attach(textdata)
-        message.attach(textdata2)
-
-        param = {"statementId":stmt_id}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
-        r = self.client.put(path, message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 400)
-        self.assertIn("Could not find attachment payload with sha", r.content)
-
-    def test_app_json_multipart_put(self):
-        stmt_id = str(uuid.uuid1())
-        stmt = {"id":stmt_id,
-            "actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "fileUrl": "http://my/file/url"}]}
-        
-        param = {"statementId":stmt_id}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
-        response = self.client.put(path, json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 204)
-
-    def test_app_json_multipart_not_array(self):
-        stmt_id = str(uuid.uuid1())
-        stmt = {"id":stmt_id,
-            "actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": "wrong"}
-        
-        param = {"statementId":stmt_id}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
-        response = self.client.put(path, json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.content, 'Attachments is not a properly formatted array')
-
-    def test_app_json_multipart_no_fileUrl_put(self):
-        stmt_id = str(uuid.uuid1())
-        stmt = {"id":stmt_id,
-            "actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27}]}
-
-        param = {"statementId":stmt_id}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
-        response = self.client.put(path, json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 400)
-        self.assertIn( 'Attachment sha2 is required when no fileUrl is given', response.content)
-
-    def test_app_json_invalid_fileUrl(self):
-        stmt_id = str(uuid.uuid1())
-        stmt = {"id":stmt_id,
-            "actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "fileUrl": "blah"}]}
-
-        param = {"statementId":stmt_id}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
-        response = self.client.put(path, json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Attachments fileUrl with value blah was not a valid URI', response.content)
-
-
-
-    def test_multiple_app_json_multipart_no_fileUrl_put(self):
-        stmt_id = str(uuid.uuid1())
-
-        stmt = {"id":stmt_id,
-            "actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "fileUrl":"http://some/url"},
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment2"},
-            "description": {"en-US": "A test attachment (description)2"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 28,
-            "fileUrl":""}]}
-
-        param = {"statementId":stmt_id}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
-        response = self.client.put(path, json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 400)
-        self.assertIn('Attachments fileUrl with value  was not a valid URI', response.content)
-
-    def test_multipart_non_text_file(self):
-        stmt = {"actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test picture"},
-            "description": {"en-US": "A test picture (description)"},
-            "contentType": "image/png",
-            "length": 27,
-            "sha2":""}]}
-
-        message = MIMEMultipart(boundary="myboundary")
-        img_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'static','img', 'minus_small_white.png'))
-        img = open(img_path, 'rb')
-        img_data = img.read()
-        img.close()
-        imgsha = hashlib.sha256(img_data).hexdigest()
-        stmt['attachments'][0]["sha2"] = str(imgsha)
-        
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        imgdata = MIMEImage(img_data)
-
-        imgdata.add_header('X-Experience-API-Hash', imgsha)
-        message.attach(stmtdata)
-        message.attach(imgdata)
-        
-        r = self.client.post(reverse(statements), message.as_string(),
-            content_type='multipart/mixed', Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 200)
-        
-        param= {"attachments":True}
-        path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
-        r = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
-        self.assertEqual(r.status_code, 200)
-        self.assertEqual(r['Content-Type'], 'multipart/mixed; charset=utf-8')
-
-        msg = message_from_string(r.content)
-        parts = []
-        for part in msg.walk():
-            parts.append(part)
-  
-        for part in parts[2:]:
-            self.assertEqual(part.get_payload(), img_data)
-            self.assertEqual(part.get("X-Experience-API-Hash"), imgsha)
-            self.assertEqual(part.get('Content-Type'), "application/octet-stream")
-            self.assertEqual(part.get('Content-Transfer-Encoding'), 'binary')
-
-    def test_app_json_multipart_post_define(self):
-        stmt = {
-            "actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment"},
-            "description": {"en-US": "A test attachment (description)"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "fileUrl": "http://my/file/url"}]}
-        
-        response = self.client.post(reverse(statements), json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 200)
-
-        stmt = {
-            "actor":{"mbox":"mailto:tom@example.com"},
-            "verb":{"id":"http://tom.com/verb/butted"},
-            "object":{"id":"act:tom.com/objs/heads"},
-            "attachments": [
-            {"usageType": "http://example.com/attachment-usage/test",
-            "display": {"en-US": "A test attachment.", "en-UK": "UK attachment"},
-            "description": {"en-US": "A test attachment (description)", "en-UK": "UK attachment"},
-            "contentType": "text/plain; charset=utf-8",
-            "length": 27,
-            "fileUrl": "http://my/file/url"}]}
-        
-        response = self.client.post(reverse(statements), json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(response.status_code, 200)
-        attach_objs = StatementAttachment.objects.all()
-        self.assertEqual(len(attach_objs), 1)
-
-        displays = attach_objs[0].display
-        descs = attach_objs[0].description
-
-        self.assertEqual(len(displays), 2)
-        self.assertEqual(len(descs), 2)
-
-        self.assertIn('en-US', displays.keys())
-        self.assertIn('en-UK', displays.keys())
-        self.assertIn('A test attachment.', displays.values())
-        self.assertIn('UK attachment', displays.values())
-
-        self.assertIn('en-US', descs.keys())
-        self.assertIn('en-UK', descs.keys())
-        self.assertIn('A test attachment (description)', descs.values())
-        self.assertIn('UK attachment', descs.values())
-
-    def test_example_signed_statement(self):
-        header = base64.urlsafe_b64decode(fixpad(encodedhead))
-        payload = base64.urlsafe_b64decode(fixpad(encodedpayload))
-
-        stmt = json.loads(exstmt)
-        
-        jwso = JWS(header, payload)
-        thejws = jwso.create(privatekey)
-        self.assertEqual(thejws,sig)
-
-        message = MIMEMultipart()
-        stmt['attachments'][0]["sha2"] = jwso.sha2(thejws)
-        
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        jwsdata = MIMEApplication(thejws, _subtype="octet-stream")
-
-        jwsdata.add_header('X-Experience-API-Hash', jwso.sha2(thejws))
-        message.attach(stmtdata)
-        message.attach(jwsdata)
-        
-        r = self.client.post(reverse(statements), message.as_string(),
-            content_type='multipart/mixed', Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 200)
-
-    def test_example_signed_statement_bad(self):
-        header = base64.urlsafe_b64decode(fixpad(encodedhead))
-        payload = base64.urlsafe_b64decode(fixpad(encodedpayload))
-
-        stmt = json.loads(exstmt)
-        stmt['actor'] = {"mbox": "mailto:sneaky@example.com", "name": "Cheater", "objectType": "Agent"}
-        
-        jwso = JWS(header, payload)
-        thejws = jwso.create(privatekey)
-        self.assertEqual(thejws,sig)
-
-        message = MIMEMultipart()
-        stmt['attachments'][0]["sha2"] = jwso.sha2(thejws)
-        
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        jwsdata = MIMEApplication(thejws, _subtype="octet-stream")
-
-        jwsdata.add_header('X-Experience-API-Hash', jwso.sha2(thejws))
-        message.attach(stmtdata)
-        message.attach(jwsdata)
-        
-        r = self.client.post(reverse(statements), message.as_string(),
-            content_type='multipart/mixed', Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 400)
-        self.assertEqual(r.content, 'The JSON Web Signature is not valid')
-
-    def test_example_signed_statements(self):
-        header = base64.urlsafe_b64decode(fixpad(encodedhead))
-        payload = base64.urlsafe_b64decode(fixpad(encodedpayload))
-
-        stmt1 = json.loads(exstmt)
-
-        stmt2 = {"actor": {"mbox" : "mailto:otherguy@example.com"},
-                 "verb" : {"id":"http://verbs.com/did"},
-                 "object" : {"id":"act:stuff"} }
-
-        stmt = [stmt1, stmt2]
-        
-        jwso = JWS(header, payload)
-        thejws = jwso.create(privatekey)
-        self.assertEqual(thejws,sig)
-
-        message = MIMEMultipart()
-        stmt1['attachments'][0]["sha2"] = jwso.sha2()
-        
-        stmtdata = MIMEApplication(json.dumps(stmt), _subtype="json", _encoder=json.JSONEncoder)
-        jwsdata = MIMEApplication(thejws, _subtype="octet-stream")
-
-        jwsdata.add_header('X-Experience-API-Hash', jwso.sha2(thejws))
-        message.attach(stmtdata)
-        message.attach(jwsdata)
-        
-        r = self.client.post(reverse(statements), message.as_string(),
-            content_type='multipart/mixed', Authorization=self.auth, X_Experience_API_Version="1.0.0")
-        self.assertEqual(r.status_code, 200)
-
-fixpad = lambda s: s if len(s) % 4 == 0 else s + '=' * (4 - (len(s) % 4))
-
-exstmt = """{
-    "version": "1.0.0",
-    "id": "33cff416-e331-4c9d-969e-5373a1756120",
-    "actor": {
-        "mbox": "mailto:example@example.com",
-        "name": "Example Learner",
-        "objectType": "Agent"
-    },
-    "verb": {
-        "id": "http://adlnet.gov/expapi/verbs/experienced",
-        "display": {
-            "en-US": "experienced"
-        }
-    },
-    "object": {
-        "id": "https://www.youtube.com/watch?v=xh4kIiH3Sm8",
-        "objectType": "Activity",
-        "definition": {
-            "name": {
-                "en-US": "Tax Tips & Information : How to File a Tax Return "
-            },
-            "description": {
-                "en-US": "Filing a tax return will require filling out either a 1040, 1040A or 1040EZ form"
-            }
-        }
-    },
-    "timestamp": "2013-04-01T12:00:00Z",
-    "attachments": [
-        {
-            "usageType": "http://adlnet.gov/expapi/attachments/signature",
-            "display": { "en-US": "Signature" },
-            "description": { "en-US": "A test signature" },
-            "contentType": "application/octet-stream",
-            "length": 4235,
-            "sha2": "dc9589e454ff375dd5dfd6f556d2583e231e8cafe55ef40102ddd988b79f86f0"
-        }
-    ]
-}"""
-
-sig = "ew0KICAgICJhbGciOiAiUlMyNTYiLA0KICAgICJ4NWMiOiBbDQogICAgICAgICJNSUlEQVRDQ0FtcWdBd0lCQWdJSkFNQjFjc051QTYra01BMEdDU3FHU0liM0RRRUJCUVVBTUhFeEN6QUpCZ05WQkFZVEFsVlRNUkl3RUFZRFZRUUlFd2xVWlc1dVpYTnpaV1V4R0RBV0JnTlZCQW9URDBWNFlXMXdiR1VnUTI5dGNHRnVlVEVRTUE0R0ExVUVBeE1IUlhoaGJYQnNaVEVpTUNBR0NTcUdTSWIzRFFFSkFSWVRaWGhoYlhCc1pVQmxlR0Z0Y0d4bExtTnZiVEFlRncweE16QTBNRFF4TlRJNE16QmFGdzB4TkRBME1EUXhOVEk0TXpCYU1JR1dNUXN3Q1FZRFZRUUdFd0pWVXpFU01CQUdBMVVFQ0JNSlZHVnVibVZ6YzJWbE1SRXdEd1lEVlFRSEV3aEdjbUZ1YTJ4cGJqRVlNQllHQTFVRUNoTVBSWGhoYlhCc1pTQkRiMjF3WVc1NU1SQXdEZ1lEVlFRTEV3ZEZlR0Z0Y0d4bE1SQXdEZ1lEVlFRREV3ZEZlR0Z0Y0d4bE1TSXdJQVlKS29aSWh2Y05BUWtCRmhObGVHRnRjR3hsUUdWNFlXMXdiR1V1WTI5dE1JR2ZNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0R05BRENCaVFLQmdRRGp4dlpYRjMwV0w0b0tqWllYZ1IwWnlhWCt1M3k2K0pxVHFpTmtGYS9WVG5ldDZMeTJPVDZabW1jSkVQbnEzVW5ld3BIb09RK0dmaGhUa1cxM2owNmo1aU5uNG9iY0NWV1RMOXlYTnZKSCtLbyt4dTRZbC95U1BScklQeVRqdEhkRzBNMlh6SWxtbUxxbStDQVMrS0NiSmVINHRmNTQza0lXQzVwQzVwM2NWUUlEQVFBQm8zc3dlVEFKQmdOVkhSTUVBakFBTUN3R0NXQ0dTQUdHK0VJQkRRUWZGaDFQY0dWdVUxTk1JRWRsYm1WeVlYUmxaQ0JEWlhKMGFXWnBZMkYwWlRBZEJnTlZIUTRFRmdRVVZzM3Y1YWZFZE9lb1llVmFqQVFFNHYwV1MxUXdId1lEVlIwakJCZ3dGb0FVeVZJYzN5dnJhNEVCejIwSTRCRjM5SUFpeEJrd0RRWUpLb1pJaHZjTkFRRUZCUUFEZ1lFQWdTL0ZGNUQwSG5qNDRydlQ2a2duM2tKQXZ2MmxqL2Z5anp0S0lyWVMzM2xqWEduNmdHeUE0cXRiWEEyM1ByTzR1Yy93WUNTRElDRHBQb2JoNjJ4VENkOXFPYktoZ3dXT2kwNVBTQkxxVXUzbXdmQWUxNUxKQkpCcVBWWjRLMGtwcGVQQlU4bTZhSVpvSDU3TC85dDRPb2FMOHlLcy9xaktGZUkxT0ZXWnh2QT0iLA0KICAgICAgICAiTUlJRE56Q0NBcUNnQXdJQkFnSUpBTUIxY3NOdUE2K2pNQTBHQ1NxR1NJYjNEUUVCQlFVQU1IRXhDekFKQmdOVkJBWVRBbFZUTVJJd0VBWURWUVFJRXdsVVpXNXVaWE56WldVeEdEQVdCZ05WQkFvVEQwVjRZVzF3YkdVZ1EyOXRjR0Z1ZVRFUU1BNEdBMVVFQXhNSFJYaGhiWEJzWlRFaU1DQUdDU3FHU0liM0RRRUpBUllUWlhoaGJYQnNaVUJsZUdGdGNHeGxMbU52YlRBZUZ3MHhNekEwTURReE5USTFOVE5hRncweU16QTBNREl4TlRJMU5UTmFNSEV4Q3pBSkJnTlZCQVlUQWxWVE1SSXdFQVlEVlFRSUV3bFVaVzV1WlhOelpXVXhHREFXQmdOVkJBb1REMFY0WVcxd2JHVWdRMjl0Y0dGdWVURVFNQTRHQTFVRUF4TUhSWGhoYlhCc1pURWlNQ0FHQ1NxR1NJYjNEUUVKQVJZVFpYaGhiWEJzWlVCbGVHRnRjR3hsTG1OdmJUQ0JuekFOQmdrcWhraUc5dzBCQVFFRkFBT0JqUUF3Z1lrQ2dZRUExc0JuQldQWjBmN1dKVUZUSnk1KzAxU2xTNVo2RERENlV5ZTl2SzlBeWNnVjVCMytXQzhIQzV1NWg5MU11akFDMUFSUFZVT3RzdlBSczQ1cUtORklnSUdSWEtQQXdaamF3RUkyc0NKUlNLVjQ3aTZCOGJEdjRXa3VHdlFhdmVaR0kwcWxtTjVSMUVpbTJnVUl0UmoxaGdjQzlyUWF2amxuRktEWTJybFhHdWtDQXdFQUFhT0IxakNCMHpBZEJnTlZIUTRFRmdRVXlWSWMzeXZyYTRFQnoyMEk0QkYzOUlBaXhCa3dnYU1HQTFVZEl3U0JtekNCbUlBVXlWSWMzeXZyYTRFQnoyMEk0QkYzOUlBaXhCbWhkYVJ6TUhFeEN6QUpCZ05WQkFZVEFsVlRNUkl3RUFZRFZRUUlFd2xVWlc1dVpYTnpaV1V4R0RBV0JnTlZCQW9URDBWNFlXMXdiR1VnUTI5dGNHRnVlVEVRTUE0R0ExVUVBeE1IUlhoaGJYQnNaVEVpTUNBR0NTcUdTSWIzRFFFSkFSWVRaWGhoYlhCc1pVQmxlR0Z0Y0d4bExtTnZiWUlKQU1CMWNzTnVBNitqTUF3R0ExVWRFd1FGTUFNQkFmOHdEUVlKS29aSWh2Y05BUUVGQlFBRGdZRUFEaHdUZWJHazczNXlLaG04RHFDeHZObkVaME54c1lFWU9qZ1JHMXlYVGxXNXBFNjkxZlNINUFaK1Q2ZnB3cFpjV1k1UVlrb042RG53ak94R2tTZlFDMy95R21jVURLQlB3aVo1TzJzOUMrZkUxa1VFbnJYMlhlYTRhZ1ZuZ016UjhEUTZvT2F1TFdxZWhEQitnMkVOV1JMb1ZnUyttYTUvWWNzMEdUeXJFQ1k9Ig0KICAgIF0NCn0.ew0KICAgICJ2ZXJzaW9uIjogIjEuMC4wIiwNCiAgICAiaWQiOiAiMzNjZmY0MTYtZTMzMS00YzlkLTk2OWUtNTM3M2ExNzU2MTIwIiwNCiAgICAiYWN0b3IiOiB7DQogICAgICAgICJtYm94IjogIm1haWx0bzpleGFtcGxlQGV4YW1wbGUuY29tIiwNCiAgICAgICAgIm5hbWUiOiAiRXhhbXBsZSBMZWFybmVyIiwNCiAgICAgICAgIm9iamVjdFR5cGUiOiAiQWdlbnQiDQogICAgfSwNCiAgICAidmVyYiI6IHsNCiAgICAgICAgImlkIjogImh0dHA6Ly9hZGxuZXQuZ292L2V4cGFwaS92ZXJicy9leHBlcmllbmNlZCIsDQogICAgICAgICJkaXNwbGF5Ijogew0KICAgICAgICAgICAgImVuLVVTIjogImV4cGVyaWVuY2VkIg0KICAgICAgICB9DQogICAgfSwNCiAgICAib2JqZWN0Ijogew0KICAgICAgICAiaWQiOiAiaHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g_dj14aDRrSWlIM1NtOCIsDQogICAgICAgICJvYmplY3RUeXBlIjogIkFjdGl2aXR5IiwNCiAgICAgICAgImRlZmluaXRpb24iOiB7DQogICAgICAgICAgICAibmFtZSI6IHsNCiAgICAgICAgICAgICAgICAiZW4tVVMiOiAiVGF4IFRpcHMgJiBJbmZvcm1hdGlvbiA6IEhvdyB0byBGaWxlIGEgVGF4IFJldHVybiAiDQogICAgICAgICAgICB9LA0KICAgICAgICAgICAgImRlc2NyaXB0aW9uIjogew0KICAgICAgICAgICAgICAgICJlbi1VUyI6ICJGaWxpbmcgYSB0YXggcmV0dXJuIHdpbGwgcmVxdWlyZSBmaWxsaW5nIG91dCBlaXRoZXIgYSAxMDQwLCAxMDQwQSBvciAxMDQwRVogZm9ybSINCiAgICAgICAgICAgIH0NCiAgICAgICAgfQ0KICAgIH0sDQogICAgInRpbWVzdGFtcCI6ICIyMDEzLTA0LTAxVDEyOjAwOjAwWiINCn0.FWuwaPhwUbkk7h9sKW5zSvjsYNugvxJ-TrVaEgt_DCUT0bmKhQScRrjMB6P9O50uznPwT66oF1NnU_G0HVhRzS5voiXE-y7tT3z0M3-8A6YK009Bk_digVUul-HA4Fpd5IjoBBGe3yzaQ2ZvzarvRuipvNEQCI0onpfuZZJQ0d8"
-
-encodedhead = """ew0KICAgICJhbGciOiAiUlMyNTYiLA0KICAgICJ4NWMiOiBbDQogICAgICAgICJNSUlEQVRDQ0FtcWdBd0lCQWdJSkFNQjFjc051QTYra01BMEdDU3FHU0liM0RRRUJCUVVBTUhFeEN6QUpCZ05WQkFZVEFsVlRNUkl3RUFZRFZRUUlFd2xVWlc1dVpYTnpaV1V4R0RBV0JnTlZCQW9URDBWNFlXMXdiR1VnUTI5dGNHRnVlVEVRTUE0R0ExVUVBeE1IUlhoaGJYQnNaVEVpTUNBR0NTcUdTSWIzRFFFSkFSWVRaWGhoYlhCc1pVQmxlR0Z0Y0d4bExtTnZiVEFlRncweE16QTBNRFF4TlRJNE16QmFGdzB4TkRBME1EUXhOVEk0TXpCYU1JR1dNUXN3Q1FZRFZRUUdFd0pWVXpFU01CQUdBMVVFQ0JNSlZHVnVibVZ6YzJWbE1SRXdEd1lEVlFRSEV3aEdjbUZ1YTJ4cGJqRVlNQllHQTFVRUNoTVBSWGhoYlhCc1pTQkRiMjF3WVc1NU1SQXdEZ1lEVlFRTEV3ZEZlR0Z0Y0d4bE1SQXdEZ1lEVlFRREV3ZEZlR0Z0Y0d4bE1TSXdJQVlKS29aSWh2Y05BUWtCRmhObGVHRnRjR3hsUUdWNFlXMXdiR1V1WTI5dE1JR2ZNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0R05BRENCaVFLQmdRRGp4dlpYRjMwV0w0b0tqWllYZ1IwWnlhWCt1M3k2K0pxVHFpTmtGYS9WVG5ldDZMeTJPVDZabW1jSkVQbnEzVW5ld3BIb09RK0dmaGhUa1cxM2owNmo1aU5uNG9iY0NWV1RMOXlYTnZKSCtLbyt4dTRZbC95U1BScklQeVRqdEhkRzBNMlh6SWxtbUxxbStDQVMrS0NiSmVINHRmNTQza0lXQzVwQzVwM2NWUUlEQVFBQm8zc3dlVEFKQmdOVkhSTUVBakFBTUN3R0NXQ0dTQUdHK0VJQkRRUWZGaDFQY0dWdVUxTk1JRWRsYm1WeVlYUmxaQ0JEWlhKMGFXWnBZMkYwWlRBZEJnTlZIUTRFRmdRVVZzM3Y1YWZFZE9lb1llVmFqQVFFNHYwV1MxUXdId1lEVlIwakJCZ3dGb0FVeVZJYzN5dnJhNEVCejIwSTRCRjM5SUFpeEJrd0RRWUpLb1pJaHZjTkFRRUZCUUFEZ1lFQWdTL0ZGNUQwSG5qNDRydlQ2a2duM2tKQXZ2MmxqL2Z5anp0S0lyWVMzM2xqWEduNmdHeUE0cXRiWEEyM1ByTzR1Yy93WUNTRElDRHBQb2JoNjJ4VENkOXFPYktoZ3dXT2kwNVBTQkxxVXUzbXdmQWUxNUxKQkpCcVBWWjRLMGtwcGVQQlU4bTZhSVpvSDU3TC85dDRPb2FMOHlLcy9xaktGZUkxT0ZXWnh2QT0iLA0KICAgICAgICAiTUlJRE56Q0NBcUNnQXdJQkFnSUpBTUIxY3NOdUE2K2pNQTBHQ1NxR1NJYjNEUUVCQlFVQU1IRXhDekFKQmdOVkJBWVRBbFZUTVJJd0VBWURWUVFJRXdsVVpXNXVaWE56WldVeEdEQVdCZ05WQkFvVEQwVjRZVzF3YkdVZ1EyOXRjR0Z1ZVRFUU1BNEdBMVVFQXhNSFJYaGhiWEJzWlRFaU1DQUdDU3FHU0liM0RRRUpBUllUWlhoaGJYQnNaVUJsZUdGdGNHeGxMbU52YlRBZUZ3MHhNekEwTURReE5USTFOVE5hRncweU16QTBNREl4TlRJMU5UTmFNSEV4Q3pBSkJnTlZCQVlUQWxWVE1SSXdFQVlEVlFRSUV3bFVaVzV1WlhOelpXVXhHREFXQmdOVkJBb1REMFY0WVcxd2JHVWdRMjl0Y0dGdWVURVFNQTRHQTFVRUF4TUhSWGhoYlhCc1pURWlNQ0FHQ1NxR1NJYjNEUUVKQVJZVFpYaGhiWEJzWlVCbGVHRnRjR3hsTG1OdmJUQ0JuekFOQmdrcWhraUc5dzBCQVFFRkFBT0JqUUF3Z1lrQ2dZRUExc0JuQldQWjBmN1dKVUZUSnk1KzAxU2xTNVo2RERENlV5ZTl2SzlBeWNnVjVCMytXQzhIQzV1NWg5MU11akFDMUFSUFZVT3RzdlBSczQ1cUtORklnSUdSWEtQQXdaamF3RUkyc0NKUlNLVjQ3aTZCOGJEdjRXa3VHdlFhdmVaR0kwcWxtTjVSMUVpbTJnVUl0UmoxaGdjQzlyUWF2amxuRktEWTJybFhHdWtDQXdFQUFhT0IxakNCMHpBZEJnTlZIUTRFRmdRVXlWSWMzeXZyYTRFQnoyMEk0QkYzOUlBaXhCa3dnYU1HQTFVZEl3U0JtekNCbUlBVXlWSWMzeXZyYTRFQnoyMEk0QkYzOUlBaXhCbWhkYVJ6TUhFeEN6QUpCZ05WQkFZVEFsVlRNUkl3RUFZRFZRUUlFd2xVWlc1dVpYTnpaV1V4R0RBV0JnTlZCQW9URDBWNFlXMXdiR1VnUTI5dGNHRnVlVEVRTUE0R0ExVUVBeE1IUlhoaGJYQnNaVEVpTUNBR0NTcUdTSWIzRFFFSkFSWVRaWGhoYlhCc1pVQmxlR0Z0Y0d4bExtTnZiWUlKQU1CMWNzTnVBNitqTUF3R0ExVWRFd1FGTUFNQkFmOHdEUVlKS29aSWh2Y05BUUVGQlFBRGdZRUFEaHdUZWJHazczNXlLaG04RHFDeHZObkVaME54c1lFWU9qZ1JHMXlYVGxXNXBFNjkxZlNINUFaK1Q2ZnB3cFpjV1k1UVlrb042RG53ak94R2tTZlFDMy95R21jVURLQlB3aVo1TzJzOUMrZkUxa1VFbnJYMlhlYTRhZ1ZuZ016UjhEUTZvT2F1TFdxZWhEQitnMkVOV1JMb1ZnUyttYTUvWWNzMEdUeXJFQ1k9Ig0KICAgIF0NCn0"""
-encodedpayload = """ew0KICAgICJ2ZXJzaW9uIjogIjEuMC4wIiwNCiAgICAiaWQiOiAiMzNjZmY0MTYtZTMzMS00YzlkLTk2OWUtNTM3M2ExNzU2MTIwIiwNCiAgICAiYWN0b3IiOiB7DQogICAgICAgICJtYm94IjogIm1haWx0bzpleGFtcGxlQGV4YW1wbGUuY29tIiwNCiAgICAgICAgIm5hbWUiOiAiRXhhbXBsZSBMZWFybmVyIiwNCiAgICAgICAgIm9iamVjdFR5cGUiOiAiQWdlbnQiDQogICAgfSwNCiAgICAidmVyYiI6IHsNCiAgICAgICAgImlkIjogImh0dHA6Ly9hZGxuZXQuZ292L2V4cGFwaS92ZXJicy9leHBlcmllbmNlZCIsDQogICAgICAgICJkaXNwbGF5Ijogew0KICAgICAgICAgICAgImVuLVVTIjogImV4cGVyaWVuY2VkIg0KICAgICAgICB9DQogICAgfSwNCiAgICAib2JqZWN0Ijogew0KICAgICAgICAiaWQiOiAiaHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2g_dj14aDRrSWlIM1NtOCIsDQogICAgICAgICJvYmplY3RUeXBlIjogIkFjdGl2aXR5IiwNCiAgICAgICAgImRlZmluaXRpb24iOiB7DQogICAgICAgICAgICAibmFtZSI6IHsNCiAgICAgICAgICAgICAgICAiZW4tVVMiOiAiVGF4IFRpcHMgJiBJbmZvcm1hdGlvbiA6IEhvdyB0byBGaWxlIGEgVGF4IFJldHVybiAiDQogICAgICAgICAgICB9LA0KICAgICAgICAgICAgImRlc2NyaXB0aW9uIjogew0KICAgICAgICAgICAgICAgICJlbi1VUyI6ICJGaWxpbmcgYSB0YXggcmV0dXJuIHdpbGwgcmVxdWlyZSBmaWxsaW5nIG91dCBlaXRoZXIgYSAxMDQwLCAxMDQwQSBvciAxMDQwRVogZm9ybSINCiAgICAgICAgICAgIH0NCiAgICAgICAgfQ0KICAgIH0sDQogICAgInRpbWVzdGFtcCI6ICIyMDEzLTA0LTAxVDEyOjAwOjAwWiINCn0"""
-
-privatekey = """-----BEGIN RSA PRIVATE KEY-----
-MIICXAIBAAKBgQDjxvZXF30WL4oKjZYXgR0ZyaX+u3y6+JqTqiNkFa/VTnet6Ly2
-OT6ZmmcJEPnq3UnewpHoOQ+GfhhTkW13j06j5iNn4obcCVWTL9yXNvJH+Ko+xu4Y
-l/ySPRrIPyTjtHdG0M2XzIlmmLqm+CAS+KCbJeH4tf543kIWC5pC5p3cVQIDAQAB
-AoGAOejdvGq2XKuddu1kWXl0Aphn4YmdPpPyCNTaxplU6PBYMRjY0aNgLQE6bO2p
-/HJiU4Y4PkgzkEgCu0xf/mOq5DnSkX32ICoQS6jChABAe20ErPfm5t8h9YKsTfn9
-40lAouuwD9ePRteizd4YvHtiMMwmh5PtUoCbqLefawNApAECQQD1mdBW3zL0okUx
-2pc4tttn2qArCG4CsEZMLlGRDd3FwPWJz3ZPNEEgZWXGSpA9F1QTZ6JYXIfejjRo
-UuvRMWeBAkEA7WvzDBNcv4N+xeUKvH8ILti/BM58LraTtqJlzjQSovek0srxtmDg
-5of+xrxN6IM4p7yvQa+7YOUOukrVXjG+1QJBAI2mBrjzxgm9xTa5odn97JD7UMFA
-/WHjlMe/Nx/35V52qaav1sZbluw+TvKMcqApYj5G2SUpSNudHLDGkmd2nQECQFfc
-lBRK8g7ZncekbGW3aRLVGVOxClnLLTzwOlamBKOUm8V6XxsMHQ6TE2D+fKJoNUY1
-2HGpk+FWwy2D1hRGuoUCQAXfaLSxtaWdPtlZTPVueF7ZikQDsVg+vtTFgpuHloR2
-6EVc1RbHHZm32yvGDY8IkcoMfJQqLONDdLfS/05yoNU=
------END RSA PRIVATE KEY-----"""
-
-

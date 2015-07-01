@@ -1,595 +1,234 @@
 {% extends "base.html" %}
 {% block extra_css %}
-<style type="text/css">
-.border {
-  position: relative;
-  margin-top: 15px;
-  margin-bottom: 15px;
-  padding: 19px 19px 14px;
-  *padding-top: 19px;
-  background-color: #f9f9ff;
-  border: 1px solid #ddd;
-  -webkit-border-radius: 4px;
-     -moz-border-radius: 4px;
-          border-radius: 4px;
-}
-/* for json syntax highlighting */
-pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
-.string { color: green; }
-.number { color: blue; }
-.boolean { color: red; }
-.null { color: red; }
-.key { color: black; }
-/* end json syntax highlighting */
-</style>
+<link rel="stylesheet" href="{{ STATIC_URL }}css/extra.css">
 {% endblock extra_css %}
-{% block title %}{{user.username}} Home{% endblock title %}
-{% block heading %}{{user.username}} Home{% endblock heading %}
+{% block title %}{{user.username}}'s Account{% endblock title %}
+{% block heading %}{{user.username}}'s Account{% endblock heading %}
 {% block content %}
-<div id="content">
-    <ul class='nav nav-tabs' data-tabs="tabs" id="mytabs">
-        <li class='statements default'><a href="#mystatements" id='showme' data-toggle="tab">Statements</a></li>
-        <li class='activities'><a href="#myactivities" data-toggle="tab">Activities</a></li>
-        <li><a href="#clientapps" data-toggle="tab">OAuth Client Apps</a></li>
-        <li><a href="#myaccesstokens" data-toggle="tab">OAuth Access Tokens</a></li>
-        <li><a href="#clientapps2" data-toggle="tab">OAuth2 Client Apps</a></li>
-        <li><a href="#myaccesstokens2" data-toggle="tab">OAuth2 Access Tokens</a></li>
-    </ul>
-    <div id="mycontent" class="tab-content">
-        <div id="mystatements" class="tab-pane fade">
-            <strong>Statements:</strong><small style="margin-left: 5px"><a id="delstmts" href="#mystatements">Delete all statements</a></small>
-            <!-- content -->
-        </div>
-        <div id="myactivities" class="tab-pane fade">
-            <strong>Activities:</strong>
-            <!-- content -->
-        </div>
-        <div id="clientapps" class="tab-pane fade">
-            <strong>OAuth Client Apps:</strong><small style="margin-left: 5px"><a href="{% url lrs.views.reg_client %}">Add</a></small><br>
-            {% if client_apps %}
-            <div class="row">
-                {% for app in client_apps %}
-                <div class="span5 border">
-                    <h4 class="appname">{{ app.name }}</h4>
-                    <span class="{% if app.status == 1 %}label label-warning
-                                {% elif app.status == 2 %}label label-success
-                                {% elif app.status == 3 %}label label-important
-                                {% elif app.status == 4 %}label label-important
-                                {% endif %} app_status">{{ app.get_status_display}}</span>
-                    <span class="pull-right"><a class="change_app_status" href='#'>{% if app.status == 2 %}Deactivate{% else %}Activate{% endif %}</a></span>
-                    <table class="table">
-                        <tr><td><strong>Key</strong></td><td><span style="margin-left: 5px">{{ app.key }}</span></td></tr>
-                        {% if not app.rsa_signature %}
-                        <tr><td><strong>Secret</strong></td><td><span style="margin-left: 5px">{{ app.secret }}</span></td></tr>
-                        {% else %}
-                        <tr><td><strong>Secret</strong></td><td><span style="margin-left: 5px">Your RSA key pair</span></td></tr>
-                        {% endif %}
-                    </table>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-                <div>No OAuth1 apps</div>
-            {% endif %}
-        </div>
-        <div id="myaccesstokens" class="tab-pane fade">
-            <strong>OAuth1 Access Tokens:</strong>
-            <div class="row">
-            {% if access_tokens %}
-                {% for token in access_tokens %}
-                <div class="span5 border">
-                    <h4>{{ token.consumer.name }}</h4>
-                    <span class="pull-right"><a class="delete_token" href='#myaccesstokens'>Delete</a></span>
-                    <span style="visibility:hidden">{{ token.key_partial }}-{{ token.consumer.id }}-{{ token.timestamp }}</span>
-                    <table class="table" style="table-layout:fixed;">
-                        <tr><td><strong>Key</strong></td><td><span style="margin-left: 5px;word-wrap: break-word">{{ token.key }}</span></td></tr>
-                        <tr><td><strong>Secret</strong></td><td style="word-wrap: break-word"><span style="margin-left: 5px">{{ token.secret }}</span></td></tr>                    
-                        <tr><td><strong>Date Created</strong></td><td><span style="margin-left: 5px">{{ token.timestamp_asdatetime|date:"j M Y H:i:s" }}</span></td></tr>
-                        <tr><td><strong>Scopes Allowed</strong></td><td></td></tr>
-                        {% for scope in token.scope_to_list %}
-                        <tr><td></td><td><span style="margin-left: 5px">{{ scope }}</span></td></tr>
-                        {% endfor %}
-                    </table>
-                </div>
-                {% endfor %}
-            {% else %}
-                <div class="span5">No OAuth1 access tokens</div>
-            {% endif %}
+<br>
+<br>
+<div class="content">
+    <div class="pure-g">
+        <div class="l-box pure-u-1 pure-u-md-1-5 pure-u-lg-1-5">
+            <div class="pure-menu custom-restricted-width custom-menu">
+                <ul class="pure-menu-list">
+                    <li class="pure-menu-item pure-menu-item-custom pure-menu-selected tab-content"><a href="#myaccount" id="showme" class="pure-menu-link custom-wrap">Account</a></li>
+                    <li class="pure-menu-item pure-menu-item-custom"><a target="_blank" href="{% url lrs.views.my_statements %}" class="pure-menu-link custom-wrap">Statements</a></li>
+                    <li class="pure-menu-item pure-menu-item-custom"><a target="_blank" href="{% url lrs.views.my_activity_states %}" class="pure-menu-link custom-wrap">Activity States</a></li>
+                    <li class="pure-menu-item pure-menu-item-custom tab-content"><a href="#clientapps" class="pure-menu-link custom-wrap">OAuth Client Apps</a></li>
+                    <li class="pure-menu-item pure-menu-item-custom tab-content"><a href="#myaccesstokens" class="pure-menu-link custom-wrap">OAuth Access Tokens</a></li>
+                    <li class="pure-menu-item pure-menu-item-custom tab-content"><a href="#clientapps2" class="pure-menu-link custom-wrap">OAuth2 Client Apps</a></li>
+                    <li class="pure-menu-item pure-menu-item-custom tab-content"><a href="#myaccesstokens2" class="pure-menu-link custom-wrap">OAuth2 Access Tokens</a></li>
+                </ul>
             </div>
         </div>
-        <div id="clientapps2" class="tab-pane fade">
-            <strong>OAuth2 Client Apps:</strong><small style="margin-left: 5px"><a href="{% url lrs.views.reg_client2 %}">Add</a></small>
-            <div class="row">
-            {% if client_apps2 %}
-                {% for app in client_apps2 %}
-                <div class="span5 border">
-                    <h4 class="appname">{{ app.name }}</h4>
-                    <span class="pull-right"><a class="delete_client" href='#clientapps2'>Delete</a></span>
-                    <span style="visibility:hidden">{{ app.client_id }}</span>
-                    <table class="table" style="table-layout:fixed;">
-                        <tr><td><strong>Key</strong></td><td><span style="margin-left: 5px">{{ app.client_id }}</span></td></tr>
-                        <tr><td><strong>Secret</strong></td><td style="word-wrap: break-word"><span style="margin-left: 5px">{{ app.client_secret }}</span></td></tr>
-                        <tr><td><strong>URL</strong></td><td><span style="margin-left: 5px">{{ app.url }}</span></td></tr>
-                        <tr><td><strong>Redirect URL</strong></td><td><span style="margin-left: 5px">{{ app.redirect_uri }}</span></td></tr>
-                        <tr><td><strong>Type</strong></td><td><span style="margin-left: 5px">{% if app.client_type == 0 %}Confidential (Web applications){% else %}Public (Native and JS applications){% endif %}</span></td></tr>
-                    </table>
+        <div class="l-box pure-u-1 pure-u-md-4-5 pure-u-lg-4-5">
+            <div id="myaccount">
+                <strong>My Account</strong>
+                <div>
+                    <p>Welcome to the ADL LRS, {{user.username}}! ({{user.email}})</p>
+                    <P>When you first use your credentials as basic authority to access the LRS, it will automatically create an agent for you. For example,
+                        the agent created for you will be:<br>
+                        <span class="user-agent">{"name": "{{user.username}}", "mbox": "mailto:{{user.email}}", "objectType": "Agent"}</span>
+                    </p>
+                    <p>Please take a minute to read the descriptions below of the tabs available to help you visualize your xAPI information better.</p>
+                    <ul>
+                        <li><b>Statements</b> - Displays human-readable sentences for your stored statements. Expand them to view the raw JSON data</li>
+                        <li><b>Activity States</b> - Displays all of your activity states and recognizes if the state is part of the <a target="_blank" href="http://adlnet.github.io/xAPI-SCORM-Profile/index.html">ADL SCORM Profile</a> for further inspection</li>
+                        <li><b>OAuth Client Apps</b> - Displays your registered OAuth apps' information (you can activate/deactivate them here)</li>
+                        <li><b>OAuth Access Tokens</b> - Displays available access tokens for your registered OAuth apps</li>
+                        <li><b>OAuth2 Client Apps</b> - Displays your registered OAuth2 apps' information (you can delete them here)</li>
+                        <li><b>OAuth2 Access Tokens</b> - Displays available access tokens for your registered OAuth2 apps</li>
+                    </ul>
                 </div>
-                {% endfor %}
-            {% else %}
-                <div class="span5">No OAuth2 apps</div>
-            {% endif %}
-            </div>    
-        </div>
-        <div id="myaccesstokens2" class="tab-pane fade">
-            <strong>OAuth2 Access Tokens:</strong>
-            <div class="row">
-            {% if access_tokens2 %}
-                {% for pair in access_tokens2 %}  
-                <div class="span5 border">
-                    <h4>{{ pair.0.client.name }}</h4>
-                    <span class="pull-right"><a class="delete_token2" href='#myaccesstokens2'>Delete</a></span>
-                    <span style="visibility:hidden">{{ pair.0.token }}</span>
-                    <table class="table" style="table-layout:fixed;">
-                        <tr><td><strong>Access Token</strong></td><td style="word-wrap: break-word"><span style="margin-left: 5px">{{ pair.0.token }}</span></td></tr>
-                        <tr><td><strong>Refresh Token</strong></td><td style="word-wrap: break-word"><span style="margin-left: 5px">{{ pair.0.refresh_token }}</span></td></tr>
-                        <tr><td><strong>Date Expires</strong></td><td>{{ pair.0.expires }}</td></tr>
-                        <tr><td><strong>Scopes Allowed</strong></td><td></td></tr>
-                        {% for scope in pair.1 %}
-                        <tr><td></td><td><span style="margin-left: 5px">{{ scope }}</span></td></tr>
+            </div>
+            <div id="clientapps" class="content">
+                <h2>OAuth Client Apps</h2>
+                <a class="pure-button" href="{% url lrs.views.reg_client %}">Add</a>
+                {% if client_apps %}
+                    <div class="email-item">
+                        {% for app in client_apps %}
+                            <div class="pure-u appdiv">
+                                <h5 class="email-name"><span class="appname">{{ app.name }}</span> --- <a class="change_app_status" href='#'>{% if app.status == 2 %}Deactivate{% else %}Activate{% endif %}</a></h5>
+                                <h4 class="email-subject {% if app.get_status_display == 'Accepted' %}formvalid
+                                                         {% elif app.get_status_display == 'Canceled' %}errorlist
+                                                         {% endif %}">{{ app.get_status_display }}</h4>
+                                <p class="email-desc">
+                                    <strong>Key</strong>: {{ app.key }}<br>
+                                    <strong>Secret</strong>: {% if not app.rsa_signature %}{{ app.secret }}{% else %}Your RSA key pair{% endif %}<br>
+                                </p>
+                            </div>
                         {% endfor %}
-                    </table>
-                </div>
-                {% endfor %}    
-            {% else %}
-                <div class="span5">No OAuth2 access tokens</div>
-            {% endif %}
-            </div>    
+                    </div>
+                {% else %}
+                    <div>No OAuth1 apps</div>
+                {% endif %}
+            </div>
+            <div id="myaccesstokens" class="content">
+                <h2>OAuth1 Access Tokens</h2>
+                {% if access_tokens %}
+                    <div class="email-item">
+                        {% for token in access_tokens %}
+                            <div class="pure-u appdiv">
+                                <h5 class="email-name"><span class="appname">{{ token.consumer.name }}</span></h5>
+                                <h4 class="email-subject">
+                                    <a class="delete_token" href='#myaccesstokens'>Delete</a>
+                                    <span class="hide-token-info">{{ token.key_partial }}-{{ token.consumer.id }}-{{ token.timestamp }}</span>
+                                </h4>
+                                <p class="email-desc">
+                                    <strong>Key</strong>: {{ token.key }}<br>
+                                    <strong>Secret</strong>: {{ token.secret }}<br>
+                                    <strong>Date Created</strong>: {{ token.timestamp_asdatetime|date:"j M Y H:i:s" }}<br>
+                                    <strong>Scopes Allowed</strong>: {{ token.scope_to_list|join:" " }}<br>
+                                </p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div>No OAuth1 access tokens</div>
+                {% endif %}
+            </div>
+            <div id="clientapps2" class="content">
+                <h2>OAuth2 Client Apps</h2>
+                <a class="pure-button" href="{% url lrs.views.reg_client2 %}">Add</a>
+                {% if client_apps2 %}
+                    <div class="email-item">
+                        {% for app in client_apps2 %}
+                        <div class="pure-u appdiv">
+                            <h5 class="email-name"><span class="appname">{{ app.name }}</span></h5>
+                            <h4 class="email-subject">
+                                <a class="delete_client" href='#clientapps2'>Delete</a>
+                                <span class="hide-token-info">{{ app.client_id }}</span>
+                            </h4>
+                            <p class="email-desc">
+                                <strong>Key</strong>: {{ app.client_id }}<br>
+                                <strong>Secret</strong>: {{ app.client_secret }}<br>
+                                <strong>URL</strong>: {{ app.url }}<br>
+                                <strong>Redirect URL</strong>: {{ app.redirect_uri }}<br>
+                                <strong>Type</strong>: {% if app.client_type == 0 %}Confidential (Web applications){% else %}Public (Native and JS applications){% endif %}<br>
+                            </p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div>No OAuth2 apps</div>
+                {% endif %}  
+            </div>
+            <div id="myaccesstokens2">
+                <h2>OAuth2 Access Tokens</h2>
+                {% if access_tokens2 %}
+                    <div class="email-item">
+                        {% for pair in access_tokens2 %}  
+                        <div class="pure-u appdiv">
+                            <h5 class="email-name"><span class="appname">{{ pair.0.client.name }}</span></h5>
+                            <h4 class="email-subject">
+                                <a class="delete_token2" href='#myaccesstokens2'>Delete</a>
+                                <span class="hide-token-info">{{ pair.0.token }}</span>
+                            </h4>
+                            <p class="email-desc">
+                                <strong>Access Token</strong>: {{ pair.0.token }}<br>
+                                <strong>Refresh Token</strong>: {{ pair.0.refresh_token }}<br>
+                                <strong>Date Expires</strong>: {{ pair.0.expires }}<br>
+                                <strong>Scopes Allowed</strong>: {{ pair.1|join:" " }}<br>
+                            </p>
+                        </div>
+                        {% endfor %}    
+                    </div> 
+                {% else %}
+                    <div class="span5">No OAuth2 access tokens</div>
+                {% endif %}
+            </div>                        
         </div>
     </div>
 </div>
 {% endblock content %}
 {% block extra_js %}
-    <script type="text/javascript">
-        $(document).ready(function() {
-            $('#showme').tab('show');
-            $(".stmt_link").parent().parent().click(stmtLink);
-            $('.change_app_status').click(function(){
-                var appname = $(this).parent().siblings(".appname").text();
-                var status = "";
-                cur_s = $(this).parent().siblings(".app_status").text();
-                if (cur_s == "Accepted") status = "Canceled";
-                else status = "Accepted";
-                $.ajax({
-                    url: "{% url lrs.views.my_app_status %}?app_name="+appname+"&status="+status,
-                    type: "POST",
-                    context: $(this),
-                    success: function (data){
-                        var link, status, theclass;
-                        if (data['status'] == "Canceled"){
-                            link = "Activate";
-                            status = data['status'];
-                            theclass = "label label-important app_status";
-                        }
-                        else {
-                            link = "Deactivate";
-                            status = data['status'];
-                            theclass = "label label-success app_status";
-                        }
-                        $(this).text(link);
-                        $(this).parent().siblings(".app_status").text(status);
-                        $(this).parent().siblings(".app_status").removeClass().addClass(theclass);
-                    },
-                    error: function(xhr, ajaxOptions, thrownError){
-                        alert(thrownError);
-                    },
-                    timeout : 15000
-                });
-});
-$('.delete_token').click(function(){
-    var id = $(this).parent().next('span').text();
-    $.ajax({
-        url: "{% url lrs.views.delete_token %}?id="+id,
-        type: "DELETE",
-        context: $(this),
-        success: function(data){
-            $(this).parent().parent().remove();
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            alert(thrownError);
-        },
-        timeout:5000
-    });
-});
-$('.delete_token2').click(function(){
-    var id = $(this).parent().next('span').text();
-    $.ajax({
-        url: "{% url lrs.views.delete_token2 %}?id="+id,
-        type: "DELETE",
-        context: $(this),
-        success: function(data){
-            $(this).parent().parent().remove();
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            alert(thrownError);
-        },
-        timeout:5000
-    });
-});
-$('.delete_client').click(function(){
-    var id = $(this).parent().next('span').text();
-    $.ajax({
-        url: "{% url lrs.views.delete_client %}?id="+id,
-        type: "DELETE",
-        context: $(this),
-        success: function(data){
-            $(this).parent().parent().remove();
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            alert(thrownError);
-        },
-        timeout:5000
-    });
-});
-if ($('#mystatements').hasClass('active') && ! $('#mystatements ul').length){
-    getStmts();
-}
-if ($('#myactivities').hasClass('active') && ! $('#myactivities ul').length){
-    getActs();
-}
-$('a[data-toggle="tab"]').on('shown', function (e) {
-    if (e.target.hash == "#mystatements"){
-        getStmts();
-    }
-});
-$('a[data-toggle="tab"]').on('shown', function (e) {
-    if (e.target.hash == "#myactivities"){
-        getActs();
-    }
-});
-$('#mystatements #delstmts').click(function(){
-    $.ajax({
-        url: "{% url lrs.views.my_statements %}",
-        type: "DELETE",
-        context: $(this),
-        success: function (data){
-            getStmts();
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            alert(thrownError);
-        },
-        timeout : 15000
-    });
-});
-});
-function stmtLink(event){
-    if (event && event.currentTarget){
-        ele = event.target;
-    }
-    if(!$(ele).children('pre#stmts').length){
-        getStmt($(ele).children('.stmt_link').text(), ele);
-    }
-    else{
-        $(ele).children('pre#stmts').toggle();
-    }
-    return false;
-}
-function actLink(event){
-    if (event && event.currentTarget){
-        ele = event.target;
-    }
-    if(!$(ele).children('pre#acts').length){
-        getAct($(ele).children('.act_link').text(), ele);
-    }
-    else{
-        $(ele).children('pre#acts').toggle();
-    }
-    return false;
-}
-function getStmts(event){
-    var u = "{% url lrs.views.my_statements %}";
-    if (event && event.data.the_url){
-        u = event.data.the_url;
-    }
-    $.ajax({
-        url: u,
-        type: "GET",
-        context: $('#mystatements'),
-        success: function (data){
-            if ($(this).children('div').length){
-                $(this).children('div').replaceWith(uiData(data));
-            }
-            else {
-                $(this).append(uiData(data));
-            }
-            $(this).children('div').click(stmtLink);
-            $(this).children('div').children('ul').find('li.previous a').click(
-                {the_url: $(this).children('div').children('ul').find('li.previous a').attr("data-target")}, getStmts);
-            $(this).children('div').children('ul').find('li.next a').click(
-                {the_url: $(this).children('div').children('ul').find('li.next a').attr("data-target")}, getStmts);
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            alert(thrownError);
-        },
-        timeout : 15000
-    });
-}
-function getActs(event){
-    var u = "{% url lrs.views.my_activities %}";
-    if (event && event.data.the_url){
-        u = event.data.the_url;
-    }
-    $.ajax({
-        url: u,
-        type: "GET",
-        context: $('#myactivities'),
-        success: function (data){
-            if ($(this).children('div').length){
-                $(this).children('div').replaceWith(actuiData(data));
-            }
-            else {
-                $(this).append(actuiData(data));
-            }
-            $(this).children('div').click(actLink);
-            $(this).children('div').children('ul').find('li.previous a').click(
-                {the_url: $(this).children('div').children('ul').find('li.previous a').attr("data-target")}, getActs);
-            $(this).children('div').children('ul').find('li.next a').click(
-                {the_url: $(this).children('div').children('ul').find('li.next a').attr("data-target")}, getActs);
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            alert(thrownError);
-        },
-        timeout : 15000
-    });
-}
-function getProfiles(act_id, id){
-    var pu = "{% url lrs.views.my_activity_profiles %}?act_id="+encodeURIComponent(act_id);
-    $.ajax({
-        url: pu,
-        type: "GET",
-        context: $('#myactivities'),
-        success: function (data){
-            apr = $("#actrow"+id)
-            apr.append("<br><br><div><b>Profiles</b></div>");
-            apr.append("<div id='actprofiles"+id+"' class='panel-group' role='tablist' aria-multiselectable='true'></div>");
-            ap = $("#actprofiles"+id);
-            if (data.length != 0){
-                for (var i=0; i < data.length; i++){
-                    var panelid = "propanel"+id+"-"+i
-                    ap.append("<a href='#' id='"+panelid+"'>"+data[i]['profileId']+"</a><br>")
-                    ap.append("<div id='specdiv"+panelid+"' style='border:solid;border-width:thin;display:none'></div>")
-                    sd = $("#specdiv"+panelid)
-                    $.each(data[i], function(key, value){
-                        sd.append("<b>" + key + "</b>: " + value + "<br>");
-                    });
-
-                    pp = $("#propanel"+id+"-"+i)
-                    var foo = function (){
-                        var pid = $(this).attr('id')
-                        // var specid = pid.substr(pid.length - 3);
-                        $("#specdiv"+pid).toggle();
-                    };
-                    pp.bind("click", foo)
-                }
-            }
+<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}scripts/extra-menu.js"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        // These events stay inline so urls render correctly
+        $('.change_app_status').click(function(e){
+            e.preventDefault();
+            var appname = $(this).prev(".appname").text().trim();
+            var status = "";
+            cur_s = $(this).parent().next(".email-subject").text().trim();
+            if (cur_s == "Accepted"){
+                status = "Canceled";                
+            } 
             else{
-                ap.append("<p>None</p>");
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            alert(thrownError);
-        },
-        timeout : 15000
-    });
-}
-function getStates(act_id, id){
-    var su = "{% url lrs.views.my_activity_states %}?act_id="+encodeURIComponent(act_id);
-    $.ajax({
-        url: su,
-        type: "GET",
-        context: $('#myactivities'),
-        success: function (data){
-            apr = $("#actrow"+id)
-            apr.append("<br><br><div><b>States:</b></div>");
-            apr.append("<div id='actstates"+id+"'></div>");
-            ap = $("#actstates"+id);
-            if (data.length != 0){
-                for (var i=0; i < data.length; i++){
-                    if (data[i]['stateId'] == "http://adlnet.gov/xapi/profile/scorm/attempt-state"){
+                status = "Accepted";                
+            } 
+            $.ajax({
+                url: "{% url lrs.views.my_app_status %}?app_name="+appname+"&status="+status,
+                type: "POST",
+                context: $(this),
+                success: function (data){
+                    var link, status;
+                    if (data['status'] == "Canceled"){
+                        link = "Activate";
+                        status = data['status'];
+                        $(this).parent().next(".email-subject").removeClass("formvalid").addClass("errorlist")
                     }
-                    else if (data[i]['stateId'] == "http://adlnet.gov/xapi/profile/scorm/activity-state"){
-                        var stpanelid = "stpanel"+id+"-"+i
-                        ap.append("<a href='#' id='"+stpanelid+"'>"+data[i]['stateId']+"</a>-"+ new Date(data[i]['updated']).toLocaleString()+" -- ("+data[i]['agent_name']+")<br>")
-
-                        var real_data = JSON.parse(data[i]['real_data']);
-                        if (real_data['attempts'] != undefined){
-                            var attempts = real_data['attempts']
-                            if (attempts.length > 0){
-                                ap.append("<br><div id='mainatt"+stpanelid+"' style='border:double;border-width:thin;display:none'></div><br>")
-                                matt = $("#mainatt"+stpanelid)
-                                matt.append("<div><i>Attempts:</i></div>")
-                                for (var x=0; x < attempts.length; x++){
-                                    if (attempts[x]){
-                                        var attid = "attpanel"+id+"-"+i+"-"+x
-                                        matt.append("<a href='#' data-actor='"+data[i]['agent']+"' id='"+attid+"'>"+attempts[x]+"</a><br>")
-                                        matt.append("<div id='ssdiv"+attid+"' style='border:solid;border-width:thin;display:none'></div>")
-                                        sp = $("#attpanel"+id+"-"+i+"-"+x)
-
-                                        var foo = function (ev){
-					    var pid = $(this).attr('id')
-					    if ($("#ssdiv"+pid).is(":empty")){
-					    var innerid = ev.currentTarget.innerHTML
-					    var innerag = ev.currentTarget.dataset.actor
-                                            // var specsid = pid.substr(pid.length - 5);
-                                            $.post("{% url lrs.views.jono %}?act_id="+encodeURIComponent(innerid)+"&state_id="+encodeURIComponent("http://adlnet.gov/xapi/profile/scorm/attempt-state")+"&agent="+encodeURIComponent(innerag), function(new_data, status){
-                                                $.each(new_data, function(key, value){
-                                                	if (typeof(value) === "object"){
-								$("#ssdiv"+pid).append("<b>" + key + "</b>:<br>");
-								$.each(value, function (k, v){
-									$("#ssdiv"+pid).append(k + ": " + v + "<br>");									
-								});	
-							}
-							else{    
-							$("#ssdiv"+pid).append("<b>" + key + "</b>: " + value + "<br>");
-							}                                                
-						});
-                                            });
-					}
-                                            $("#ssdiv"+pid).toggle();
-                                        };
-                                        sp.bind("click", foo)
-                                    }
-                                }
-                                stp = $("#stpanel"+id+"-"+i)
-                                var foo = function (){
-                                    var pid = $(this).attr('id')
-                                    // var ttid = pid.substr(pid.length - 3);
-                                    $("#mainatt"+pid).toggle();
-                                };
-                                stp.bind("click", foo)
-                            }
-                        }
-
+                    else {
+                        link = "Deactivate";
+                        status = data['status'];
+                        $(this).parent().next(".email-subject").removeClass("errorlist").addClass("formvalid")
                     }
-                    else{
-                        ap.append("<a href='#' id='stpanel"+id+"-"+i+"'>"+data[i]['stateId']+"</a>-"+ new Date(data[i]['updated']).toLocaleString()+" -- ("+data[i]['agent_name']+")<br>")
-                        ap.append("<div id='specsdiv"+id+"-"+i+"' style='border:solid;border-width:thin;display:none'></div>")
-                        sd = $("#specsdiv"+id+"-"+i)
-                        $.each(data[i], function(key, value){
-                            sd.append("<b>" + key + "</b>: " + value + "<br>");
-                        });                        
-
-                        sp = $("#stpanel"+id+"-"+i)
-                        var foo = function (){
-                            var pid = $(this).attr('id')
-                            var specsid = pid.substr(pid.length - 3);
-                            $("#specsdiv"+specsid).toggle();
-                        };
-                        sp.bind("click", foo)                      
-                    }
-                }
-            }
-            else{
-                ap.append("<p>None</p>");
-            }
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            alert(thrownError);
-        },
-        timeout : 15000
-    });
-}
-function actuiData(data){
-    if (data['acts'].length == 0){
-        return "<div>No activities</div>"
-    }
-
-    var ret = "<div>";
-    for (var i = 0; i < data['acts'].length; i++) {
-        var act = data['acts'][i];        
-        ret += "<div class='row'>";
-        ret += "<div id='actrow"+act['id']+"' class='span9 border'><span class='activity'><strong>" +act['name'] + "</strong></span><br>";
-        ret += " <span class='act_link lpad'>" + act['activity_id'] + "</span> ";
-        ret += "</div>";
-        ret += "</div>";
-        getProfiles(act['activity_id'], act['id']);
-        getStates(act['activity_id'], act['id']);
-    }
-    var prev = "<li class='previous disabled'><a>previous</a></li>";
-    if (data['previous']) {
-        prev = "<li class='previous'><a href='#' data-target='" + data['previous'] + "'>previous</a></li>";
-    }
-    var next = "<li class='next disabled'><a>next</a></li>";
-    if (data['next']) {
-        next = "<li class='next'><a href='#' data-target='" + data['next'] + "'>next</a></li>";
-    }
-    ret += "<ul class='pager'>" + prev + next + "</ul>";
-    ret += "</div>";
-    return ret;
-}
-function uiData(data){
-    if (data['stmts'].length == 0){
-        return "<div>No statements</div>"
-    }
-    var ret = "<div>";
-    for (var i = 0; i < data['stmts'].length; i++) {
-        var stmt = data['stmts'][i];
-        ret += "<div class='row'>";
-        ret += "<div class='span9 border'><span class='statement'><strong>" +stmt['actor_name'] + " " + stmt['verb'] + " " + stmt['object'] + "</strong></span><br>";
-        ret += "<span class='timestamp'><small>" + stmt['timestamp'] + "</small></span><br>";
-        ret += " <span class='stmt_link lpad'>" + stmt['statement_id'] + "</span> ";
-        ret += "</div>";
-        ret += "</div>";
-    }
-    var prev = "<li class='previous disabled'><a>previous</a></li>";
-    if (data['previous']) {
-        prev = "<li class='previous'><a href='#' data-target='" + data['previous'] + "'>previous</a></li>";
-    }
-    var next = "<li class='next disabled'><a>next</a></li>";
-    if (data['next']) {
-        next = "<li class='next'><a href='#' data-target='" + data['next'] + "'>next</a></li>";
-    }
-    ret += "<ul class='pager'>" + prev + next + "</ul>";
-    ret += "</div>";
-    return ret;
-}
-function getStmt(stmtid,ele){
-    $.ajax({
-        url: "{% url lrs.views.my_statements %}?stmt_id="+stmtid,
-        type: "GET",
-        success: function (data){
-            $(ele).children('.stmt_link').after('<pre id="stmts"></pre>')
-            $(ele).children().siblings('pre#stmts').append(syntaxHighlight(data));
-            $(ele).children().siblings('pre#stmts').find("span.expandable a").click(function(){
-                $(this).next("span.obj").toggle();
-                return false;
+                    $(this).text(link);
+                    $(this).parent().next(".email-subject").text(status);
+                },
+                error: function(xhr, ajaxOptions, thrownError){
+                    alert(thrownError);
+                },
+                timeout : 15000
             });
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            alert(thrownError)
-        },
-        timeout : 15000
-    });
-}
-function getAct(actid, ele){
-    $.ajax({
-        url: "{% url lrs.views.my_activities %}?act_id="+encodeURIComponent(actid),
-        type: "GET",
-        success: function (data){
-            $(ele).children('.act_link').after('<pre id="acts"></pre>')
-            $(ele).children().siblings('pre#acts').append(syntaxHighlight(data));
-            $(ele).children().siblings('pre#acts').find("span.expandable a").click(function(){
-                $(this).next("span.obj").toggle();
-                return false;
+        });
+        $('.delete_token').click(function(){
+            var id = $(this).next('span').text();
+            $.ajax({
+                url: "{% url lrs.views.delete_token %}?id="+id,
+                type: "DELETE",
+                context: $(this),
+                success: function(data){
+                    $(this).parent().parent().remove();
+                },
+                error: function(xhr, ajaxOptions, thrownError){
+                    alert(thrownError);
+                },
+                timeout:5000
             });
-        },
-        error: function(xhr, ajaxOptions, thrownError){
-            alert(thrownError)
-        },
-        timeout : 15000
+        });
+        $('.delete_token2').click(function(){
+            var id = $(this).next('span').text();
+            $.ajax({
+                url: "{% url lrs.views.delete_token2 %}?id="+id,
+                type: "DELETE",
+                context: $(this),
+                success: function(data){
+                    $(this).parent().parent().remove();
+                },
+                error: function(xhr, ajaxOptions, thrownError){
+                    alert(thrownError);
+                },
+                timeout:5000
+            });
+        });
+        $('.delete_client').click(function(){
+            var id = $(this).next('span').text();
+            $.ajax({
+                url: "{% url lrs.views.delete_client %}?id="+id,
+                type: "DELETE",
+                context: $(this),
+                success: function(data){
+                    $(this).parent().parent().remove();
+                },
+                error: function(xhr, ajaxOptions, thrownError){
+                    alert(thrownError);
+                },
+                timeout:5000
+            });
+        });
     });
-}
-function syntaxHighlight(json) {
-    if (typeof json != 'string') {
-       json = JSON.stringify(json, undefined, 4);
-   }
-   json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-   json = json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-    var cls = 'number';
-    if (/^"/.test(match)) {
-        if (/:$/.test(match)) {
-            cls = 'key';
-        } else {
-            cls = 'string';
-        }
-    } else if (/true|false/.test(match)) {
-        cls = 'boolean';
-    } else if (/null/.test(match)) {
-        cls = 'null';
-    }
-    return '<span class="' + cls + '">' + match + '</span>';
-});
-   json = json.replace(/(\{|\[)/g, function(match){return '<span class="expandable"><a href="#">' + match +'</a><span class="obj">';});
-   return json.replace(/(\}|\])/g, function(match){return '</span>' + match + '</span>'});
-}
 </script>
 {% endblock extra_js %}

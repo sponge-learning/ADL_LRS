@@ -1,16 +1,16 @@
 import re
-import ast
-import json
-from dateutil import parser as timeparser
+from isodate.isodatetime import parse_datetime
 from isodate.isoduration import parse_duration
 from isodate.isoerror import ISO8601Error
 
 from ..exceptions import ParamError
+from util import convert_to_dict
 
 SCHEME = 2
 EMAIL = 5
-uri_re = re.compile('^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?')
+iri_re = re.compile('^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?')
 sha1sum_re = re.compile('([a-fA-F\d]{40}$)')
+lang_tag_re = re.compile('^[a-z]{2,3}(?:-[A-Z]{2,3}(?:-[a-zA-Z]{4})?)?$')
 
 statement_allowed_fields = ['id', 'actor', 'verb', 'object', 'result', 'context', 'timestamp', 'authority', 'version', 'attachments']
 statement_required_fields = ['actor', 'verb', 'object']
@@ -18,8 +18,8 @@ statement_required_fields = ['actor', 'verb', 'object']
 attachment_allowed_fields = ['usageType', 'display', 'description', 'contentType', 'length', 'sha2', 'fileUrl']
 attachment_required_fields = ['usageType', 'display', 'contentType', 'length']
 
-agent_ifis_can_only_be_one = ['mbox', 'mbox_sha1sum', 'openID', 'account', 'openid']
-agent_allowed_fields = ['objectType', 'name', 'member', 'mbox', 'mbox_sha1sum', 'openID', 'openid','account']
+agent_ifis_can_only_be_one = ['mbox', 'mbox_sha1sum', 'openid', 'account']
+agent_allowed_fields = ['objectType', 'name', 'member', 'mbox', 'mbox_sha1sum', 'openid','account']
 
 account_fields = ['homePage', 'name']
 
@@ -43,33 +43,19 @@ score_allowed_fields = ['scaled', 'raw', 'min', 'max']
 context_allowed_fields = ['registration', 'instructor', 'team', 'contextActivities', 'revision', 'platform', 'language', 'statement', 'extensions']
 
 class StatementValidator():
-	def __init__(self, data):
+	def __init__(self, data=None):
 		# If incoming is a string, ast eval it (exception will be caught with whatever is calling validator)
-		if isinstance(data, basestring):
-			try:
-				self.stmt = ast.literal_eval(data)
-			except Exception:
-				self.stmt = json.loads(data)
-		# If incoming data is already a list 
-		elif isinstance(data, list):
-			# If each item in list is not a dict, then try to load them as one
-			if not all(isinstance(item, dict) for item in data):
-				self.stmt = [json.loads(st) for st in data]
-			# Else it is a list of all dicts
-			else:
-				self.stmt = data
-		# If incoming data is not a string or list, try loading into dict
-		else:
-			self.stmt = data
-	
+		if data:
+			self.data = convert_to_dict(data)
+
 	def validate(self):
 		# If list, validate each stmt inside
-		if isinstance(self.stmt, list):
-			for st in self.stmt:
+		if isinstance(self.data, list):
+			for st in self.data:
 				self.validate_statement(st)
 			return "All Statements are valid"
 		else:
-			self.validate_statement(self.stmt)
+			self.validate_statement(self.data)
 			return "Statement is valid"
 
 	def return_error(self, err_msg):
@@ -77,11 +63,27 @@ class StatementValidator():
 
 	def validate_email(self, email):
 		if isinstance(email, basestring):
-			res = uri_re.match(email)
-			if res.group(SCHEME) != "mailto" or res.group(EMAIL) == None or res.group(0) != email:
-				self.return_error("mbox value [%s] did not start with mailto:" % email)
+			if email.startswith("mailto:"):
+				email_re = re.compile("[^@]+@[^@]+\.[^@]+")
+				if not email_re.match(email[7:]):
+					self.return_error("mbox value %s is not a valid email" % email)
+			else:
+				self.return_error("mbox value %s did not start with mailto:" % email)
 		else:
 			self.return_error("mbox value must be a string type")
+
+	def validate_lang_tag(self, tag, field):
+		if tag:
+			for lang in tag:
+				if not lang_tag_re.match(lang) or tag == 'test':
+					self.return_error("language %s is not valid in %s" % (tag, field))
+		else:
+			self.return_error("language tags must contain at least one key/value pair in %s" % field)
+
+	def validate_dict_values(self, values, field):
+		for v in values:
+			if not v:
+				self.return_error("%s contains a null value" % field)
 
 	def validate_email_sha1sum(self, sha1sum):
 		if isinstance(sha1sum, basestring):
@@ -90,16 +92,16 @@ class StatementValidator():
 		else:
 			self.return_error("mbox_sha1sum value must be a string type")	
 
-	def validate_uri(self, uri_value, field):
-		if isinstance(uri_value, basestring):
-			if not uri_re.match(uri_value).group(SCHEME):
-				self.return_error("%s with value %s was not a valid URI" % (field, uri_value))
+	def validate_iri(self, iri_value, field):
+		if isinstance(iri_value, basestring):
+			if not iri_re.match(iri_value).group(SCHEME):
+				self.return_error("%s with value %s was not a valid IRI" % (field, iri_value))
 		else:
 			self.return_error("%s must be a string type" % field)
 		
 	def validate_uuid(self, uuid, field):
 		if isinstance(uuid, basestring):
-			id_regex = re.compile("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}")
+			id_regex = re.compile("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$")
 			if not id_regex.match(uuid):
 				self.return_error("%s - %s is not a valid UUID" % (field, uuid))
 		else:
@@ -147,13 +149,13 @@ class StatementValidator():
 		if 'timestamp' in stmt:
 			timestamp = stmt['timestamp']
 			try:
-				timeparser.parse(timestamp)
-			except ValueError as e:
+				parse_datetime(timestamp)
+			except ISO8601Error as e:
 				self.return_error("Timestamp error - There was an error while parsing the date from %s -- Error: %s" % (timestamp, e.message))
 
 		# Validate the actor and verb
 		self.validate_agent(stmt['actor'], 'actor')
-		self.validate_verb(stmt['verb'])
+		self.validate_verb(stmt['verb'], stmt['object'])
 
 		# Validate the object
 		stmt_object = stmt['object']
@@ -174,10 +176,26 @@ class StatementValidator():
 		# If authority is included, validate it
 		if 'authority' in stmt:
 			self.validate_agent(stmt['authority'], 'authority')
+			self.validate_authority(stmt['authority'])
 
 		# If attachments is included, validate it
 		if 'attachments' in stmt:
 			self.validate_attachments(stmt['attachments'])
+
+	def validate_authority(self, authority):
+		if authority['objectType'] == 'Group':
+			contains_account = len([x for m in authority['member'] for x in m.keys() if 'account' in x]) > 0
+			if contains_account:
+				if len(authority['member']) == 2:
+					for agent in authority['member']:
+						if 'account' in agent:
+							if not 'oauth' in agent['account']['homePage'].lower():
+								self.return_error("Statements cannot have a non-OAuth group as the authority")
+				else:
+					self.return_error("OAuth authority must only contain 2 members")
+			# No members contain an account so that means it's not an Oauth group
+			else:
+				self.return_error("Statements cannot have a non-OAuth group as the authority")
 
 	def validate_attachments(self, attachments):
 		# Ensure attachments is a list
@@ -189,11 +207,11 @@ class StatementValidator():
 			self.check_required_fields(attachment_required_fields, attach, "Attachment")
 
 			# Validate usageType
-			self.validate_uri(attach['usageType'], 'Attachments usageType')
+			self.validate_iri(attach['usageType'], 'Attachments usageType')
 
 			# If fileUrl included, validate it
 			if 'fileUrl' in attach:
-				self.validate_uri(attach['fileUrl'], 'Attachments fileUrl')
+				self.validate_iri(attach['fileUrl'], 'Attachments fileUrl')
 			else:
 				# If fileUrl is not included, sha2 must be - only time sha2 is required
 				if not 'sha2' in attach:
@@ -213,18 +231,20 @@ class StatementValidator():
 
 			# Ensure display is a dict (language map)
 			self.check_if_dict(attach['display'], "Attachment display")
-			
+			self.validate_lang_tag(attach['display'].keys(), "attachment display")			
+
 			# If description included, ensure it is a dict (language map)
 			if 'description' in attach:
 				self.check_if_dict(attach['description'], "Attachment description")
+				self.validate_lang_tag(attach['description'].keys(), "attachment description")
 
 	def validate_extensions(self, extensions, field):
 		# Ensure incoming extensions is a dict
 		self.check_if_dict(extensions, "%s extensions" % field)
 		
-		# Ensure each key in extensions is a valid URI
+		# Ensure each key in extensions is a valid IRI
 		for k, v in extensions.items():
-			self.validate_uri(k, field)
+			self.validate_iri(k, field)
 
 	def validate_agent(self, agent, placement):
 		# Ensure incoming agent is a dict and check allowed fields
@@ -245,6 +265,9 @@ class StatementValidator():
 		ifis = [a for a in agent_ifis_can_only_be_one if agent.get(a, None) != None]
 		if agent['objectType'] == 'Agent' and len(ifis) != 1:
 			self.return_error("One and only one of %s may be supplied with an Agent" % ", ".join(agent_ifis_can_only_be_one))
+		elif agent['objectType'] == 'Group' and len(ifis) > 1:
+			self.return_error("None or one and only one of %s may be supplied with a Group" % ", ".join(agent_ifis_can_only_be_one))
+
 
 		if agent['objectType'] == 'Agent':
 			# If agent, if name given, ensure name is string and validate the IFI
@@ -258,37 +281,39 @@ class StatementValidator():
 
 			# If no IFIs, it is an anonymous group which must contain the member property 
 			if not ifis:
+				# No ifi means anonymous group - must have member
 				if not 'member' in agent:
 					self.return_error("Anonymous groups must contain member")
+				else:
+					self.validate_members(agent)
 			else:
 				# IFI given, validate it
 				self.validate_ifi(ifis[0], agent[ifis[0]])
+				if 'member' in agent:
+					self.validate_members(agent)
 
-			# If member is in group (not required if have IFI)
-			if 'member' in agent:
-				# Ensure member list is array
-				members = agent['member']
-				self.check_if_list(members, "Members")
-				# Make sure no member of group is another group
-				object_types = [t['objectType'] for t in members if 'objectType' in t]
-				if 'Group' in object_types:
-					self.return_error('Group member value cannot be other groups')
-				# Validate each member in group
-				for agent in members:
-					self.validate_agent(agent, 'member')
+	def validate_members(self, agent):
+		# Ensure member list is array
+		members = agent['member']
+		self.check_if_list(members, "Members")
+		if not members:
+			self.return_error("Member property must contain agents")
+		# Make sure no member of group is another group
+		object_types = [t['objectType'] for t in members if 'objectType' in t]
+		if 'Group' in object_types:
+			self.return_error('Group member value cannot be other groups')
+		# Validate each member in group
+		for agent in members:
+			self.validate_agent(agent, 'member')
 
 	def validate_ifi(self, ifis, ifi_value):
-		# Spec not clear if openid or openID - set to openID just in case
-		if ifis == 'openid':
-			ifis = 'openID'
-		
 		# Validate each IFI accordingly
 		if ifis == 'mbox':
 			self.validate_email(ifi_value)
 		elif ifis == 'mbox_sha1sum':
 			self.validate_email_sha1sum(ifi_value)
-		elif ifis == 'openID':
-			self.validate_uri(ifi_value, 'openID')
+		elif ifis == 'openid':
+			self.validate_iri(ifi_value, 'openid')
 		elif ifis == 'account':
 			self.validate_account(ifi_value)
 
@@ -298,14 +323,14 @@ class StatementValidator():
 		self.check_allowed_fields(account_fields, account, "Account")
 		self.check_required_fields(account_fields, account, "Account")
 
-		# Ensure homePage is a valid URI
-		self.validate_uri(account['homePage'], 'homePage')
+		# Ensure homePage is a valid IRI
+		self.validate_iri(account['homePage'], 'homePage')
 
 		# Ensure name is a string
 		if not isinstance(account['name'], basestring):
 			self.return_error("account name must be a string")
 
-	def validate_verb(self, verb):
+	def validate_verb(self, verb, stmt_object=None):
 		# Ensure incoming verb is a dict and check allowed fields
 		self.check_if_dict(verb, "Verb")
 		self.check_allowed_fields(verb_allowed_fields, verb, "Verb")
@@ -313,11 +338,20 @@ class StatementValidator():
 		# Verb must conatin id - then validate it
 		if not 'id' in verb:
 			self.return_error('Verb must contain an id')
-		self.validate_uri(verb['id'], 'Verb id')
+		self.validate_iri(verb['id'], 'Verb id')
+
+		if verb['id'] == "http://adlnet.gov/expapi/verbs/voided":
+			if stmt_object['objectType']:
+				if stmt_object['objectType'] != "StatementRef":
+					raise ParamError("Statement with voided verb must have StatementRef as objectType")
+			else:
+				raise ParamError("Statement with voided verb must have StatementRef as objectType")
 
 		# If display given, ensure it's a dict (language map)
 		if 'display' in verb:
 			self.check_if_dict(verb['display'], "Verb display")
+			self.validate_lang_tag(verb['display'].keys(), "verb display")
+			self.validate_dict_values(verb['display'].values(), "verb display")
 
 	def validate_object(self, stmt_object):
 		# Ensure incoming object is a dict
@@ -359,8 +393,8 @@ class StatementValidator():
 		if not 'id' in activity:
 			self.return_error("Id field must be present in an Activity")
 
-		# Id must be valid URI
-		self.validate_uri(activity['id'], "Activity id")
+		# Id must be valid IRI
+		self.validate_iri(activity['id'], "Activity id")
 
 		# If definition included, validate it
 		if 'definition' in activity:
@@ -369,27 +403,34 @@ class StatementValidator():
 	def validate_activity_definition(self, definition):
 		# Ensure incoming def is a dict and check allowed fields
 		self.check_if_dict(definition, "Activity definition")
+
+		# Make sure it's not an empty definition
+		if not definition:
+			self.return_error("Definition is empty")
+
 		self.check_allowed_fields(act_def_allowed_fields, definition, "Activity definition")
 
 		# If name or description included, ensure it is a dict (language map)
 		if 'name' in definition:
 			self.check_if_dict(definition['name'], "Activity definition name")
+			self.validate_lang_tag(definition['name'].keys(), "activity definition name")
 		if 'description' in definition:
 			self.check_if_dict(definition['description'], "Activity definition description")
+			self.validate_lang_tag(definition['description'].keys(), "activity definition description")
 
-		# If type or moreInfo included, ensure it is valid URI
+		# If type or moreInfo included, ensure it is valid IRI
 		if 'type' in definition:
-			self.validate_uri(definition['type'], 'Activity definition type')
+			self.validate_iri(definition['type'], 'Activity definition type')
 		if 'moreInfo' in definition:
-			self.validate_uri(definition['moreInfo'], 'Activity definition moreInfo')
+			self.validate_iri(definition['moreInfo'], 'Activity definition moreInfo')
 
 		interactionType = None
 		# If interactionType included, ensure it is a string
-		if 'interactionType' in definition:
+		if 'interactionType' in definition and 'correctResponsesPattern' in definition:
 			if not isinstance(definition['interactionType'], basestring):
 				self.return_error("Activity definition interactionType must be a string")
 
-			scorm_interaction_types = ['true-false', 'choice', 'fill-in','matching', 'performance',
+			scorm_interaction_types = ['true-false', 'choice', 'fill-in', 'long-fill-in', 'matching', 'performance',
 				'sequencing', 'likert', 'numeric', 'other']
 
 			#Check if valid SCORM interactionType
@@ -398,61 +439,71 @@ class StatementValidator():
 
 			interactionType = definition['interactionType']
 
-		# If correctResponsesPatter included, ensure it is an array
-		if 'correctResponsesPattern' in definition:
 			self.check_if_list(definition['correctResponsesPattern'], "Activity definition correctResponsesPattern")
 			for answer in definition['correctResponsesPattern']:
 				# For each answer, ensure it is a string
 				if not isinstance(answer, basestring):
-					self.return_error("Activity definition correctResponsesPattern answer's must all be strings")
+					self.return_error("Activity definition correctResponsesPattern answers must all be strings")
+		elif 'interactionType' not in definition and 'correctResponsesPattern' not in definition:
+			pass
+		else:
+			self.return_error('If using interaction types, both interactionType and correctResponsesPattern fields must be present')
 		self.validate_interaction_types(interactionType, definition)
 
 		# If extensions, validate it
 		if 'extensions' in definition:
 			self.validate_extensions(definition['extensions'], 'activity definition')		
 
+	def check_other_interaction_component_fields(self, allowed, definition):
+		interaction_components = set(["choices", "scale", "source", "target", "steps"])
+		keys = set(definition.keys())
+
+		both = interaction_components.intersection(keys)
+		not_allowed = list(both - set(allowed))
+
+		if not_allowed:
+			self.return_error("Only interaction component field(s) allowed (%s) - not allowed: %s" % (' '.join(allowed), ' '.join(not_allowed)))
+
+		# not_allowed = any(x in keys for x in interaction_components if x not in allowed)
+
 	def validate_interaction_types(self, interactionType, definition):
 		if interactionType == "choice" or interactionType == "sequencing":
 			# If choices included, ensure it is an array and validate it
 			if 'choices' in definition:
+				self.check_other_interaction_component_fields(['choices'], definition)
 				choices = definition['choices']
 				self.check_if_list(choices, "Activity definition choices")
-				self.validate_interaction_activities(choices, 'choices')			
-			else:
-				self.return_error("Activity definition is missing choices")
+				self.validate_interaction_activities(choices, 'choices')
 		elif interactionType == "likert":
 			# If scale included, ensure it is an array and validate it
 			if 'scale' in definition:
+				self.check_other_interaction_component_fields(['scale'], definition)
 				scale = definition['scale']
 				self.check_if_list(scale, "Activity definition scale")
 				self.validate_interaction_activities(scale, 'scale')
-			else:
-				self.return_error("Activity definition is missing scale")
 		elif interactionType == "matching":
 			# If scale included, ensure it is an array and validate it
 			if 'source' in definition:
+				self.check_other_interaction_component_fields(['target', 'source'], definition)
 				source = definition['source']
 				self.check_if_list(source, "Activity definition source")
 				self.validate_interaction_activities(source, 'source')
-			else:
-				self.return_error("Activity definition is missing source")
 			# If target included, ensure it is an array and validate it
 			if 'target' in definition:
+				self.check_other_interaction_component_fields(['target', 'source'], definition)
 				target = definition['target']
 				self.check_if_list(target, "Activity definition target")
 				self.validate_interaction_activities(target, 'target')
-			else:
-				self.return_error("Activity definition is missing target")
 		elif interactionType == "performance":
-		# If steps included, ensure it is an array and validate it
+			# If steps included, ensure it is an array and validate it
 			if 'steps' in definition:
+				self.check_other_interaction_component_fields(['steps'], definition)
 				steps = definition['steps']
 				self.check_if_list(steps, "Activity definition steps")
 				self.validate_interaction_activities(steps, 'steps')
-			else:
-				self.return_error("Activity definition is missing steps")		
 
 	def validate_interaction_activities(self, activities, field):
+		id_list = []
 		for act in activities:
 			# Ensure each interaction activity is a dict and check allowed fields
 			self.check_if_dict(act, "%s interaction component" % field)
@@ -463,8 +514,16 @@ class StatementValidator():
 			if not isinstance(act['id'], basestring):
 				self.return_error("Interaction activity in component %s has an id that is not a string" % field)
 
-			# Ensure description is a dict (language map)
-			self.check_if_dict(act['description'], "%s interaction component description" % field)
+			id_list.append(act['id'])
+			if 'description' in act:
+				# Ensure description is a dict (language map)
+				self.check_if_dict(act['description'], "%s interaction component description" % field)
+				self.validate_lang_tag(act['description'].keys(), "%s interaction component description" % field)
+
+		# Check and make sure all ids being listed are unique
+		dups = set([i for i in id_list if id_list.count(i) > 1])
+		if dups:
+			self.return_error("Interaction activities shared the same id(s) (%s) which is not allowed" % ' '.join(dups))
 
 	def validate_substatement(self, substmt):
 		# Ensure incoming substmt is a dict and check allowed and required fields
@@ -476,8 +535,8 @@ class StatementValidator():
 		if 'timestamp' in substmt:
 			timestamp = substmt['timestamp']
 			try:
-				timeparser.parse(timestamp)
-			except ValueError as e:
+				parse_datetime(timestamp)
+			except ISO8601Error as e:
 				self.return_error("Timestamp error - There was an error while parsing the date from %s -- Error: %s" % (timestamp, e.message))
 
 		# Can't next substmts in other substmts - if not supplied it is an Activity
@@ -489,8 +548,8 @@ class StatementValidator():
 
 		# Validate agent, verb, and object
 		self.validate_agent(substmt['actor'], 'actor')
-		self.validate_verb(substmt['verb'])
 		self.validate_object(substmt['object'])
+		self.validate_verb(substmt['verb'])
 
 		# If result included, validate it
 		if 'result' in substmt:
@@ -590,24 +649,27 @@ class StatementValidator():
 			self.validate_agent(context['instructor'], 'Context instructor')
 		if 'team' in context:
 			self.validate_agent(context['team'], 'Context team')
+			if not 'objectType' in context['team'] or context['team']['objectType'] == 'Agent':
+				self.return_error("Team in context must be a group")
 
 		# If objectType of object in stmt is Agent/Group, context cannot have revision or platform fields
 		object_type = stmt_object['objectType']
+		
 		if 'revision' in context:
-			if object_type == 'Agent' or object_type == 'Group':
-				self.return_error("Revision is not allowed in context if statement object is an Agent or Group")		
-
 			# Check revision is string
 			if not isinstance(context['revision'], basestring):
 				self.return_error("Context revision must be a string")
 
-		if 'platform' in context:
-			if object_type == 'Agent' or object_type == 'Group':
-				self.return_error("Platform is not allowed in context if statement object is an Agent or Group")		
+			if object_type != 'Activity':
+				self.return_error("Revision is not allowed in context if statement object is not an Activity")
 
+		if 'platform' in context:
 			# Check platform is string
 			if not isinstance(context['platform'], basestring):
 				self.return_error("Context platform must be a string")
+
+			if object_type != 'Activity':
+				self.return_error("Platform is not allowed in context if statement object is not an Activity")		
 
 		# If language given, ensure it is string
 		if 'language' in context:
@@ -630,15 +692,18 @@ class StatementValidator():
 		# Ensure incoming conact is dict
 		self.check_if_dict(conacts, "Context activity")
 		context_activity_types = ['parent', 'grouping', 'category', 'other']
-		for conact in conacts.items():
-			# Check if conact is a valid type
-			if not conact[0] in context_activity_types:
-				self.return_error("Context activity type is not valid - %s - must be %s" % (conact[0], ', '.join(context_activity_types)))
-			# Ensure conact is a list or dict
-			if isinstance(conact[1], list):
-				for act in conact[1]:
-					self.validate_activity(act)
-			elif isinstance(conact[1], dict):
-				self.validate_activity(conact[1])
-			else:
-				self.return_error("contextActivities is not formatted correctly")
+		if conacts:
+			for conact in conacts.items():
+				# Check if conact is a valid type
+				if not conact[0] in context_activity_types:
+					self.return_error("Context activity type is not valid - %s - must be %s" % (conact[0], ', '.join(context_activity_types)))
+				# Ensure conact is a list or dict
+				if isinstance(conact[1], list):
+					for act in conact[1]:
+						self.validate_activity(act)
+				elif isinstance(conact[1], dict):
+					self.validate_activity(conact[1])
+				else:
+					self.return_error("contextActivities is not formatted correctly")
+		else:
+			self.return_error("contextActivities must contain at least one key/value pair")

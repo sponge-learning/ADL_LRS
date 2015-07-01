@@ -1,6 +1,11 @@
 import StringIO
 import email
 import urllib
+import json
+import itertools
+from base64 import b64decode, b64encode
+from isodate.isoerror import ISO8601Error
+from isodate.isodatetime import parse_datetime
 
 from django.http.multipartparser import MultiPartParser
 from django.core.cache import get_cache
@@ -22,7 +27,7 @@ def parse(request, more_id=None):
     r_dict = {}
     # Build headers from request in request dict
     r_dict['headers'] = get_headers(request.META)
-    
+
     # Traditional authorization should be passed in headers
     r_dict['auth'] = {}
 
@@ -171,36 +176,61 @@ def get_endpoint(request):
     return endpoint   
 
 def parse_attachment(r, request):
+    # Email library insists on having the multipart header in the body - workaround
     message = request.body
-    # i need boundary to be in the message for email to parse it right
     if 'boundary' not in message[:message.index("--")]:
         if 'boundary' in request.META['CONTENT_TYPE']:
-            message = request.META['CONTENT_TYPE'] + message
+            message = "Content-Type:" + request.META['CONTENT_TYPE'] + "\r\n" + message
         else:
             raise BadRequest("Could not find the boundary for the multipart content")
+
     msg = email.message_from_string(message)
     if msg.is_multipart():
-        parts = []
-        for part in msg.walk():
-            parts.append(part)
-        if len(parts) < 1:
-            raise ParamError("The content of the multipart request didn't contain a statement")
-        # ignore parts[0], it's the whole thing
-        # parts[1] better be the statement
-        r['body'] = convert_to_dict(parts[1].get_payload())
-        if len(parts) > 2:
-            r['payload_sha2s'] = []
-            for a in parts[2:]:
-                # attachments
-                thehash = a.get("X-Experience-API-Hash")
-                if not thehash:
-                    raise BadRequest("X-Experience-API-Hash header was missing from attachment")
-                r['payload_sha2s'].append(thehash)
-                # Save msg object to cache
-                att_cache.set(thehash, a)
+        parts = msg.get_payload()
+        stmt_part = parts.pop(0)
+        if stmt_part['Content-Type'] != "application/json":
+            raise ParamError("Content-Type of statement was not application/json")
+
+        try:
+            r['body'] = json.loads(stmt_part.get_payload())
+        except Exception:
+            raise ParamError("Statement was not valid JSON")
+
+        # Find the signature sha2 from the list attachment values in the statements (there should only be one)
+        if isinstance(r['body'], list):
+            signature_att = list(itertools.chain(*[[a.get('sha2', None) for a in s['attachments'] if a.get('usageType', None) == "http://adlnet.gov/expapi/attachments/signature"] for s in r['body'] if 'attachments' in s]))
+        else:        
+            signature_att = [a.get('sha2', None) for a in r['body']['attachments'] if a.get('usageType', None) == "http://adlnet.gov/expapi/attachments/signature" and 'attachments' in r['body']]
+
+        # Get all sha2s from the request
+        payload_sha2s = [p.get('X-Experience-API-Hash', None) for p in msg.get_payload()]
+        # Check each sha2 in payload, if even one of them is None then there is a missing hash
+        for sha2 in payload_sha2s:
+            if not sha2:
+                raise BadRequest("X-Experience-API-Hash header was missing from attachment")
+
+        # Check the sig sha2 in statements if it not in the payload sha2s then the sig sha2 is missing
+        for sig in signature_att:
+            if sig:
+                if sig not in payload_sha2s:
+                    raise BadRequest("Signature attachment is missing from request")
+            else:
+                raise BadRequest("Signature attachment is missing from request")   
+
+        # We know all sha2s are there so set it and loop through each payload
+        r['payload_sha2s'] = payload_sha2s
+        for part in msg.get_payload():
+            xhash = part.get('X-Experience-API-Hash')
+            c_type = part['Content-Type']
+            # Payloads are base64 encoded implictly from email lib (except for plaintext)
+            if "text/plain" in c_type:
+                payload = b64encode(part.get_payload())
+            else:
+                payload = part.get_payload()
+            att_cache.set(xhash, payload)
     else:
         raise ParamError("This content was not multipart for the multipart request.")
-    # see if the posted statements have attachments
+    # See if the posted statements have attachments
     att_stmts = []
     if isinstance(r['body'], list):
         for s in r['body']:
@@ -212,13 +242,13 @@ def parse_attachment(r, request):
         # find if any of those statements with attachments have a signed statement
         signed_stmts = [(s,a) for s in att_stmts for a in s.get('attachments', None) if a['usageType'] == "http://adlnet.gov/expapi/attachments/signature"]
         for ss in signed_stmts:
-            attmnt = att_cache.get(ss[1]['sha2']).get_payload(decode=True)
+            attmnt = b64decode(att_cache.get(ss[1]['sha2']))
             jws = JWS(jws=attmnt)
             try:
                 if not jws.verify() or not jws.validate(ss[0]):
                     raise BadRequest("The JSON Web Signature is not valid")
             except JWSException as jwsx:
-                raise BadRequest(jwsx)    
+                raise BadRequest(jwsx)
 
 def parse_body(r, request):
     if request.method == 'POST' or request.method == 'PUT':
@@ -246,9 +276,15 @@ def parse_body(r, request):
 def get_headers(headers):
     r = {}
     if 'HTTP_UPDATED' in headers:
-        r['updated'] = headers['HTTP_UPDATED']
+        try:
+            r['updated'] = parse_datetime(headers['HTTP_UPDATED'])
+        except (Exception, ISO8601Error):
+            raise ParamError("Updated header was not a valid ISO8601 timestamp")        
     elif 'updated' in headers:
-        r['updated'] = headers['updated']
+        try:
+            r['updated'] = parse_datetime(headers['updated'])
+        except (Exception, ISO8601Error):
+            raise ParamError("Updated header was not a valid ISO8601 timestamp")
 
     r['CONTENT_TYPE'] = headers.get('CONTENT_TYPE', '')
     if r['CONTENT_TYPE'] == '' and 'Content-Type' in headers:
@@ -267,4 +303,7 @@ def get_headers(headers):
         r['language'] = headers.get('Accept_Language', None)
     elif 'Accept-Language' in headers:
         r['language'] = headers['Accept-Language']
+
+    if 'X-Experience-API-Version' in headers:
+            r['X-Experience-API-Version'] = headers['X-Experience-API-Version']
     return r

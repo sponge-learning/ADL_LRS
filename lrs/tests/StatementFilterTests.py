@@ -50,8 +50,8 @@ class StatementFilterTests(TestCase):
     def test_limit_filter(self):
         # Test limit
         for i in range(1,4):
-            stmt = {"actor":{"mbox":"mailto:test%s" % i},"verb":{"id":"http://tom.com/tested"},"object":{"id":"act:activity%s" %i}}
-            resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+            stmt = {"actor":{"mbox":"mailto:test%s@mail.com" % i},"verb":{"id":"http://tom.com/tested"},"object":{"id":"act:activity%s" %i}}
+            resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         limitGetResponse = self.client.post(reverse(statements),{"limit":2}, content_type="application/x-www-form-urlencoded", X_Experience_API_Version="1.0", Authorization=self.auth)
         self.assertEqual(limitGetResponse.status_code, 200)
@@ -62,7 +62,7 @@ class StatementFilterTests(TestCase):
 
     def test_get_id(self):
         stmt = {
-            "timestamp": "2013-04-08 21:07:11.459000+00:00", 
+            "timestamp": "2013-04-08T21:07:11.459000+00:00", 
             "object": { 
                 "id": "act:adlnet.gov/JsTetris_TCAPI/level18"
             }, 
@@ -95,7 +95,7 @@ class StatementFilterTests(TestCase):
                 }
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         sid = Statement.objects.get(verb__verb_id="http://adlnet.gov/xapi/verbs/passed(to_go_beyond)").statement_id
         param = {"statementId":sid}
@@ -121,9 +121,9 @@ class StatementFilterTests(TestCase):
                     "en-US": "nixed"
                 }
             }, 
-            "timestamp": "2013-04-11 23:24:03.603184+00:00", 
+            "timestamp": "2013-04-11T23:24:03.603184+00:00", 
             "object": {
-                "timestamp": "2013-04-11 23:24:03.578795+00:00", 
+                "timestamp": "2013-04-11T23:24:03.578795+00:00", 
                 "object": {
                     "id": "act:adlnet.gov/website", 
                     "objectType": "Activity"
@@ -147,10 +147,10 @@ class StatementFilterTests(TestCase):
                 "objectType": "Agent"
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stmt = {
-            "timestamp": "2013-04-08 21:07:20.392000+00:00", 
+            "timestamp": "2013-04-08T21:07:20.392000+00:00", 
             "object": { 
                 "id": "act:adlnet.gov/JsTetris_TCAPI", 
                 "objectType": "Activity"
@@ -179,7 +179,7 @@ class StatementFilterTests(TestCase):
                 }
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
 
         param = {"agent":{"mbox":"mailto:tom@example.com"}}
@@ -203,7 +203,7 @@ class StatementFilterTests(TestCase):
                     "en-US": "started"
                 }
             },
-            "timestamp": "2013-04-11 14:49:25.376782+00:00", 
+            "timestamp": "2013-04-11T14:49:25.376782+00:00", 
             "object": {
                 "id": "act:github.com/adlnet/ADL_LRS/tree/1.0dev", 
                 "objectType": "Activity"
@@ -226,10 +226,10 @@ class StatementFilterTests(TestCase):
                 "objectType": "Group"
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stmt = {
-            "timestamp": "2013-04-10 21:25:59.583000+00:00", 
+            "timestamp": "2013-04-10T21:25:59.583000+00:00", 
             "object": {
                 "mbox": "mailto:louo@example.com", 
                 "name": "louo", 
@@ -270,7 +270,7 @@ class StatementFilterTests(TestCase):
                 }
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         param = {"agent":{"mbox":"mailto:adllrsdevs@example.com"}}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
@@ -285,7 +285,7 @@ class StatementFilterTests(TestCase):
 
     def test_related_agents_filter(self):
         stmt = {
-            "timestamp": "2013-04-10 21:25:59.583000+00:00", 
+            "timestamp": "2013-04-10T21:25:59.583000+00:00", 
             "object": {
                 "mbox": "mailto:louo@example.com", 
                 "name": "louo", 
@@ -323,7 +323,7 @@ class StatementFilterTests(TestCase):
                 }
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stmt = {
             "verb": {
@@ -332,7 +332,7 @@ class StatementFilterTests(TestCase):
                     "en-US": "started"
                 }
             }, 
-            "timestamp": "2013-04-11 14:49:25.376782+00:00", 
+            "timestamp": "2013-04-11T14:49:25.376782+00:00", 
             "object": {
                 "id": "act:github.com/adlnet/ADL_LRS/tree/1.0dev"
             }, 
@@ -352,7 +352,7 @@ class StatementFilterTests(TestCase):
                 "objectType": "Group"
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stmt = {
             "verb": {
@@ -361,9 +361,9 @@ class StatementFilterTests(TestCase):
                     "en-US": "nixed"
                 }
             },
-            "timestamp": "2013-04-11 23:24:03.603184+00:00", 
+            "timestamp": "2013-04-11T23:24:03.603184+00:00", 
             "object": {
-                "timestamp": "2013-04-11 23:24:03.578795+00:00", 
+                "timestamp": "2013-04-11T23:24:03.578795+00:00", 
                 "object": {
                     "id": "act:adlnet.gov/website"
                 }, 
@@ -384,7 +384,7 @@ class StatementFilterTests(TestCase):
                 "name": "timmy"
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         param = {"agent":{"mbox":"mailto:louo@example.com"}}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
@@ -405,7 +405,7 @@ class StatementFilterTests(TestCase):
     def test_agent_filter_since_and_until(self):
         batch = [
         {
-            "timestamp": "2013-04-08 17:51:38.118000+00:00", 
+            "timestamp": "2013-04-08T17:51:38.118000+00:00", 
             "object": {
                 "id": "act:adlnet.gov/JsTetris_TCAPI"
             }, 
@@ -419,7 +419,7 @@ class StatementFilterTests(TestCase):
             }
         }, 
         {
-            "timestamp": "2013-04-08 17:52:31.209000+00:00", 
+            "timestamp": "2013-04-08T17:52:31.209000+00:00", 
             "object": {
                 "id": "act:adlnet.gov/JsTetris_TCAPI"
             }, 
@@ -433,7 +433,7 @@ class StatementFilterTests(TestCase):
             }
         }, 
         {
-            "timestamp": "2013-04-08 20:47:08.626000+00:00", 
+            "timestamp": "2013-04-08T20:47:08.626000+00:00", 
             "object": {
                 "id": "act:adlnet.gov/JsTetris_TCAPI"
             }, 
@@ -447,7 +447,7 @@ class StatementFilterTests(TestCase):
             }
         }, 
         {
-            "timestamp": "2013-04-08 20:47:36.129000+00:00", 
+            "timestamp": "2013-04-08T20:47:36.129000+00:00", 
             "object": {
                 "id": "act:adlnet.gov/JsTetris_TCAPI/level1"
             }, 
@@ -461,7 +461,7 @@ class StatementFilterTests(TestCase):
             }
         }, 
         {
-            "timestamp": "2013-04-08 20:48:50.090000+00:00", 
+            "timestamp": "2013-04-08T20:48:50.090000+00:00", 
             "object": {
                 "id": "act:adlnet.gov/JsTetris_TCAPI/level2"
             }, 
@@ -475,7 +475,7 @@ class StatementFilterTests(TestCase):
             }
         }, 
         {
-            "timestamp": "2013-04-08 20:49:27.109000+00:00", 
+            "timestamp": "2013-04-08T20:49:27.109000+00:00", 
             "object": {
                 "id": "act:adlnet.gov/JsTetris_TCAPI/level3"
             }, 
@@ -490,7 +490,7 @@ class StatementFilterTests(TestCase):
         }]
 
         response = self.client.post(reverse(statements), json.dumps(batch), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 200)
 
         param = {"agent":{"mbox":"mailto:tom@example.com"}}
@@ -568,7 +568,7 @@ class StatementFilterTests(TestCase):
 
     def test_related_agents_filter_until(self):
         stmt = {
-            "timestamp": "2013-04-10 21:25:59.583000+00:00", 
+            "timestamp": "2013-04-10T21:25:59.583000+00:00", 
             "object": {
                 "mbox": "mailto:louo@example.com", 
                 "name": "louo", 
@@ -606,7 +606,7 @@ class StatementFilterTests(TestCase):
                 }
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stmt = {
             "verb": {
@@ -615,7 +615,7 @@ class StatementFilterTests(TestCase):
                     "en-US": "started"
                 }
             }, 
-            "timestamp": "2013-04-11 14:49:25.376782+00:00", 
+            "timestamp": "2013-04-11T14:49:25.376782+00:00", 
             "object": {
                 "id": "act:github.com/adlnet/ADL_LRS/tree/1.0dev"
             }, 
@@ -635,7 +635,7 @@ class StatementFilterTests(TestCase):
                 "objectType": "Group"
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stmt = {
             "verb": {
@@ -644,9 +644,9 @@ class StatementFilterTests(TestCase):
                     "en-US": "nixed"
                 }
             },
-            "timestamp": "2013-04-11 23:24:03.603184+00:00", 
+            "timestamp": "2013-04-11T23:24:03.603184+00:00", 
             "object": {
-                "timestamp": "2013-04-11 23:24:03.578795+00:00", 
+                "timestamp": "2013-04-11T23:24:03.578795+00:00", 
                 "object": {
                     "id": "act:adlnet.gov/website"
                 }, 
@@ -667,7 +667,7 @@ class StatementFilterTests(TestCase):
                 "name": "timmy"
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         param = {"agent":{"mbox":"mailto:louo@example.com"}, "related_agents":True}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
@@ -710,7 +710,7 @@ class StatementFilterTests(TestCase):
 
     def test_related_agents_filter_since(self):
         stmts = [{
-            "timestamp": "2013-04-10 21:25:59.583000+00:00", 
+            "timestamp": "2013-04-10T21:25:59.583000+00:00", 
             "object": {
                 "mbox": "mailto:louo@example.com", 
                 "name": "louo", 
@@ -755,7 +755,7 @@ class StatementFilterTests(TestCase):
                     "en-US": "started"
                 }
             }, 
-            "timestamp": "2013-04-11 14:49:25.376782+00:00", 
+            "timestamp": "2013-04-11T14:49:25.376782+00:00", 
             "object": {
                 "id": "act:github.com/adlnet/ADL_LRS/tree/1.0dev"
             }, 
@@ -782,9 +782,9 @@ class StatementFilterTests(TestCase):
                     "en-US": "nixed"
                 }
             },
-            "timestamp": "2013-04-11 23:24:03.603184+00:00", 
+            "timestamp": "2013-04-11T23:24:03.603184+00:00", 
             "object": {
-                "timestamp": "2013-04-11 23:24:03.578795+00:00", 
+                "timestamp": "2013-04-11T23:24:03.578795+00:00", 
                 "object": {
                     "id": "act:adlnet.gov/website"
                 }, 
@@ -806,7 +806,7 @@ class StatementFilterTests(TestCase):
             }
         }]
         response = self.client.post(reverse(statements), json.dumps(stmts), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 200)
 
         param = {"agent":{"mbox":"mailto:louo@example.com"}, "related_agents":True}
@@ -900,7 +900,7 @@ class StatementFilterTests(TestCase):
         theid = str(uuid.uuid1())
         stmt = {
         "id":theid,
-        "timestamp": "2013-04-10 21:27:15.613000+00:00", 
+        "timestamp": "2013-04-10T21:27:15.613000+00:00", 
         "object": {
             "mbox": "mailto:louo@example.com", 
             "name": "louo",
@@ -936,7 +936,7 @@ class StatementFilterTests(TestCase):
             }
         }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stman_id = str(uuid.uuid1())
         stmt = {"id": stman_id,
@@ -947,7 +947,7 @@ class StatementFilterTests(TestCase):
             }
         }, 
         
-        "timestamp": "2013-04-10 21:28:33.870000+00:00", 
+        "timestamp": "2013-04-10T21:28:33.870000+00:00", 
         "object": {
             "id": theid, 
             "objectType": "StatementRef"
@@ -974,7 +974,7 @@ class StatementFilterTests(TestCase):
             "objectType": "Group"
         }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         param = {"verb":"http://special.adlnet.gov/xapi/verbs/high-fived"}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
@@ -1001,7 +1001,7 @@ class StatementFilterTests(TestCase):
         theid = str(uuid.uuid1())
         stmt = {
         "id":theid,
-        "timestamp": "2013-04-10 21:27:15.613000+00:00", 
+        "timestamp": "2013-04-10T21:27:15.613000+00:00", 
         "object": {
             "mbox": "mailto:louo@example.com", 
             "name": "louo",
@@ -1038,10 +1038,10 @@ class StatementFilterTests(TestCase):
             "registration":"05bb4c1a-9ddb-44a0-ba4f-52ff77811a92"
         }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stmt = {
-            "timestamp": "2013-04-08 17:51:38.118000+00:00", 
+            "timestamp": "2013-04-08T17:51:38.118000+00:00", 
             "object": {
                 "id": "act:adlnet.gov/JsTetris_TCAPI"
             }, 
@@ -1057,10 +1057,10 @@ class StatementFilterTests(TestCase):
                 "registration":"05bb4c1a-9ddb-44a0-ba4f-52ff77811a91"
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stmt =         {
-        "timestamp": "2013-04-08 21:07:20.392000+00:00", 
+        "timestamp": "2013-04-08T21:07:20.392000+00:00", 
         "object": { 
             "id": "act:adlnet.gov/JsTetris_TCAPI", 
             "objectType": "Activity"
@@ -1089,7 +1089,7 @@ class StatementFilterTests(TestCase):
             "registration":"05bb4c1a-9ddb-44a0-ba4f-52ff77811a91"
         }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         param = {"registration":"05bb4c1a-9ddb-44a0-ba4f-52ff77811a91"}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
@@ -1133,7 +1133,7 @@ class StatementFilterTests(TestCase):
 
     def test_activity_filter(self):
         stmt = {
-        "timestamp": "2013-04-08 21:05:48.869000+00:00", 
+        "timestamp": "2013-04-08T21:05:48.869000+00:00", 
         "object": {
             "id": "act:adlnet.gov/JsTetris_TCAPI/level17", 
             "objectType": "Activity"
@@ -1154,10 +1154,10 @@ class StatementFilterTests(TestCase):
             }
         }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stmt = {
-            "timestamp": "2013-04-08 21:07:11.459000+00:00", 
+            "timestamp": "2013-04-08T21:07:11.459000+00:00", 
             "object": {
                 "id": "act:adlnet.gov/JsTetris_TCAPI/level18"
             }, 
@@ -1183,10 +1183,10 @@ class StatementFilterTests(TestCase):
                 }
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stmt = {
-        "timestamp": "2013-04-08 21:07:20.392000+00:00", 
+        "timestamp": "2013-04-08T21:07:20.392000+00:00", 
         "object": {
             "definition": {
                 "type": "type:media", 
@@ -1227,7 +1227,7 @@ class StatementFilterTests(TestCase):
             }
         }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         param = {"activity":"act:adlnet.gov/JsTetris_TCAPI"}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
@@ -1262,7 +1262,7 @@ class StatementFilterTests(TestCase):
 
     def test_no_activity_filter(self):
         stmt = {
-        "timestamp": "2013-04-08 21:05:48.869000+00:00", 
+        "timestamp": "2013-04-08T21:05:48.869000+00:00", 
         "object": {
             "id": "act:adlnet.gov/JsTetris_TCAPI/level17", 
             "objectType": "Activity"
@@ -1283,10 +1283,10 @@ class StatementFilterTests(TestCase):
             }
         }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         stmt = {
-            "timestamp": "2013-04-08 21:07:11.459000+00:00", 
+            "timestamp": "2013-04-08T21:07:11.459000+00:00", 
             "object": {
                 "id": "act:adlnet.gov/JsTetris_TCAPI/level18"
             }, 
@@ -1312,7 +1312,7 @@ class StatementFilterTests(TestCase):
                 }
             }
         }
-        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version="1.0.0")
+        resp = self.client.post(reverse(statements), json.dumps(stmt), Authorization=self.auth, content_type="application/json", X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
         actorGetResponse = self.client.post(reverse(statements), 
             {"activity":"http://notarealactivity.com"},
@@ -1587,19 +1587,19 @@ class StatementFilterTests(TestCase):
         param = {"statementId": stmt_id}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
         response = self.client.put(path, json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 204)
 
         param["format"] = "canonical"
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
-        r = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        r = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(r.status_code, 200)
         stmt_obj = json.loads(r.content)
         self.assertIn('definition', stmt_obj['object'])
 
         param["format"] = "exact"
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
-        r = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        r = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(r.status_code, 200)
         stmt_obj = json.loads(r.content)
         self.assertNotIn('definition', stmt_obj['object'])
@@ -1731,14 +1731,14 @@ class StatementFilterTests(TestCase):
         message.attach(textdata22)
         
         r = self.client.post(reverse(statements), message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 200)
 
         param = {"attachments": True}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
-        r = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        r = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r['Content-Type'], 'multipart/mixed; charset=utf-8')
+        self.assertEqual(r['Content-Type'], 'multipart/mixed; boundary=======ADL_LRS======')
 
     def test_attachments_no_payload(self):
         stmt = {"actor":{"mbox":"mailto:tom@example.com"},
@@ -1753,14 +1753,14 @@ class StatementFilterTests(TestCase):
             "fileUrl": "http://my/file/url"}]}
         
         response = self.client.post(reverse(statements), json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 200)
 
         param = {"attachments": True}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
-        r = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        r = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r['Content-Type'], 'application/json; charset=utf-8')
+        self.assertEqual(r['Content-Type'], 'application/json')
         obj_from_json = json.loads(r.content)
         self.assertIn('statements', obj_from_json.keys())
         self.assertIn('more', obj_from_json.keys())
@@ -1779,12 +1779,12 @@ class StatementFilterTests(TestCase):
             "fileUrl": "http://my/file/url"}]}
         
         response = self.client.post(reverse(statements), json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 200)
 
-        r = self.client.get(reverse(statements), X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        r = self.client.get(reverse(statements), X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r['Content-Type'], 'application/json; charset=utf-8')
+        self.assertEqual(r['Content-Type'], 'application/json')
         obj_from_json = json.loads(r.content)
         self.assertIn('statements', obj_from_json.keys())
         self.assertIn('more', obj_from_json.keys())
@@ -1807,14 +1807,14 @@ class StatementFilterTests(TestCase):
         param = {"statementId": stmt_id}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
         response = self.client.put(path, json.dumps(stmt), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 204)
 
         param["attachments"] = True
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
-        r = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        r = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r['Content-Type'], 'application/json; charset=utf-8')
+        self.assertEqual(r['Content-Type'], 'application/json')
 
     def test_attachments_payload_single_stmt_get(self):
         stmt_id = str(uuid.uuid1())
@@ -1846,16 +1846,16 @@ class StatementFilterTests(TestCase):
         param = {"statementId": stmt_id}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
         response = self.client.put(path, message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 204)
 
         param["attachments"] = True
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
-        r = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        r = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r['Content-Type'], 'multipart/mixed; charset=utf-8')
+        self.assertEqual(r['Content-Type'], 'multipart/mixed; boundary=======ADL_LRS======')
 
-    def test_more_attachments(self):
+    def test_more_attachments_no_payload(self):
         settings.SERVER_STMT_LIMIT=2
         stmts =[
             {"actor":{"mbox":"mailto:tom@example.com"},
@@ -1924,14 +1924,12 @@ class StatementFilterTests(TestCase):
                 "fileUrl":"http://my/test/url42"}]}
         ]
         response = self.client.post(reverse(statements), json.dumps(stmts), content_type="application/json",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 200)
 
-        param= {"attachments":True}
-        path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
-        r = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        r = self.client.get(reverse(statements), X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r['Content-Type'], 'application/json; charset=utf-8')
+        self.assertEqual(r['Content-Type'], 'application/json')
         obj_from_json = json.loads(r.content)
         self.assertEqual(len(obj_from_json['statements']), 2)
         self.assertIn('attachments', obj_from_json['statements'][0].keys())
@@ -1941,9 +1939,9 @@ class StatementFilterTests(TestCase):
         resp_id = resp_url[-32:]
 
         more_get = self.client.get(reverse(statements_more,kwargs={'more_id':resp_id}),
-            X_Experience_API_Version="1.0.0",HTTP_AUTHORIZATION=self.auth)
+            X_Experience_API_Version=settings.XAPI_VERSION,HTTP_AUTHORIZATION=self.auth)
         self.assertEqual(more_get.status_code, 200)
-        self.assertEqual(more_get['Content-Type'], 'application/json; charset=utf-8')
+        self.assertEqual(more_get['Content-Type'], 'application/json')
         more_obj = json.loads(more_get.content)
         self.assertEqual(len(more_obj['statements']), 2)
         self.assertIn('attachments', more_obj['statements'][0].keys())
@@ -2028,54 +2026,63 @@ class StatementFilterTests(TestCase):
         message.attach(textdata4)
 
         r = self.client.post(reverse(statements), message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 200)
 
         param= {"attachments":True}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
-        r = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        r = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r['Content-Type'], 'multipart/mixed; charset=utf-8')
-        headers_list= [txtsha1, txtsha2, txtsha3,txtsha4]
-        payload_list = [u"This is a text attachment1",u"This is a text attachment2",u"This is a text attachment3",u"This is a text attachment4"]
-        msg = message_from_string(r.content)
-        parts = []
 
+        self.assertEqual(r['Content-Type'], 'multipart/mixed; boundary=======ADL_LRS======')
+        headers_list1 = [txtsha1, txtsha2]
+        headers_list2 = [txtsha3, txtsha4]
+        payload_list1 = [u"This is a text attachment1",u"This is a text attachment2"]
+        payload_list2 = [u"This is a text attachment3",u"This is a text attachment4"]
+
+        # Have to add header to body so email lib will parse correctly
+        msg = message_from_string("Content-Type:" + "multipart/mixed; boundary=======ADL_LRS======" + r.content)
+        self.assertTrue(msg.is_multipart())
+
+        parts = []
         for part in msg.walk():
             parts.append(part)
 
-        self.assertEqual(parts[0].get('Content-Type'), 'multipart/mixed; boundary="ADL_LRS---------"')
         self.assertEqual(parts[1].get('Content-Type'), 'application/json')
         returned_json = json.loads(parts[1].get_payload())
+        self.assertTrue(isinstance(returned_json, dict))
         self.assertEqual(len(returned_json['statements']), 2)
         resp_url = returned_json['more']
         resp_id = resp_url[-32:]        
 
         for part in parts[2:]:
-            self.assertIn(part._payload, payload_list)
-            self.assertIn(part.get("X-Experience-API-Hash"), headers_list)
-            self.assertEqual(part.get('Content-Type'), "application/octet-stream")
+            self.assertIn(part.get_payload(), payload_list2)
+            self.assertIn(part.get("X-Experience-API-Hash"), headers_list2)
+            self.assertEqual(part.get('Content-Type'), 'text/plain; charset=utf-8')
             self.assertEqual(part.get('Content-Transfer-Encoding'), 'binary')
 
-        more_get = self.client.get(reverse(statements_more,kwargs={'more_id':resp_id}),
-            X_Experience_API_Version="1.0.0",HTTP_AUTHORIZATION=self.auth)
+        path = "%s?%s" % (reverse(statements_more,kwargs={'more_id':resp_id}), urllib.urlencode(param))
+        more_get = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION,HTTP_AUTHORIZATION=self.auth)
         self.assertEqual(more_get.status_code, 200)
-        msg = message_from_string(more_get.content)
-        parts = []
 
-        for part in msg.walk():
-            parts.append(part)
+        # Have to add header to body so email lib will parse correctly        
+        more_msg = message_from_string("Content-Type:" + "multipart/mixed; boundary=======ADL_LRS======" + more_get.content)
+        self.assertTrue(more_msg.is_multipart())
 
-        self.assertEqual(parts[0].get('Content-Type'), 'multipart/mixed; boundary="ADL_LRS---------"')
-        self.assertEqual(parts[1].get('Content-Type'), 'application/json')
-        returned_json = json.loads(parts[1].get_payload())
-        self.assertEqual(len(returned_json['statements']), 2)
+        more_parts = []
+        for more_part in more_msg.walk():
+            more_parts.append(more_part)
 
-        for part in parts[2:]:
-            self.assertIn(part._payload, payload_list)
-            self.assertIn(part.get("X-Experience-API-Hash"), headers_list)
-            self.assertEqual(part.get('Content-Type'), "application/octet-stream")
-            self.assertEqual(part.get('Content-Transfer-Encoding'), 'binary')
+        self.assertEqual(more_parts[1].get('Content-Type'), 'application/json')
+        more_returned_json = json.loads(more_parts[1].get_payload())
+        self.assertTrue(isinstance(more_returned_json, dict))
+        self.assertEqual(len(more_returned_json['statements']), 2)
+
+        for more_part in more_parts[2:]:
+            self.assertIn(more_part.get_payload(), payload_list1)
+            self.assertIn(more_part.get("X-Experience-API-Hash"), headers_list1)
+            self.assertEqual(more_part.get('Content-Type'), 'text/plain; charset=utf-8')
+            self.assertEqual(more_part.get('Content-Transfer-Encoding'), 'binary')
 
 
     def test_more_attachments_with_payloads_no_attach_param(self):
@@ -2157,21 +2164,183 @@ class StatementFilterTests(TestCase):
         message.attach(textdata4)
 
         r = self.client.post(reverse(statements), message.as_string(), content_type="multipart/mixed",
-            Authorization=self.auth, X_Experience_API_Version="1.0.0")
+            Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 200)
 
         param= {"attachments":False}
         path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
-        r = self.client.get(path, X_Experience_API_Version="1.0.0", Authorization=self.auth)
+        r = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r['Content-Type'], 'application/json; charset=utf-8')
+        self.assertEqual(r['Content-Type'], 'application/json')
         obj_from_json = json.loads(r.content)
 
         resp_url = obj_from_json['more']
         resp_id = resp_url[-32:]
 
         more_get = self.client.get(reverse(statements_more,kwargs={'more_id':resp_id}),
-            X_Experience_API_Version="1.0.0",HTTP_AUTHORIZATION=self.auth)
+            X_Experience_API_Version=settings.XAPI_VERSION,HTTP_AUTHORIZATION=self.auth)
         self.assertEqual(more_get.status_code, 200)
-        self.assertEqual(more_get['Content-Type'], 'application/json; charset=utf-8')
-         
+        self.assertEqual(more_get['Content-Type'], 'application/json')
+
+    def test_related_activities_filter_more(self):
+        stmt_list = []
+        stmt1 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt1)
+
+        stmt2 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt2)
+
+        stmt3 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt3)
+
+        stmt4 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt4)
+
+        stmt5 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt5)
+
+        stmt6 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}   
+        stmt_list.append(stmt6)
+
+        stmt7 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt7)
+
+        stmt8 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt8)
+
+        stmt9 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt9)
+
+        stmt10 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt10)
+
+        stmt11 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt11)
+
+        stmt12 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt12)
+
+        stmt13 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt13)
+
+        stmt14 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt14)
+
+        stmt15 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt15)
+
+        stmt16 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt16)
+
+        stmt17 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt17)
+
+        stmt18 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt18)
+
+        stmt19 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt19)
+
+        stmt20 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt20)
+
+        stmt21 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt21)
+
+        stmt22 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt22)
+
+        stmt23 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt23)
+
+        stmt24 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt24)
+
+        stmt25 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt25)
+
+        stmt26 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://foobar"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}}}
+        stmt_list.append(stmt26)
+
+        stmt27 = {"actor":{"objectType":"Agent","mbox":"mailto:s@s.com"},
+            "object":{"id":"act://barfoo"},"verb":{"id":"verb:verb/passed",
+            "display":{"en-US":"passed", 'en-GB':"altpassed"}},
+            "context":{"contextActivities": {"other": {"id": "act://foobar"}}}}   
+        stmt_list.append(stmt27)
+
+        # Post statements
+        post_statements = self.client.post(reverse(statements), json.dumps(stmt_list),
+            content_type="application/json",HTTP_AUTHORIZATION=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)        
+        self.assertEqual(post_statements.status_code, 200)
+
+        # Get regular
+        get_param = {"activity":"act://foobar"}
+        path = "%s?%s" % (reverse(statements),urllib.urlencode(get_param))
+        r = self.client.get(path, X_Experience_API_Version="1.0", Authorization=self.auth)
+        self.assertEqual(r.status_code, 200)
+        returned = json.loads(r.content)
+        returned_stmts = returned['statements']
+        self.assertEqual(len(returned_stmts), len(stmt_list) - 1)
+        self.assertEqual(returned['more'], "")
+
+        # Get related
+        get_param = {"activity":"act://foobar", "related_activities": True}
+        path = "%s?%s" % (reverse(statements),urllib.urlencode(get_param))
+        r = self.client.get(path, X_Experience_API_Version="1.0", Authorization=self.auth)
+        self.assertEqual(r.status_code, 200)
+        returned = json.loads(r.content)
+        returned_stmts = returned['statements']
+        self.assertEqual(len(returned_stmts), len(stmt_list))
+        self.assertEqual(returned['more'], "")

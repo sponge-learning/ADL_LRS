@@ -1,3 +1,4 @@
+from django.db import transaction
 from ..models import Activity
 
 class ActivityManager():
@@ -7,6 +8,7 @@ class ActivityManager():
         self.populate(data)
 
     #Save activity definition to DB
+    @transaction.commit_on_success
     def save_activity_definition_to_db(self, act_def_type, int_type, more_info, name, desc, crp, ext):
         created = True        
         # Have to check if the activity already has an activity definition. Can only update name and
@@ -30,6 +32,7 @@ class ActivityManager():
         return new_name_value == existing_name_value
 
     #Once JSON is verified, populate the activity objects
+    @transaction.commit_on_success
     def populate(self, the_object):        
         activity_id = the_object['id']
         can_update = False
@@ -52,18 +55,12 @@ class ActivityManager():
             # If canonical already exists and have define
             if self.define:
                 # Act exists - if it has same auth set it, else create non-canonical version
-                if act.authority == self.auth:
+                if (act.authority == self.auth) or \
+                   (act.authority.objectType == 'Group' and self.auth in act.authority.member.all()) or \
+                   (self.auth.objectType == 'Group' and act.authority in self.auth.member.all()):
                     self.Activity = act
                     act_created = False
-                    can_update = True
-                elif act.authority.objectType == 'Group' and self.auth in act.authority.member.all():
-                    self.Activity = act
-                    act_created = False
-                    can_update = True
-                elif self.auth.objectType == 'Group' and act.authority in self.auth.member.all():
-                    self.Activity = act
-                    act_created = False
-                    can_update = True                                                        
+                    can_update = True                                                     
                 else:
                     # Not allowed to create global version b/c the activity already exists (could also already have created a non-global act)
                     self.Activity, act_created = Activity.objects.get_or_create(activity_id=activity_id,
@@ -83,6 +80,7 @@ class ActivityManager():
         return act_def != self.Activity.to_dict().get('definition', {})
 
     #Populate definition either from JSON or validated XML
+    @transaction.commit_on_success
     def populate_definition(self, act_def, act_created, can_update):
         # return t/f if you can create the def from type, interactionType and moreInfo if the activity already
         # doesn't have a definition
@@ -113,19 +111,24 @@ class ActivityManager():
         if act_def_created and self.Activity.activity_definition_crpanswers:
             self.populate_correct_responses_pattern(act_def)
 
+    @transaction.commit_on_success
     def populate_correct_responses_pattern(self, act_def):
         #Multiple choice and sequencing must have choices
-        if act_def['interactionType'] == 'choice' or \
-            act_def['interactionType'] == 'sequencing':
+        if (act_def['interactionType'] == 'choice' or \
+            act_def['interactionType'] == 'sequencing') and \
+            ('choices' in act_def):
             self.Activity.activity_definition_choices = act_def['choices']
         #Matching must have both source and target
-        elif act_def['interactionType'] == 'matching':
+        elif (act_def['interactionType'] == 'matching') and \
+            ('source' in act_def and 'target' in act_def):
             self.Activity.activity_definition_sources = act_def['source'] 
             self.Activity.activity_definition_targets = act_def['target']
         #Performance must have steps
-        elif act_def['interactionType'] == 'performance':
+        elif (act_def['interactionType'] == 'performance') and \
+            ('steps' in act_def):
             self.Activity.activity_definition_steps = act_def['steps']
         #Likert must have scale
-        elif act_def['interactionType'] == 'likert':
+        elif (act_def['interactionType'] == 'likert') and \
+            ('scale' in act_def):
             self.Activity.activity_definition_scales = act_def['scale']
         self.Activity.save()

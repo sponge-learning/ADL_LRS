@@ -1,9 +1,10 @@
 # Django settings for adl_lrs project.
-from unipath import Path
+from os import path
+from os.path import dirname, abspath
 
 # Root of LRS
-SETTINGS_PATH = Path(__file__)
-PROJECT_ROOT = SETTINGS_PATH.ancestor(3)
+SETTINGS_DIR = dirname(abspath(__file__))
+PROJECT_ROOT = dirname(dirname(SETTINGS_DIR))
 
 # If you want to debug
 DEBUG = True
@@ -43,7 +44,7 @@ LANGUAGE_CODE = 'en-US'
 # content for multiple sites.
 SITE_ID = 1
 SITE_SCHEME = 'http'
-
+SITE_DOMAIN = 'localhost:8000'
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
 USE_I18N = True
@@ -57,12 +58,12 @@ USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = PROJECT_ROOT.child('media')
+MEDIA_ROOT = path.join(PROJECT_ROOT, 'media')
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = ''
+MEDIA_URL = '/media/'
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
@@ -98,8 +99,7 @@ OAUTH_ENABLED = True
 OAUTH_AUTHORIZE_VIEW = 'oauth_provider.views.authorize_client'
 OAUTH_CALLBACK_VIEW = 'oauth_provider.views.callback_view'
 OAUTH_SIGNATURE_METHODS = ['plaintext','hmac-sha1','rsa-sha1']
-OAUTH_REALM_KEY_NAME = 'http://localhost:8000/XAPI'
-
+OAUTH_REALM_KEY_NAME = '%s://%s/xAPI' % (SITE_SCHEME, SITE_DOMAIN)
 
 # THIS IS OAUTH2 STUFF
 STATE = 1
@@ -161,6 +161,7 @@ TEMPLATE_LOADERS = (
 
 TEMPLATE_CONTEXT_PROCESSORS = (
     "django.contrib.auth.context_processors.auth",
+    "django.core.context_processors.request",
     "django.core.context_processors.debug",
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
@@ -200,16 +201,18 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'lrs',
-    'gunicorn',
     'oauth_provider',
     'oauth2_provider.provider',
     'oauth2_provider.provider.oauth2',
     'django.contrib.admin',
-    'django_extensions'
+    'django_extensions',
+    'jsonify',
+    'south',
+    'endless_pagination'
 )
 
-REQUEST_HANDLER_LOG_DIR = '../logs/django_request.log'
-DEFAULT_LOG_DIR = '../logs/lrs.log'
+REQUEST_HANDLER_LOG_DIR = path.join(PROJECT_ROOT, 'logs/django_request.log')
+DEFAULT_LOG_DIR = path.join(PROJECT_ROOT, 'logs/lrs.log')
 
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.

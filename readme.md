@@ -1,91 +1,114 @@
-# ADL LRS 
+﻿# ADL LRS 
 
-#### Installation tested on Ubuntu 12.10 machine with Python 2.7.3. Should be good with Ubuntu 10.04 LTS - 13.04 releases. Updated to be compliant with the 1.0.1 xAPI spec.
+#### Installation tested on Ubuntu 12.10 machine with Python 2.7.3. Should be good with Ubuntu 10.04 LTS - 13.04 releases. Updated to be compliant with the 1.0.2 xAPI spec.
 
 This version is stable, but only intended to support a small amount of users as a proof of concept. While it uses programming best practices, it is not designed to take the place of an enterprise system.
 
 ## Installation
 
-Software Installation
+**Install Prerequisites**
 
-    sudo apt-get install git fabric postgresql python-setuptools postgresql-server-dev-all python-dev libxml2-dev libxslt-dev
-    sudo easy_install pip
-    sudo pip install virtualenv
-
-Setup Postgres
-
-    sudo passwd postgres (set password for postgres system user)
-    sudo -u postgres createuser -P <db_owner> (create postgres user that will be owner of the db - make superuser)
-    su postgres
-    psql template1
+    admin:~$ sudo apt-get install git fabric postgresql python-setuptools \
+    	postgresql-server-dev-all python-dev libxml2-dev libxslt-dev
+    admin:~$ sudo easy_install pip
+    admin:~$ sudo pip install virtualenv
     
-Create database inside of postgres shell
+**Create ADL LRS system user**
 
-    CREATE DATABASE lrs OWNER <db_owner>;
-    \q (exits shell)
-    exit (logout as system postgres user)
+    admin:~$ sudo useradd -c "ADL Learning Record Store System" -m -s "/bin/bash" <db_owner>
     
-Create ADL LRS system user
+**Setup Postgres**
 
-    sudo useradd -c "ADL Learning Record Store System" -m -s "/bin/bash" adllrs
-    sudo passwd adllrs (set password)
-    su adllrs
-    cd ~
+    admin:~$ sudo -u postgres createuser -P -s <db_owner>
+    Enter password for new role: *****
+	Enter it again: *****
+    admin:~$ sudo -u postgres psql template1
+    template1=# CREATE DATABASE lrs OWNER <db_owner>;
+    template1=# \q (exits shell)
     
-Create desired directory to keep LRS
+**Clone the LRS repository**
 
-    mkdir <dir_name>
-    cd <dir_name>
+	admin:~$ sudo su <db_owner>
+	dbowner:~$ cd ~
+	dbowner:~$ mkdir <dir_name>
+	dbowner:~$ cd <dir_name>
+    dbowner:~$ git clone https://github.com/adlnet/ADL_LRS.git
+    dbowner:~$ cd ADL_LRS/
     
-Clone the LRS repository
+**Set the LRS configuration**
 
-    git clone https://github.com/adlnet/ADL_LRS.git
-    cd ADL_LRS
+	### File: ADL_LRS/adl_lrs/settings.py
+	
+	# configure the database
+	DATABASES = {
+    	'default': {
+    	    'ENGINE': 'django.db.backends.postgresql_psycopg2',
+	        'NAME': 'lrs',
+	        'USER': '<db_owner>',
+	        'PASSWORD': '<password>',   # Comment out these lines if
+	        'HOST': 'localhost',      # using postgresql "peer" auth.
+	        'PORT': '',               # See pg_hba.conf for details
+	    }
+	}
+	
+	# Make this unique, and don't share it with anybody.
+	SECRET_KEY = 'Some long random string with numb3rs and $ymbol$'
+	
+	# set to 'https' if using SSL encryption
+	SITE_SCHEME = 'http'
+  
+  	# Keep as localhost if running dev or change it to your planned domain. Should be the same in /admin site (see below)
+  	SITE_DOMAIN = 'localhost:8000'
+
+**Setup the environment**
+
+    dbowner:ADL_LRS$ fab setup_env
+    ...
+    dbowner:ADL_LRS$ source ../env/bin/activate
+    (env)dbowner:ADL_LRS$
     
-Note: Under ADL_LRS/adl_lrs/settings.py, make sure the database USER and PASSWORD are the same as the db_owner created
-earlier. Also, be sure to replace the current SECRET_KEY flag with a secret string of your own, and be sure not to share it.
+**Setup the LRS**
 
-Set Site Scheme
+    (env)dbowner:ADL_LRS$ fab setup_lrs
+    ...
+    You just installed Django's auth system, which means you don't have any superusers defined.
+	Would you like to create one now? (yes/no): yes
+	Username (leave blank to use '<db_owner>'): 
+	E-mail address:
+	Password: 
+	Password (again): 
+	Superuser created successfully.
+	...
 
-  Inside of ADL_LRS/adl_lrs/settings.py there is a SITE_SCHEME value you should set (defaults to http but if you're using https set it here)
-
-Setup the environment
-
-    fab setup_env
-    source ../env/bin/activate
-    
-Setup the LRS - while still in the activated virtual environment (creates media directories and cache tables, then syncs database)
-
-    fab setup_lrs (when prompted make adllrs a Django superuser)
+If you get some sort of authentication error here, make sure that Django and PostgreSQL are both
+using the same form of authentication (*adl_lrs/settings.py* and *pg_hba.conf*) and that the credentials
+given in *settings.py* are the same as those you created.
 
 ## Starting
+
 While still in the ADL_LRS directory, run
 
-    supervisord
+    (env)dbowner:ADL_LRS$ python manage.py runserver
 
-To verify it's running
+This starts a lightweight development web server on the local machine. By default, the server runs on port 8000 on the IP address 127.0.0.1. You can pass in an IP address and port number explicitly. This will serve your static files without setting up Nginx but must NOT be used for production purposes. Press `CTRL + C` to stop the server
 
-    supervisorctl
 
 Set your site domain
 
-  Visit the admin section of your website (/admin). Click Sites and you'll see the only entry is 'example.com' (The key for this in the DB is 1 and it maps back to the SITE_ID value in settings). Change the domain and name to the domain you're going to use. If running locally it could be localhost:8000, or if production could be lrs.adlnet.gov (DON'T include the scheme here, that should be set in settings.py already). Sync your database again to apply the change
+  Visit the admin section of your website (/admin). Click Sites and you'll see the only entry is 'example.com' (The key for this in the DB is 1 and it maps back to the SITE_ID value in settings). Change the domain and name to the domain you're going to use. This should be the same value as what you set SITE_DOMAIN as in the settings.py file. If running locally it could be localhost:8000, or if production could be lrs.adlnet.gov (DON'T include the scheme here, that should be set in settings.py already). Sync your database again to apply the change
 
-    python manage.py syncdb
+    (env)dbowner:ADL_LRS$ python manage.py syncdb
 
 
 
 Whenever you want to exit the virtual environment, just type `deactivate`
 
-You should see a task named web running. This will host the application using gunicorn with 2 worker processes.
-If you open a browser and visit http://localhost:8000/xapi you will hit the LRS. Gunicorn does not serve static files
-so no CSS will be present. This is fine if you're doing testing/development but if you want to host a production-ready
-LRS, Nginx needs to be setup to serve static files. For more production-like environments, we also recommend using uWSGI instead of Gunicorn. Please read [these](https://github.com/adlnet/ADL_LRS/wiki/Using-Nginx-for-Production) instructions for including
-Nginx and using uWSGI intead of Gunicorn. For a more detailed description of the tools being used in general, visit [here](https://github.com/adlnet/ADL_LRS/wiki/Putting-the-Pieces-Together). Additionally if you're just doing dev, instead of using supervisor you can just run `python manage.py runserver` and use Django's built-in web server.
+
+For other ways to start and run the LRS, please visit our Wiki.
 
 ## Test LRS
     
-    fab test_lrs
+    (env)dbowner:ADL_LRS$ fab test_lrs
 
 ## Helpful Information
     
@@ -97,7 +120,7 @@ Nginx and using uWSGI intead of Gunicorn. For a more detailed description of the
 * [Clearing the Database](https://github.com/adlnet/ADL_LRS/wiki/Clearing-the-Database)
 
 ## License
-   Copyright 2012 Advanced Distributed Learning
+   Copyright &copy;2015 Advanced Distributed Learning
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
