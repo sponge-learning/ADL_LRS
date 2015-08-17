@@ -14,7 +14,7 @@ from util import convert_to_dict, convert_post_body_to_dict
 from etag import get_etag_info
 from jws import JWS, JWSException
 from ..exceptions import OauthUnauthorized, OauthBadRequest, ParamError, BadRequest
-from ..objects.AgentManager import AgentManager
+from ..models import Agent
 
 from oauth_provider.utils import get_oauth_request, require_params
 from oauth_provider.decorators import CheckOauth
@@ -38,17 +38,14 @@ def parse(request, more_id=None):
             'type': 'django',
             'user': user,
             'define': True,
-            'authority': AgentManager(
-                params={
-                    'name': user.get_full_name(),
-                    'account': {
-                        'homePage': request.build_absolute_uri('/'),
-                        'name': '%s.%s:%s' % (user._meta.app_label, user._meta.object_name, user.pk),
-                        },
-                    'objectType': 'Agent'
+            'authority': Agent.objects.retrieve_or_create(
+                name=user.get_full_name(),
+                account={
+                    'homePage': request.build_absolute_uri('/'),
+                    'name': '%s.%s:%s' % (user._meta.app_label, user._meta.object_name, user.pk),
                     },
-                define=True,
-                ).Agent,
+                objectType='Agent',
+                )[0],
             }
     elif 'Authorization' in r_dict['headers']:
         # OAuth will always be dict, not http auth. Set required fields for oauth module and type for authentication
