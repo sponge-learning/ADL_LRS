@@ -147,7 +147,7 @@ def process_complex_get(req_dict):
 def statements_post(req_dict):
     auth = req_dict['auth']
     stmt_responses = process_statements(req_dict['body'], auth, req_dict['headers']['X-Experience-API-Version'])
-    return HttpResponse(json.dumps([st for st in stmt_responses]), mimetype="application/json", status=200)
+    return HttpResponse(json.dumps([st for st in stmt_responses]), content_type="application/json", status=200)
 
 def statements_put(req_dict):
     auth = req_dict['auth']
@@ -385,7 +385,7 @@ def activities_get(req_dict):
     activityId = req_dict['params']['activityId']
     act = Activity.objects.get(activity_id=activityId, canonical_version=True)    
     return_act = json.dumps(act.to_dict())    
-    resp = HttpResponse(return_act, mimetype="application/json", status=200)
+    resp = HttpResponse(return_act, content_type="application/json", status=200)
     resp['Content-Length'] = str(len(return_act))
     
     # If it's a HEAD request
@@ -450,7 +450,7 @@ def agent_profile_delete(req_dict):
 def agents_get(req_dict):
     a = Agent.objects.get(**req_dict['agent_ifp'])    
     agent_data = json.dumps(a.to_dict_person())
-    resp = HttpResponse(agent_data, mimetype="application/json")
+    resp = HttpResponse(agent_data, content_type="application/json")
     resp['Content-Length'] = str(len(agent_data))
     
     # If it's a HEAD request

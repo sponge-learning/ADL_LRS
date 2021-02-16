@@ -207,7 +207,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django_extensions',
     'jsonify',
-    'south',
     'endless_pagination'
 )
 

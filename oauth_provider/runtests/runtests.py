@@ -11,7 +11,6 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'oauth_provider.runtests.settings'
 
 from django.conf import settings
 from django.test.utils import get_runner
-from south.management.commands import patch_for_test_db_setup
 
 def usage():
     return """
@@ -35,7 +34,6 @@ def main():
         print(usage())
         sys.exit(1)
 
-    patch_for_test_db_setup()
     failures = test_runner.run_tests(['tests' + test_case])
 
     sys.exit(failures)
