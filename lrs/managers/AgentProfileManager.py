@@ -14,7 +14,7 @@ class AgentProfileManager():
     def __init__(self, agent):
     	self.Agent = agent
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def save_non_json_profile(self, p, profile, request_dict):
         p.content_type = request_dict['headers']['CONTENT_TYPE']
         p.etag = etag.create_tag(profile.read())
@@ -31,7 +31,7 @@ class AgentProfileManager():
 
         p.save()
 
-    @transaction.commit_on_success        
+    @transaction.atomic
     def post_profile(self, request_dict):
         # get/create profile
         p, created = AgentProfile.objects.get_or_create(profileId=request_dict['params']['profileId'],agent=self.Agent)
@@ -71,7 +71,7 @@ class AgentProfileManager():
                 p.updated = datetime.datetime.utcnow().replace(tzinfo=utc)
             p.save()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def put_profile(self, request_dict):
         # get/create profile
         p, created = AgentProfile.objects.get_or_create(profileId=request_dict['params']['profileId'],agent=self.Agent)
@@ -135,7 +135,7 @@ class AgentProfileManager():
             ids = self.Agent.agentprofile_set.values_list('profileId', flat=True)
         return ids
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete_profile(self, profileId):
         try:
             self.get_profile(profileId).delete()
