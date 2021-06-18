@@ -11,5 +11,8 @@ setup(
     version = "0.0.0",
     author = "ADL",
     packages=['lrs'],
-    install_requires=[str(ir.req) for ir in install_reqs],
+    install_requires=[
+        str(ir.requirement if hasattr(ir, "requirement") else ir.req)
+        for ir in install_reqs
+    ],
 )
