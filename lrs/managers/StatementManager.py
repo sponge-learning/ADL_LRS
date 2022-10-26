@@ -1,6 +1,8 @@
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.core.files.base import ContentFile
 from django.core.cache import get_cache
+
+from lrs.exceptions import ParamConflict
 
 from .ActivityManager import ActivityManager
 from ..models import Verb, Statement, StatementRef, StatementAttachment, StatementContextActivity, SubStatement, SubStatementContextActivity, Agent 
@@ -71,7 +73,11 @@ class StatementManager():
             del self.data['id']
 
         # Try to create statement
-        stmt = Statement.objects.create(**self.data)
+        try:
+            stmt = Statement.objects.create(**self.data)
+        except IntegrityError:
+            err_msg = "A statement with ID %s already exists" % self.data.get('statement_id')
+            raise ParamConflict(err_msg)
 
         # Save context activities
         # Can have multiple groupings
