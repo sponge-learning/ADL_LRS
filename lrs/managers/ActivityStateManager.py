@@ -137,6 +137,7 @@ class ActivityStateManager():
             s.save()
 
     def get_state(self, activity_id, registration, state_id):
+        print(activity_id, registration, state_id)
         try:
             if registration:
                 return self.Agent.activitystate_set.get(state_id=state_id, activity_id=activity_id, registration_id=registration)
