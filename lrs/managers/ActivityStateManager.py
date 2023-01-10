@@ -137,9 +137,9 @@ class ActivityStateManager():
             s.save()
 
     def get_state(self, activity_id, registration, state_id):
-        print(activity_id, registration, state_id)
         try:
             if registration:
+                print(activity_id, registration, state_id)
                 return self.Agent.activitystate_set.get(state_id=state_id, activity_id=activity_id, registration_id=registration)
             return self.Agent.activitystate_set.get(state_id=state_id, activity_id=activity_id)
         except ActivityState.DoesNotExist:
