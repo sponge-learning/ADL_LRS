@@ -303,7 +303,6 @@ def activity_state_get(req_dict):
     # state id means we want only 1 item
     if state_id:
         resource = actstate.get_state(activity_id, registration, state_id)
-        print(resource.state)
         if resource.state:
             response = HttpResponse(resource.state.read(), content_type=resource.content_type)
         else:
