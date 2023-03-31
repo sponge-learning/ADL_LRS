@@ -1,12 +1,15 @@
-from setuptools import setup
-from pip.req import parse_requirements
+from __future__ import print_function
 
-install_reqs = parse_requirements('requirements.txt', session=False)
+from pkg_resources import parse_requirements
+from setuptools import setup
+
+with open("requirements.txt") as req_file:
+    install_reqs = list(parse_requirements(req_file.readlines()))
 
 setup(
-    name = "lrs",
-    version = "0.0.0",
-    author = "ADL",
+    name="lrs",
+    version="0.0.1",
+    author="ADL",
     packages=['lrs'],
-    install_requires=[str(ir.req) for ir in install_reqs],
+    install_requires=map(str, install_reqs),
 )
