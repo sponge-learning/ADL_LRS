@@ -4,7 +4,7 @@ import linecache
 from fabric.api import local
 
 def setup_env():
-    INSTALL_STEPS = ['virtualenv ../env;. ../env/bin/activate;pip install -r requirements.txt;deactivate']
+    INSTALL_STEPS = ['virtualenv ../env;. ../env/bin/activate;pip install .;deactivate']
     for step in INSTALL_STEPS:
         local(step)
 
