@@ -12,7 +12,7 @@ from ..util import etag
 
 class ActivityProfileManager():
     
-    @transaction.commit_on_success
+    @transaction.atomic
     def save_non_json_profile(self, p, created, profile, request_dict):
         #Save profile content type based on incoming content type header and create etag
         p.content_type = request_dict['headers']['CONTENT_TYPE']
@@ -32,7 +32,7 @@ class ActivityProfileManager():
         
         p.save()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def post_profile(self, request_dict):
         # get/create profile
         p, created = ActivityProfile.objects.get_or_create(activityId=request_dict['params']['activityId'],  profileId=request_dict['params']['profileId'])
@@ -72,7 +72,7 @@ class ActivityProfileManager():
                 p.updated = datetime.datetime.utcnow().replace(tzinfo=utc)
             p.save()
 
-    @transaction.commit_on_success
+    @transaction.atomic
 	#Save profile to desired activity
     def put_profile(self, request_dict):        
         #Get the profile, or if not already created, create one
@@ -142,7 +142,7 @@ class ActivityProfileManager():
             ids = ActivityProfile.objects.filter(activityId=activityId).values_list('profileId', flat=True)
         return ids
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def delete_profile(self, request_dict):
         #Get profile and delete it
         try:

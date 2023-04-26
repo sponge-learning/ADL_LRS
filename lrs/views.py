@@ -189,7 +189,7 @@ def about(request):
             }            
         }
     }    
-    return HttpResponse(json.dumps(lrs_data), mimetype="application/json", status=200)
+    return HttpResponse(json.dumps(lrs_data), content_type="application/json", status=200)
 
 @csrf_protect
 @require_http_methods(["POST", "GET"])
@@ -275,7 +275,7 @@ def reg_client(request):
         else:
             return render_to_response('regclient.html', {"form": form}, context_instance=RequestContext(request))
 
-@transaction.commit_on_success
+@transaction.atomic
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["POST", "GET"])
 def reg_client2(request):
@@ -341,11 +341,11 @@ def my_download_statements(request):
     stmts = Statement.objects.filter(user=request.user).order_by('-stored')
     result = "[%s]" % ",".join([stmt.object_return() for stmt in stmts])
 
-    response = HttpResponse(result, mimetype='application/json', status=200)
+    response = HttpResponse(result, content_type='application/json', status=200)
     response['Content-Length'] = len(result)
     return response
 
-@transaction.commit_on_success
+@transaction.atomic
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["DELETE"])
 def my_delete_statements(request):
@@ -378,7 +378,7 @@ def my_activity_state(request):
         return HttpResponse(state.json_state, content_type=state.content_type, status=200)
     return HttpResponseBadRequest("Activity ID, State ID and are both required")
 
-@transaction.commit_on_success
+@transaction.atomic
 @login_required(login_url=LOGIN_URL)
 def my_app_status(request):
     try:
@@ -389,11 +389,11 @@ def my_app_status(request):
         client.status = new_status
         client.save()
         ret = {"app_name":client.name, "status":client.get_status_display()}
-        return HttpResponse(json.dumps(ret), mimetype="application/json", status=200)
+        return HttpResponse(json.dumps(ret), content_type="application/json", status=200)
     except:
-        return HttpResponse(json.dumps({"error_message":"unable to fulfill request"}), mimetype="application/json", status=400)
+        return HttpResponse(json.dumps({"error_message":"unable to fulfill request"}), content_type="application/json", status=400)
 
-@transaction.commit_on_success
+@transaction.atomic
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["DELETE"])
 def delete_token(request):
@@ -414,7 +414,7 @@ def delete_token(request):
     except:
         return HttpResponse("Unknown token", status=400)
 
-@transaction.commit_on_success
+@transaction.atomic
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["DELETE"])
 def delete_token2(request):
@@ -429,7 +429,7 @@ def delete_token2(request):
         return HttpResponse(e.message, status=400)
     return HttpResponse("", status=204)
 
-@transaction.commit_on_success
+@transaction.atomic
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["DELETE"])
 def delete_client(request):

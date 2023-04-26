@@ -22,7 +22,7 @@ class StatementManager():
         
         self.populate()
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def void_statement(self,stmt_id):
         stmt = Statement.objects.get(statement_id=stmt_id)
         stmt.voided = True
@@ -32,7 +32,7 @@ class StatementManager():
         stmt_ref = StatementRef.objects.create(ref_id=stmt_id)
         return stmt_ref
 
-    @transaction.commit_on_success
+    @transaction.atomic
     # Save sub to DB
     def save_substatement_to_db(self):
         # Pop off any context activities
@@ -59,7 +59,7 @@ class StatementManager():
 
         return sub
 
-    @transaction.commit_on_success
+    @transaction.atomic
     # Save statement to DB
     def save_statement_to_db(self):
         # Pop off any context activities
@@ -132,7 +132,7 @@ class StatementManager():
             attachment.payload.save(sha2, payload)
         return attachment, created 
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def populate_attachments(self, attachment_data, attachment_payloads):
         if attachment_data:
             # Iterate through each attachment
@@ -197,7 +197,7 @@ class StatementManager():
 
             del self.data['context']
     
-    @transaction.commit_on_success
+    @transaction.atomic
     def build_verb_object(self):
         incoming_verb = self.data['verb']
         verb_id = incoming_verb['id']

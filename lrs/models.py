@@ -48,7 +48,7 @@ class Verb(models.Model):
 
 agent_ifps_can_only_be_one = ['mbox', 'mbox_sha1sum', 'account', 'openid']
 class AgentManager(models.Manager):
-    @transaction.commit_on_success
+    @transaction.atomic
     def retrieve_or_create(self, **kwargs):
         ifp_sent = [a for a in agent_ifps_can_only_be_one if kwargs.get(a, None) != None]        
         is_group = kwargs.get('objectType', None) == "Group"
