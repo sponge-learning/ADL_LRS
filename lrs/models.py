@@ -657,7 +657,7 @@ class Statement(models.Model):
     version = models.CharField(max_length=7)
     attachments = models.ManyToManyField(StatementAttachment)
     # Used in views
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, db_index=True, on_delete=models.SET_NULL)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, db_index=True, on_delete=models.SET_NULL, db_constraint=False)
     full_statement = JSONField()
     
     def to_dict(self, lang=None, format='exact'):
