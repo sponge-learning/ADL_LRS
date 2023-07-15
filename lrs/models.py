@@ -482,37 +482,113 @@ class ActivityProfile(models.Model):
 
 
 class SubStatement(models.Model):
-    object_agent = models.ForeignKey(Agent, related_name="object_of_substatement", on_delete=models.SET_NULL, null=True,
-                                     db_index=True)
-    object_activity = models.ForeignKey(Activity, related_name="object_of_substatement", on_delete=models.SET_NULL,
-                                        null=True, db_index=True)
-    object_statementref = models.ForeignKey(StatementRef, related_name="object_of_substatement",
-                                            on_delete=models.SET_NULL, null=True, db_index=True)
-    actor = models.ForeignKey(Agent, related_name="actor_of_substatement", null=True, on_delete=models.SET_NULL)
-    verb = models.ForeignKey(Verb, null=True, on_delete=models.SET_NULL)
+    object_agent = models.ForeignKey(
+        Agent,
+        related_name="object_of_substatement",
+        on_delete=models.SET_NULL,
+        null=True,
+        db_index=True
+    )
+    object_activity = models.ForeignKey(
+        Activity,
+        related_name="object_of_substatement",
+        on_delete=models.SET_NULL,
+        null=True,
+        db_index=True
+    )
+    object_statementref = models.ForeignKey(
+        StatementRef,
+        related_name="object_of_substatement",
+        on_delete=models.SET_NULL,
+        null=True,
+        db_index=True
+    )
+    actor = models.ForeignKey(
+        Agent,
+        related_name="actor_of_substatement",
+        null=True,
+        on_delete=models.SET_NULL
+    )
+    verb = models.ForeignKey(
+        Verb,
+        null=True,
+        on_delete=models.SET_NULL
+    )
     result_success = models.NullBooleanField()
     result_completion = models.NullBooleanField()
-    result_response = models.TextField(blank=True)
+    result_response = models.TextField(
+        blank=True
+    )
     # Made charfield since it would be stored in ISO8601 duration format
-    result_duration = models.CharField(max_length=40, blank=True)
-    result_score_scaled = models.FloatField(blank=True, null=True)
-    result_score_raw = models.FloatField(blank=True, null=True)
-    result_score_min = models.FloatField(blank=True, null=True)
-    result_score_max = models.FloatField(blank=True, null=True)
-    result_extensions = JSONField(default={}, blank=True)
-    timestamp = models.DateTimeField(blank=True, null=True,
-                                     default=lambda: datetime.utcnow().replace(tzinfo=utc).isoformat())
-    context_registration = models.CharField(max_length=40, blank=True, db_index=True)
-    context_instructor = models.ForeignKey(Agent, blank=True, null=True, on_delete=models.SET_NULL,
-                                           db_index=True, related_name='substatement_context_instructor')
-    context_team = models.ForeignKey(Agent, blank=True, null=True, on_delete=models.SET_NULL,
-                                     related_name="substatement_context_team")
-    context_revision = models.TextField(blank=True)
-    context_platform = models.CharField(max_length=50, blank=True)
-    context_language = models.CharField(max_length=50, blank=True)
-    context_extensions = JSONField(default={}, blank=True)
+    result_duration = models.CharField(
+        max_length=40,
+        blank=True
+    )
+    result_score_scaled = models.FloatField(
+        blank=True,
+        null=True
+    )
+    result_score_raw = models.FloatField(
+        blank=True,
+        null=True
+    )
+    result_score_min = models.FloatField(
+        blank=True,
+        null=True
+    )
+    result_score_max = models.FloatField(
+        blank=True,
+        null=True
+    )
+    result_extensions = JSONField(
+        default={},
+        blank=True
+    )
+    timestamp = models.DateTimeField(
+        blank=True,
+        null=True,
+        default=lambda: datetime.utcnow().replace(tzinfo=utc).isoformat()
+    )
+    context_registration = models.CharField(
+        max_length=40,
+        blank=True,
+        db_index=True
+    )
+    context_instructor = models.ForeignKey(
+        Agent,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        db_index=True,
+        related_name='substatement_context_instructor'
+    )
+    context_team = models.ForeignKey(
+        Agent,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="substatement_context_team"
+    )
+    context_revision = models.TextField(
+        blank=True
+    )
+    context_platform = models.CharField(
+        max_length=50,
+        blank=True
+    )
+    context_language = models.CharField(
+        max_length=50,
+        blank=True
+    )
+    context_extensions = JSONField(
+        default={},
+        blank=True
+    )
     # context also has a stmt field which is a statementref
-    context_statement = models.CharField(max_length=40, blank=True)
+    context_statement = models.CharField(
+        max_length=40,
+        blank=True
+    )
 
     class Meta:
         app_label = 'lrs'
@@ -670,50 +746,154 @@ class StatementAttachment(models.Model):
 
 class Statement(models.Model):
     # If no statement_id is given, will create one automatically
-    statement_id = UUIDField(version=1, db_index=True, unique=True)
-    object_agent = models.ForeignKey(Agent, related_name="object_of_statement", null=True, on_delete=models.SET_NULL,
-                                     db_index=True)
-    object_activity = models.ForeignKey(Activity, related_name="object_of_statement", null=True,
-                                        on_delete=models.SET_NULL, db_index=True)
-    object_substatement = models.ForeignKey(SubStatement, related_name="object_of_statement", null=True,
-                                            on_delete=models.SET_NULL, db_index=True)
-    object_statementref = models.ForeignKey(StatementRef, related_name="object_of_statement", null=True,
-                                            on_delete=models.SET_NULL, db_index=True)
-    actor = models.ForeignKey(Agent, related_name="actor_statement", db_index=True, null=True,
-                              on_delete=models.SET_NULL)
-    verb = models.ForeignKey(Verb, null=True, on_delete=models.SET_NULL)
+    statement_id = UUIDField(
+        version=1,
+        db_index=True,
+        unique=True
+    )
+    object_agent = models.ForeignKey(
+        Agent,
+        related_name="object_of_statement",
+        null=True,
+        on_delete=models.SET_NULL,
+        db_index=True
+    )
+    object_activity = models.ForeignKey(
+        Activity,
+        related_name="object_of_statement",
+        null=True,
+        on_delete=models.SET_NULL,
+        db_index=True
+    )
+    object_substatement = models.ForeignKey(
+        SubStatement,
+        related_name="object_of_statement",
+        null=True,
+        on_delete=models.SET_NULL,
+        db_index=True
+    )
+    object_statementref = models.ForeignKey(
+        StatementRef,
+        related_name="object_of_statement",
+        null=True,
+        on_delete=models.SET_NULL,
+        db_index=True
+    )
+    actor = models.ForeignKey(
+        Agent,
+        related_name="actor_statement",
+        db_index=True,
+        null=True,
+        on_delete=models.SET_NULL
+    )
+    verb = models.ForeignKey(
+        Verb,
+        null=True,
+        on_delete=models.SET_NULL
+    )
     result_success = models.NullBooleanField()
     result_completion = models.NullBooleanField()
-    result_response = models.TextField(blank=True)
+    result_response = models.TextField(
+        blank=True
+    )
     # Made charfield since it would be stored in ISO8601 duration format
-    result_duration = models.CharField(max_length=40, blank=True)
-    result_score_scaled = models.FloatField(blank=True, null=True)
-    result_score_raw = models.FloatField(blank=True, null=True)
-    result_score_min = models.FloatField(blank=True, null=True)
-    result_score_max = models.FloatField(blank=True, null=True)
-    result_extensions = JSONField(default={}, blank=True)
+    result_duration = models.CharField(
+        max_length=40,
+        blank=True
+    )
+    result_score_scaled = models.FloatField(
+        blank=True,
+        null=True
+    )
+    result_score_raw = models.FloatField(
+        blank=True,
+        null=True
+    )
+    result_score_min = models.FloatField(
+        blank=True,
+        null=True
+    )
+    result_score_max = models.FloatField(
+        blank=True,
+        null=True
+    )
+    result_extensions = JSONField(
+        default={},
+        blank=True
+    )
     # If no stored or timestamp given - will create automatically (only happens if using StatementManager directly)
-    stored = models.DateTimeField(default=datetime.utcnow().replace(tzinfo=utc).isoformat(), db_index=True)
-    timestamp = models.DateTimeField(default=datetime.utcnow().replace(tzinfo=utc).isoformat(), db_index=True)
-    authority = models.ForeignKey(Agent, blank=True, null=True, related_name="authority_statement", db_index=True,
-                                  on_delete=models.SET_NULL)
-    voided = models.NullBooleanField(default=False)
-    context_registration = models.CharField(max_length=40, blank=True, db_index=True)
-    context_instructor = models.ForeignKey(Agent, blank=True, null=True, on_delete=models.SET_NULL,
-                                           db_index=True, related_name='statement_context_instructor')
-    context_team = models.ForeignKey(Agent, blank=True, null=True, on_delete=models.SET_NULL,
-                                     related_name="statement_context_team")
-    context_revision = models.TextField(blank=True)
-    context_platform = models.CharField(max_length=50, blank=True)
-    context_language = models.CharField(max_length=50, blank=True)
-    context_extensions = JSONField(default={}, blank=True)
+    stored = models.DateTimeField(
+        default=datetime.utcnow().replace(tzinfo=utc).isoformat(),
+        db_index=True
+    )
+    timestamp = models.DateTimeField(
+        default=datetime.utcnow().replace(tzinfo=utc).isoformat(),
+        db_index=True
+    )
+    authority = models.ForeignKey(
+        Agent,
+        blank=True,
+        null=True,
+        related_name="authority_statement",
+        db_index=True,
+        on_delete=models.SET_NULL
+    )
+    voided = models.NullBooleanField(
+        default=False
+    )
+    context_registration = models.CharField(
+        max_length=40,
+        blank=True,
+        db_index=True
+    )
+    context_instructor = models.ForeignKey(
+        Agent,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        db_index=True,
+        related_name='statement_context_instructor'
+    )
+    context_team = models.ForeignKey(
+        Agent,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="statement_context_team"
+    )
+    context_revision = models.TextField(
+        blank=True
+    )
+    context_platform = models.CharField(
+        max_length=50,
+        blank=True
+    )
+    context_language = models.CharField(
+        max_length=50,
+        blank=True
+    )
+    context_extensions = JSONField(
+        default={},
+        blank=True
+    )
     # context also has a stmt field which is a statementref
-    context_statement = models.CharField(max_length=40, blank=True)
-    version = models.CharField(max_length=7)
+    context_statement = models.CharField(
+        max_length=40,
+        blank=True
+    )
+    version = models.CharField(
+        max_length=7
+    )
     attachments = models.ManyToManyField(StatementAttachment)
     # Used in views
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, db_index=True, on_delete=models.SET_NULL,
-                             db_constraint=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        db_index=True,
+        on_delete=models.SET_NULL,
+        db_constraint=False
+    )
     full_statement = JSONField()
 
     class Meta:
