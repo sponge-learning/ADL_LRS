@@ -1,21 +1,21 @@
 import os
-from optparse import make_option
 from django.conf import settings
 from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from django.db.models import get_app, get_models
 from django.contrib.auth.models import User
 
+
 class Command(BaseCommand):
 	help = 'Clears all data in the apps (does not clear users), clears cache and deletes any media files'
-	option_list = BaseCommand.option_list + (
-		make_option(
+
+	def add_arguments(self, parser):
+		parser.add_argument(
 			'--sa',
-			dest = 'saveagents',
-			default = False,
-			help = 'Save the agents associated with the users\' emails',
-			metavar = 'SA'
-			),
+			dest='saveagents',
+			default=False,
+			help='Save the agents associated with the users\' emails',
+			metavar='SA'
 		)
 	
 	def handle(self, *args, **options):
