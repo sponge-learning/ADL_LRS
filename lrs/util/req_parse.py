@@ -8,7 +8,7 @@ from isodate.isoerror import ISO8601Error
 from isodate.isodatetime import parse_datetime
 
 from django.http.multipartparser import MultiPartParser
-from django.core.cache import get_cache
+from django.core.cache import caches
 
 from util import convert_to_dict, convert_post_body_to_dict
 from etag import get_etag_info
@@ -21,7 +21,8 @@ from oauth_provider.decorators import CheckOauth
 from oauth_provider.store import store
 from oauth2_provider.provider.oauth2.models import AccessToken
 
-att_cache = get_cache('attachment_cache')
+att_cache = caches['attachment_cache']
+
 
 def parse(request, more_id=None):
     r_dict = {}

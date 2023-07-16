@@ -1,13 +1,14 @@
 from django.db import transaction, IntegrityError
 from django.core.files.base import ContentFile
-from django.core.cache import get_cache
+from django.core.cache import caches
 
 from lrs.exceptions import ParamConflict
 
 from .ActivityManager import ActivityManager
 from ..models import Verb, Statement, StatementRef, StatementAttachment, StatementContextActivity, SubStatement, SubStatementContextActivity, Agent 
 
-att_cache = get_cache('attachment_cache')
+att_cache = caches['attachment_cache']
+
 
 class StatementManager():
     def __init__(self, data, auth, full_stmt={}):
@@ -126,7 +127,7 @@ class StatementManager():
             raw_payload = att_cache.get(sha2)
             try:
                 payload = ContentFile(raw_payload)
-            except Exception, e:
+            except Exception as e:
                 raise e    
             # Save ContentFile payload to attachment model object
             attachment.payload.save(sha2, payload)
