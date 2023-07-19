@@ -1,7 +1,7 @@
 from isodate.isodatetime import parse_datetime
 from isodate.isoerror import ISO8601Error
 import uuid
-
+from django.conf import settings
 from . import get_agent_ifp, convert_to_datatype
 from authorization import auth
 from StatementValidator import StatementValidator
@@ -9,6 +9,7 @@ from StatementValidator import StatementValidator
 from ..models import Statement, Agent, Activity, ActivityState, ActivityProfile, AgentProfile
 from ..exceptions import ParamConflict, ParamError, Forbidden, BadRequest, IDNotFoundError
 
+ignore_rogue_params = getattr(settings, 'XAPI_IGNORE_ROGUE_PARAMS', False)
 
 def check_for_existing_statementId(stmtID):
     return Statement.objects.filter(statement_id=stmtID).exists()
@@ -77,7 +78,7 @@ def server_validate_statement(stmt, auth, content_type):
 
 @auth
 def statements_post(req_dict):
-    if req_dict['params'].keys():
+    if req_dict['params'].keys() and not ignore_rogue_params:
         raise ParamError("The post statements request contained unexpected parameters: %s" % ", ".join(
             req_dict['params'].keys()))
 
@@ -160,7 +161,7 @@ def statements_get(req_dict):
     rogueparams = set(req_dict['params']) - set(["statementId", "voidedStatementId", "agent", "verb", "activity", "registration",
                                                  "related_activities", "related_agents", "since",
                                                  "until", "limit", "format", "attachments", "ascending"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The get statements request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -270,7 +271,7 @@ def statements_get(req_dict):
 def statements_put(req_dict):
     # Find any unexpected parameters
     rogueparams = set(req_dict['params']) - set(["statementId"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The put statements request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -330,7 +331,7 @@ def validate_attachments(attachment_data, content_type):
 def activity_state_post(req_dict):
     rogueparams = set(req_dict['params']) - \
         set(["activityId", "agent", "stateId", "registration"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The post activity state request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -417,7 +418,7 @@ def activity_state_post(req_dict):
 def activity_state_put(req_dict):
     rogueparams = set(req_dict['params']) - \
         set(["activityId", "agent", "stateId", "registration"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The put activity state request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -470,7 +471,7 @@ def activity_state_put(req_dict):
 def activity_state_get(req_dict):
     rogueparams = set(req_dict['params']) - set(["activityId",
                                                  "agent", "stateId", "registration", "since"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The get activity state request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -517,7 +518,7 @@ def activity_state_get(req_dict):
 def activity_state_delete(req_dict):
     rogueparams = set(req_dict['params']) - \
         set(["activityId", "agent", "stateId", "registration"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The delete activity state request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -556,7 +557,7 @@ def activity_state_delete(req_dict):
 @auth
 def activity_profile_post(req_dict):
     rogueparams = set(req_dict['params']) - set(["activityId", "profileId"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The post activity profile request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -610,7 +611,7 @@ def activity_profile_post(req_dict):
 @auth
 def activity_profile_put(req_dict):
     rogueparams = set(req_dict['params']) - set(["activityId", "profileId"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The put activity profile request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -642,7 +643,7 @@ def activity_profile_put(req_dict):
 def activity_profile_get(req_dict):
     rogueparams = set(req_dict['params']) - \
         set(["activityId", "profileId", "since"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The get activity profile request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -668,7 +669,7 @@ def activity_profile_get(req_dict):
 @auth
 def activity_profile_delete(req_dict):
     rogueparams = set(req_dict['params']) - set(["activityId", "profileId"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The delete activity profile request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -692,7 +693,7 @@ def activity_profile_delete(req_dict):
 @auth
 def activities_get(req_dict):
     rogueparams = set(req_dict['params']) - set(["activityId"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The get activities request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -721,7 +722,7 @@ def activities_get(req_dict):
 @auth
 def agent_profile_post(req_dict):
     rogueparams = set(req_dict['params']) - set(["agent", "profileId"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The post agent profile request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -786,7 +787,7 @@ def agent_profile_post(req_dict):
 @auth
 def agent_profile_put(req_dict):
     rogueparams = set(req_dict['params']) - set(["agent", "profileId"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The put agent profile request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -825,7 +826,7 @@ def agent_profile_put(req_dict):
 def agent_profile_get(req_dict):
     rogueparams = set(req_dict['params']) - \
         set(["agent", "profileId", "since"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The get agent profile request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -859,7 +860,7 @@ def agent_profile_get(req_dict):
 @auth
 def agent_profile_delete(req_dict):
     rogueparams = set(req_dict['params']) - set(["agent", "profileId"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The delete agent profile request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
@@ -891,7 +892,7 @@ def agent_profile_delete(req_dict):
 @auth
 def agents_get(req_dict):
     rogueparams = set(req_dict['params']) - set(["agent"])
-    if rogueparams:
+    if rogueparams and not ignore_rogue_params:
         raise ParamError(
             "The get agent request contained unexpected parameters: %s" % ", ".join(rogueparams))
 
