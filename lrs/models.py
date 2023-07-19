@@ -5,7 +5,7 @@ from collections import OrderedDict
 
 from django.db import models, IntegrityError
 from django.db.models.signals import post_save
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
 from django.core.files.storage import FileSystemStorage
 from django.utils import timezone
@@ -14,6 +14,8 @@ from oauth_provider.consts import MAX_URL_LENGTH
 
 from .exceptions import BadRequest
 from .utils import get_lang
+
+User = get_user_model()
 
 AGENT_PROFILE_UPLOAD_TO = "agent_profile"
 ACTIVITY_STATE_UPLOAD_TO = "activity_state"

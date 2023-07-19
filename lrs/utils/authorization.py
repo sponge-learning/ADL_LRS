@@ -3,7 +3,7 @@ from functools import wraps
 
 from django.conf import settings
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 
 from ..exceptions import Unauthorized, BadRequest, Forbidden, OauthUnauthorized, OauthBadRequest
@@ -13,6 +13,9 @@ from oauth_provider.models import Consumer
 from oauth_provider.utils import get_oauth_request, require_params
 from oauth_provider.decorators import CheckOauth
 from oauth_provider.store import store
+
+User = get_user_model()
+
 
 # A decorator, that can be used to authenticate some requests at the site.
 

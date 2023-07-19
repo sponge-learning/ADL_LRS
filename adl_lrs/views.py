@@ -1,9 +1,8 @@
 import json
 import urllib
 
-from django.contrib.auth import logout, login, authenticate
+from django.contrib.auth import logout, login, authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.core.urlresolvers import reverse
@@ -25,6 +24,7 @@ from lrs.utils.authorization import non_xapi_auth
 from oauth_provider.consts import ACCEPTED, CONSUMER_STATES
 from oauth_provider.models import Consumer, Token
 
+User = get_user_model()
 
 @csrf_protect
 @require_http_methods(["GET"])

@@ -10,7 +10,7 @@ import oauth2 as oauth
 from Crypto.PublicKey import RSA
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.urlresolvers import reverse
 from django.test import TestCase
 
@@ -19,6 +19,8 @@ from adl_lrs.views import register, regclient
 
 from oauth_provider.models import Consumer, Token, Nonce
 from oauth_provider.utils import SignatureMethod_RSA_SHA1
+
+User = get_user_model()
 
 # Django client uses testserver
 TEST_SERVER = 'http://testserver'
