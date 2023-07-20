@@ -2,6 +2,9 @@ from django.core.files.base import ContentFile
 import uuid
 
 from django.core.cache import caches
+from django.db import IntegrityError
+
+from lrs.exceptions import ParamConflict
 
 from .ActivityManager import ActivityManager
 from ..models import Verb, Statement, StatementAttachment, SubStatement, Agent
@@ -87,7 +90,11 @@ class StatementManager():
             stmt_data['statement_id'] = stmt_data['id']
             del stmt_data['id']
         # Try to create statement
-        stmt = Statement.objects.create(**stmt_data)
+        try:
+            stmt = Statement.objects.create(**stmt_data)
+        except IntegrityError:
+            err_msg = "A statement with ID %s already exists" % stmt_data.get('statement_id')
+            raise ParamConflict(err_msg)
         if con_act_data:
             self.build_context_activities(stmt, auth_info, con_act_data)
         return stmt
