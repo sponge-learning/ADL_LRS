@@ -9,33 +9,29 @@ ALLOWED_HOSTS = ['*']
 SETTINGS_DIR = dirname(abspath(__file__))
 PROJECT_ROOT = dirname(dirname(SETTINGS_DIR))
 
-config = RawConfigParser()
-config.read(SETTINGS_DIR+'/settings.ini')
-
-
 # If you want to debug
-DEBUG = config.getboolean('debug', 'DEBUG')
+DEBUG = True
 
 # Set these email values to send the reset password link
 # If you do not want this functionality just comment out the
 # Forgot Password? link in templates/registration/login.html
-EMAIL_BACKEND = config.get('email', 'EMAIL_BACKEND')
-EMAIL_HOST = config.get('email', 'EMAIL_HOST')
-EMAIL_PORT = config.getint('email', 'EMAIL_PORT')
-EMAIL_HOST_USER = config.get('email', 'EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config.get('email', 'EMAIL_HOST_PASSWORD')
-EMAIL_USE_SSL = config.getboolean('email', 'EMAIL_USE_SSL')
+# EMAIL_BACKEND = config.get('email', 'EMAIL_BACKEND')
+# EMAIL_HOST = config.get('email', 'EMAIL_HOST')
+# EMAIL_PORT = config.getint('email', 'EMAIL_PORT')
+# EMAIL_HOST_USER = config.get('email', 'EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = config.get('email', 'EMAIL_HOST_PASSWORD')
+# EMAIL_USE_SSL = config.getboolean('email', 'EMAIL_USE_SSL')
 
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config.get('database', 'NAME'),
-        'USER': config.get('database', 'USER'),
-        'PASSWORD': config.get('database', 'PASSWORD'),
-        'HOST': config.get('database', 'HOST'),
-        'PORT': config.getint('database', 'PORT'),
-    }
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'lrs',
+        'USER': 'root',
+        'PASSWORD': 'password',
+        'HOST': 'localhost',
+        'PORT': '',
+    }    
 }
 
 # Local time zone for this installation. Choices can be found here:
@@ -45,11 +41,11 @@ DATABASES = {
 # timezone as the operating system.
 # If running in a Windows environment this must be set to the same as your
 # system time zone.
-TIME_ZONE = config.get('preferences', 'TIME_ZONE')
+TIME_ZONE = 'America/New_York'
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
-LANGUAGE_CODE = config.get('preferences', 'LANGUAGE_CODE')
+LANGUAGE_CODE = 'en-US'
 
 # The ID, as an integer, of the current site in the django_site database table.
 # This is used so that application data can hook into specific sites and a single database can manage
@@ -68,7 +64,7 @@ USE_L10N = True
 USE_TZ = True
 
 # Set this to True if you would like to utilize the webhooks functionality
-USE_HOOKS = config.getboolean('hooks', 'USE_HOOKS')
+USE_HOOKS = False
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
@@ -110,11 +106,11 @@ XAPI_VERSIONS = ['1.0.0', '1.0.1', '1.0.2', XAPI_VERSION]
 LOGIN_REDIRECT_URL = '/me'
 
 # Me view has a tab of user's statements
-STMTS_PER_PAGE = config.getint('preferences', 'STMTS_PER_PAGE')
+STMTS_PER_PAGE = 10
 
 # Whether HTTP auth or OAuth is enabled
-ALLOW_EMPTY_HTTP_AUTH = config.getboolean('auth', 'ALLOW_EMPTY_HTTP_AUTH')
-OAUTH_ENABLED = config.getboolean('auth', 'OAUTH_ENABLED')
+ALLOW_EMPTY_HTTP_AUTH = False
+OAUTH_ENABLED = True
 
 AUTH_USER_MODEL = "auth.User"
 # OAuth1 callback views
@@ -144,11 +140,11 @@ OAUTH_SCOPES = (
     (ALL, 'all')
 )
 
-AMPQ_USERNAME = config.get('ampq', 'USERNAME')
-AMPQ_PASSWORD = config.get('ampq', 'PASSWORD')
-AMPQ_HOST = config.get('ampq', 'HOST')
-AMPQ_PORT = config.getint('ampq', 'PORT')
-AMPQ_VHOST = config.get('ampq', 'VHOST')
+# AMPQ_USERNAME = config.get('ampq', 'USERNAME')
+# AMPQ_PASSWORD = config.get('ampq', 'PASSWORD')
+# AMPQ_HOST = config.get('ampq', 'HOST')
+# AMPQ_PORT = config.getint('ampq', 'PORT')
+# AMPQ_VHOST = config.get('ampq', 'VHOST')
 
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -157,7 +153,7 @@ CELERY_STORE_ERRORS_EVEN_IF_IGNORED = True
 CELERY_IGNORE_RESULT = True
 
 # Limit on number of statements the server will return
-SERVER_STMT_LIMIT = config.getint('preferences', 'SERVER_STMT_LIMIT')
+SERVER_STMT_LIMIT = 100
 # Fifteen second timeout to all celery tasks
 CELERYD_TASK_SOFT_TIME_LIMIT = 15
 # ActivityID resolve timeout (seconds)
@@ -184,7 +180,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = config.get('secrets', 'SECRET_KEY')
+SECRET_KEY = 'v+m%^r0x)$_x8i3trn*duc6vd-yju0kx2b#9lk0sn2k^7cgyp5'
 
 TEMPLATES = [
     {
