@@ -214,7 +214,7 @@ class Agent(models.Model):
     member = models.ManyToManyField('self', related_name="agents")
     account_homePage = models.CharField(max_length=MAX_URL_LENGTH, null=True)
     account_name = models.CharField(max_length=50, null=True)
-    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True)
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, db_constraint=False)
     objects = AgentManager()
 
     class Meta:
@@ -544,7 +544,7 @@ class Statement(models.Model):
     version = models.CharField(max_length=7)
     # Used in views
     user = models.ForeignKey(User, null=True, blank=True,
-                             db_index=True, on_delete=models.SET_NULL)
+                             db_index=True, on_delete=models.SET_NULL, db_constraint=False)
     full_statement = JSONField()
 
     def to_dict(self, lang=None, ret_format='exact'):
