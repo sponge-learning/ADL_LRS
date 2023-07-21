@@ -5,7 +5,7 @@ psycopg2==2.7.5
 isodate==0.4.9
 pycrypto==2.5
 django-extensions==1.6.7
--e git+https://github.com/sponge-learning/jsonfield.git@57ac252de31b3d87c1a2b176a70bb05f58134918#egg=jsonfield
+jsonfield==2.0.2
 oauth2==1.5.211
 shortuuid==0.4.2
 django-jsonify==0.3.0
