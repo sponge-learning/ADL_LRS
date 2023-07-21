@@ -294,29 +294,6 @@ def reg_client2(request):
             return render_to_response('regclient2.html', {"form": form}, context_instance=RequestContext(request))
 
 @login_required(login_url=LOGIN_URL)
-def my_statements(request, template="my_statements.html", page_template="my_statements_holder.html"):   
-    context = {'statements': Statement.objects.filter(user=request.user).order_by('-timestamp'),'page_template': page_template}
-    
-    if request.is_ajax():
-        template = page_template
-    return render_to_response(template, context, context_instance=RequestContext(request))
-
-@login_required(login_url=LOGIN_URL)
-def my_activity_states(request, template="my_activity_states.html", page_template="my_activity_states_holder.html"):
-    try:
-        ag = Agent.objects.get(mbox="mailto:" + request.user.email)
-    except Agent.DoesNotExist:
-        ag = Agent.objects.create(mbox="mailto:" + request.user.email)
-    except Agent.MultipleObjectsReturned:
-        return HttpResponseBadRequest("More than one agent returned with email")
-
-    context = {'activity_states': ActivityState.objects.filter(agent=ag).order_by('-updated', 'activity_id'), 'page_template': page_template}
-    
-    if request.is_ajax():
-        template = page_template
-    return render_to_response(template, context, context_instance=RequestContext(request))
-
-@login_required(login_url=LOGIN_URL)
 def me(request, template='me.html'):
     client_apps = Consumer.objects.filter(user=request.user)
     access_tokens = Token.objects.filter(user=request.user, token_type=Token.ACCESS, is_approved=True)

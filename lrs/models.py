@@ -480,6 +480,8 @@ class ActivityProfile(models.Model):
             self.profile.delete()
         super(ActivityProfile, self).delete(*args, **kwargs)
 
+def now():
+    return datetime.utcnow().replace(tzinfo=utc).isoformat()
 
 class SubStatement(models.Model):
     object_agent = models.ForeignKey(
@@ -547,7 +549,7 @@ class SubStatement(models.Model):
     timestamp = models.DateTimeField(
         blank=True,
         null=True,
-        default=lambda: datetime.utcnow().replace(tzinfo=utc).isoformat()
+        default=now
     )
     context_registration = models.CharField(
         max_length=40,

@@ -5,7 +5,8 @@ WORKDIR /adl_lrs
 
 RUN apt-get update
 RUN apt-get install -y postgresql
-RUN pip install pip==20.3.4 'fabric<2.0' virtualenv .
+RUN pip install pip==20.3.4 'fabric<2.0' virtualenv
+RUN pip install -r requirements.txt
 
 # This Dockerfile is incomplete, but sufficient to test the installation of the code via `pip install .`
 # I had a bit of a look at providing a complete Dockerfile/docker compose build, but decided it wasn't worth it

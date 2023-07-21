@@ -2,7 +2,6 @@
 *.log
 env
 build
-migrations
 runtests
 .coverage
 404.html
