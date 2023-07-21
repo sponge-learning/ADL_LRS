@@ -894,7 +894,6 @@ class Statement(models.Model):
         blank=True,
         db_index=True,
         on_delete=models.SET_NULL,
-        db_constraint=False
     )
     full_statement = JSONField()
 
