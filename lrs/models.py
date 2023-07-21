@@ -825,11 +825,11 @@ class Statement(models.Model):
     )
     # If no stored or timestamp given - will create automatically (only happens if using StatementManager directly)
     stored = models.DateTimeField(
-        default=datetime.utcnow().replace(tzinfo=utc).isoformat(),
+        default=now,
         db_index=True
     )
     timestamp = models.DateTimeField(
-        default=datetime.utcnow().replace(tzinfo=utc).isoformat(),
+        default=now,
         db_index=True
     )
     authority = models.ForeignKey(
