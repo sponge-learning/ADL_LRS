@@ -64,7 +64,7 @@ def stmt_validator(request):
             try:
                 validator = StatementValidator.StatementValidator(form.cleaned_data['jsondata'])
                 valid = validator.validate()
-            except ParamError, e:
+            except ParamError as e:
                 clean_data = form.cleaned_data['jsondata']
                 return render_to_response('validator.html', {"form": form, "error_message": e.message, "clean_data":clean_data},
                     context_instance=context)
@@ -402,7 +402,7 @@ def delete_token2(request):
         return HttpResponse("Unknown token", status=400)
     try:
         token.delete()
-    except Exception, e:
+    except Exception as e:
         return HttpResponse(e.message, status=400)
     return HttpResponse("", status=204)
 
@@ -417,7 +417,7 @@ def delete_client(request):
         return HttpResponse("Unknown client", status=400)
     try:
         client.delete()
-    except Exception, e:
+    except Exception as e:
         return HttpResponse(e.message, status=400)
     return HttpResponse("", status=204)
 

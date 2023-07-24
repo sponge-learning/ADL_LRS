@@ -122,9 +122,9 @@ def server_validation(stmt_set, auth, payload_sha2s):
             try:
                 validator = StatementValidator()
                 validator.validate_activity(stmt_set['object'])
-            except Exception, e:
+            except Exception as e:
                 raise BadRequest(e.message)
-            except ParamError, e:
+            except ParamError as e:
                 raise ParamError(e.message)
 
         auth_validated = validate_stmt_authority(stmt_set, auth, auth_validated)
@@ -144,9 +144,9 @@ def statements_post(req_dict):
     try:
         validator = StatementValidator(req_dict['body'])
         validator.validate()
-    except Exception, e:
+    except Exception as e:
         raise BadRequest(e.message)
-    except ParamError, e:
+    except ParamError as e:
         raise ParamError(e.message)
 
     server_validation(req_dict['body'], req_dict['auth'], req_dict.get('payload_sha2s', None))
@@ -265,7 +265,7 @@ def statements_put(req_dict):
     # Try to get id if in body
     try:
         statement_body_id = req_dict['body']['id']
-    except Exception, e:
+    except Exception as e:
         statement_body_id = None
 
     # If ids exist in both places, check if they are equal
@@ -288,9 +288,9 @@ def statements_put(req_dict):
     try:
         validator = StatementValidator(req_dict['body'])
         validator.validate()
-    except Exception, e:
+    except Exception as e:
         raise BadRequest(e.message)
-    except ParamError, e:
+    except ParamError as e:
         raise ParamError(e.message)
     server_validation(req_dict['body'], req_dict['auth'], req_dict.get('payload_sha2s', None))
     return req_dict
