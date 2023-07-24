@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib.auth import views as auth_views
 from django.views.generic import RedirectView
-from . import views
+from lrs import views as lrs_views
 # Uncomment the next two lines to enable the admin (imports admin module in each app):
 from django.contrib import admin
 
@@ -23,11 +23,11 @@ urlpatterns = [
 # Login and logout patterns
 urlpatterns += [
     url(r'^accounts/login/$', auth_views.login, name="login"),
-    url(r'^accounts/logout/$', views.logout_view, name="logout"),
+    url(r'^accounts/logout/$', lrs_views.logout_view, name="logout"),
 ]
 
 # Allows admins to view attachments in admin console
 if settings.DEBUG:
     urlpatterns += [
-        url(r'^media/attachment_payloads/(?P<path>.*)$', views.admin_attachments),
+        url(r'^media/attachment_payloads/(?P<path>.*)$', lrs_views.admin_attachments),
     ]

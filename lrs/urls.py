@@ -12,8 +12,8 @@ urlpatterns = [
     url(r'^agents/profile', views.agent_profile,  name='agent_profile'),
     url(r'^agents', views.agents, name='agents'),
     url(r'^register', views.register, name='register'),
-    url(r'^regclient', views.reg_client, name='regclient'),
-    url(r'^statementvalidator', views.stmt_validator, name='statementvalidator'),
+    url(r'^regclient', views.reg_client, name='reg_client'),
+    url(r'^statementvalidator', views.stmt_validator, name='stmt_validator'),
 
     # url(r'^about', views.about),
     # url(r'^OAuth/', include('oauth_provider.urls', namespace='oauth')),
