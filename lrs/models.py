@@ -47,9 +47,6 @@ class Verb(models.Model):
     def __unicode__(self):
         return json.dumps(self.to_dict())
 
-    class Meta:
-        app_label = 'lrs'
-
 
 agent_ifps_can_only_be_one = ['mbox', 'mbox_sha1sum', 'account', 'openid']
 
@@ -188,7 +185,6 @@ class Agent(models.Model):
         unique_together = (("mbox", "canonical_version"), ("mbox_sha1sum", "canonical_version"),
                            ("openid", "canonical_version"), ("oauth_identifier", "canonical_version"),
                            ("account_homePage", "account_name", "canonical_version"))
-        app_label = 'lrs'
 
     def to_dict(self, format='exact', just_objectType=False):
         just_id = format == 'ids'
@@ -293,9 +289,6 @@ class AgentProfile(models.Model):
             self.profile.delete()
         super(AgentProfile, self).delete(*args, **kwargs)
 
-    class Meta:
-        app_label = 'lrs'
-
 
 class Activity(models.Model):
     activity_id = models.CharField(max_length=MAX_URL_LENGTH, db_index=True)
@@ -314,9 +307,6 @@ class Activity(models.Model):
     activity_definition_steps = JSONField(default={}, blank=True)
     authority = models.ForeignKey(Agent, null=True)
     canonical_version = models.BooleanField(default=True)
-
-    class Meta:
-        app_label = 'lrs'
 
     def add_interaction_type(self, i_type, ret, lang):
         if i_type == 'scale':
@@ -399,9 +389,6 @@ class StatementRef(models.Model):
     object_type = models.CharField(max_length=12, default="StatementRef")
     ref_id = models.CharField(max_length=40)
 
-    class Meta:
-        app_label = 'lrs'
-
     def to_dict(self):
         ret = {}
         ret['objectType'] = "StatementRef"
@@ -418,9 +405,6 @@ class SubStatementContextActivity(models.Model):
     context_activity = models.ManyToManyField(Activity)
     substatement = models.ForeignKey('SubStatement')
 
-    class Meta:
-        app_label = 'lrs'
-
     def to_dict(self, lang=None, format='exact'):
         ret = {}
         ret[self.key] = {}
@@ -432,9 +416,6 @@ class StatementContextActivity(models.Model):
     key = models.CharField(max_length=8)
     context_activity = models.ManyToManyField(Activity)
     statement = models.ForeignKey('Statement')
-
-    class Meta:
-        app_label = 'lrs'
 
     def to_dict(self, lang=None, format='exact'):
         ret = {}
@@ -454,9 +435,6 @@ class ActivityState(models.Model):
     content_type = models.CharField(max_length=255, blank=True)
     etag = models.CharField(max_length=50, blank=True)
 
-    class Meta:
-        app_label = 'lrs'
-
     def delete(self, *args, **kwargs):
         if self.state:
             self.state.delete()
@@ -471,9 +449,6 @@ class ActivityProfile(models.Model):
     json_profile = models.TextField(blank=True)
     content_type = models.CharField(max_length=255, blank=True)
     etag = models.CharField(max_length=50, blank=True)
-
-    class Meta:
-        app_label = 'lrs'
 
     def delete(self, *args, **kwargs):
         if self.profile:
@@ -591,9 +566,6 @@ class SubStatement(models.Model):
         max_length=40,
         blank=True
     )
-
-    class Meta:
-        app_label = 'lrs'
 
     def to_dict(self, lang=None, format='exact'):
         ret = {}
@@ -713,9 +685,6 @@ class StatementAttachment(models.Model):
     payload = models.FileField(upload_to=STATEMENT_ATTACHMENT_UPLOAD_TO, null=True)
     display = JSONField(default={}, blank=True)
     description = JSONField(default={}, blank=True)
-
-    class Meta:
-        app_label = 'lrs'
 
     def to_dict(self, lang=None):
         ret = {}
@@ -896,9 +865,6 @@ class Statement(models.Model):
         on_delete=models.SET_NULL,
     )
     full_statement = JSONField()
-
-    class Meta:
-        app_label = 'lrs'
 
     def to_dict(self, lang=None, format='exact'):
         if format == 'exact':
