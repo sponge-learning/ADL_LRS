@@ -1,5 +1,7 @@
 import json
 from datetime import datetime
+
+from django.db.models.query import QuerySet
 from jsonfield import JSONField
 
 from django_extensions.db.fields import UUIDField
@@ -290,6 +292,25 @@ class AgentProfile(models.Model):
         super(AgentProfile, self).delete(*args, **kwargs)
 
 
+# The ADL_LRS library uses get_or_create, without having unique constraints
+# applied in the database.  This introduces a race condition and we sometimes
+# end up with duplicate Activity records.  As a workaround, we override the
+# get() method when fetching Activity records to always just return the first
+# one found, thus ignoring duplicates.
+class ActivityQuerySet(QuerySet):
+    def get(self, **kwargs):
+        try:
+            return self.filter(**kwargs).order_by('pk')[0]
+        except IndexError:
+            raise Activity.DoesNotExist
+
+
+class ActivityManager(models.Manager):
+
+    def get_queryset(self):
+        return ActivityQuerySet(model=Activity)
+
+
 class Activity(models.Model):
     activity_id = models.CharField(max_length=MAX_URL_LENGTH, db_index=True)
     objectType = models.CharField(max_length=8, blank=True, default="Activity")
@@ -307,7 +328,9 @@ class Activity(models.Model):
     activity_definition_steps = JSONField(default={}, blank=True)
     authority = models.ForeignKey(Agent, null=True)
     canonical_version = models.BooleanField(default=True)
-
+    
+    objects = ActivityManager()
+  
     def add_interaction_type(self, i_type, ret, lang):
         if i_type == 'scale':
             interactions = self.activity_definition_scales
