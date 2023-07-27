@@ -211,8 +211,6 @@ INSTALLED_APPS = (
 
 REQUEST_HANDLER_LOG_DIR = path.join(PROJECT_ROOT, 'logs/django_request.log')
 DEFAULT_LOG_DIR = path.join(PROJECT_ROOT, 'logs/lrs.log')
-print '%' * 100
-print 'DEFAULT_LOG_DIR: ', DEFAULT_LOG_DIR
 
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
