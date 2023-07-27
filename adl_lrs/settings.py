@@ -207,7 +207,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django_extensions',
     'jsonify',
-    'endless_pagination'
 )
 
 REQUEST_HANDLER_LOG_DIR = path.join(PROJECT_ROOT, 'logs/django_request.log')
