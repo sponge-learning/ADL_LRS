@@ -23,4 +23,4 @@
 
 4. Copying files from Docker container to host:
 
-`sudo docker cp adl-lrs:/adl_lrs/lrs/migrations/0002_auto_20230727_0941.py .`
+`sudo docker cp adl-lrs:/adl_lrs/lrs/migrations/0002_auto_20230727_0941.py lrs/migrations`
