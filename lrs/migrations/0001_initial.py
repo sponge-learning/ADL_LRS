@@ -100,7 +100,7 @@ class Migration(migrations.Migration):
             name='Statement',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('statement_id', django_extensions.db.fields.UUIDField(blank=True, db_index=True, editable=False, unique=True, version=1)),
+                ('statement_id', models.UUIDField(db_index=True, default=uuid.uuid4, editable=False, unique=True)),
                 ('result_success', models.NullBooleanField()),
                 ('result_completion', models.NullBooleanField()),
                 ('result_response', models.TextField(blank=True)),
