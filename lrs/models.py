@@ -740,11 +740,13 @@ class StatementAttachment(models.Model):
 
 class Statement(models.Model):
     # If no statement_id is given, will create one automatically
-    statement_id = models.UUIDField(
+    statement_id = models.CharField(
+        max_length=36,
         db_index=True,
         unique=True,
         default=uuid.uuid4,
-        editable=False
+        editable=False,
+        blank=True
     )
     object_agent = models.ForeignKey(
         Agent,
