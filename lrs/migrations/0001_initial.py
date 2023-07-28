@@ -100,7 +100,7 @@ class Migration(migrations.Migration):
             name='Statement',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('statement_id', models.CharField(blank=True, db_index=True, default=uuid.uuid4, editable=False, max_length=36, unique=True)),
+                ('statement_id', models.CharField(blank=True, db_index=True, default=uuid.uuid1, editable=False, max_length=36, unique=True)),
                 ('result_success', models.NullBooleanField()),
                 ('result_completion', models.NullBooleanField()),
                 ('result_response', models.TextField(blank=True)),
