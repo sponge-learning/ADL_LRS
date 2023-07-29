@@ -8,6 +8,7 @@ import django.db.models.deletion
 import django_extensions.db.fields
 import jsonfield.fields
 import lrs.models
+import lrs.util.fields
 
 
 class Migration(migrations.Migration):
@@ -100,7 +101,7 @@ class Migration(migrations.Migration):
             name='Statement',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('statement_id', django_extensions.db.fields.UUIDField(blank=True, db_index=True, editable=False, unique=True, version=1)),
+                ('statement_id', lrs.util.fields.CustomUUIDField(blank=True, db_index=True, editable=False, unique=True, version=1)),
                 ('result_success', models.NullBooleanField()),
                 ('result_completion', models.NullBooleanField()),
                 ('result_response', models.TextField(blank=True)),

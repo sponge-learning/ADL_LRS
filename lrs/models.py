@@ -4,7 +4,6 @@ from datetime import datetime
 from django.db.models.query import QuerySet
 from jsonfield import JSONField
 
-from django_extensions.db.fields import UUIDField
 from django.conf import settings
 from django.db import models
 from django.db import transaction
@@ -13,6 +12,7 @@ from django.utils.timezone import utc
 from oauth_provider.consts import MAX_URL_LENGTH
 
 from .util import util
+from .util.fields import CustomUUIDField
 
 AGENT_PROFILE_UPLOAD_TO = "agent_profile"
 ACTIVITY_STATE_UPLOAD_TO = "activity_state"
@@ -740,7 +740,7 @@ class StatementAttachment(models.Model):
 
 class Statement(models.Model):
     # If no statement_id is given, will create one automatically
-    statement_id = UUIDField(
+    statement_id = CustomUUIDField(
         version=1,
         db_index=True,
         unique=True
