@@ -13,20 +13,23 @@ class CustomUUIDField(CharField):
     For more information see: https://docs.python.org/3/library/uuid.html
     """
 
+    DEFAULT_MAX_LENGTH = 36
+
     def __init__(self, verbose_name=None, name=None, auto=True, version=4, node=None, clock_seq=None, namespace=None,
-                 **kwargs):
-        kwargs.setdefault('max_length', 36)
+                 uuid_name=None, *args, **kwargs):
+
+        kwargs.setdefault('max_length', self.DEFAULT_MAX_LENGTH)
         if auto:
             self.empty_strings_allowed = False
             kwargs['blank'] = True
             kwargs.setdefault('editable', False)
         self.auto = auto
         self.version = version
-        if version == 1:
-            self.node, self.clock_seq = node, clock_seq
-        elif version == 3 or version == 5:
-            self.namespace, self.name = namespace, name
-        CharField.__init__(self, verbose_name, name, **kwargs)
+        self.node = node
+        self.clock_seq = clock_seq
+        self.namespace = namespace
+        self.uuid_name = uuid_name or name
+        super(CustomUUIDField, self).__init__(verbose_name=verbose_name, *args, **kwargs)
 
     def get_internal_type(self):
         return CharField.__name__
