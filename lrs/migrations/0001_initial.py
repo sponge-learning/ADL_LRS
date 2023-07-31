@@ -101,7 +101,7 @@ class Migration(migrations.Migration):
             name='Statement',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('statement_id', lrs.util.fields.CustomUUIDField(blank=True, db_index=True, editable=False, unique=True, version=1)),
+                ('statement_id', lrs.util.fields.CustomUUIDField(blank=True, db_index=True, editable=False, max_length=36, unique=True, version=1)),
                 ('result_success', models.NullBooleanField()),
                 ('result_completion', models.NullBooleanField()),
                 ('result_response', models.TextField(blank=True)),

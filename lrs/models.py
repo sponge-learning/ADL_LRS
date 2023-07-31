@@ -12,7 +12,7 @@ from django.utils.timezone import utc
 from oauth_provider.consts import MAX_URL_LENGTH
 
 from .util import util
-from .util import fields
+from lrs.util import fields as lrs_fields
 
 AGENT_PROFILE_UPLOAD_TO = "agent_profile"
 ACTIVITY_STATE_UPLOAD_TO = "activity_state"
@@ -740,7 +740,7 @@ class StatementAttachment(models.Model):
 
 class Statement(models.Model):
     # If no statement_id is given, will create one automatically
-    statement_id = fields.CustomUUIDField(
+    statement_id = lrs_fields.CustomUUIDField(
         version=1,
         db_index=True,
         unique=True
