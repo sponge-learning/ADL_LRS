@@ -85,4 +85,4 @@ def autoregister(*app_list):
 
 
 def get_default_uuid1_string():
-    return unicode(uuid.uuid1())
+    return unicode(uuid.uuid4())
