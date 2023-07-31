@@ -44,38 +44,3 @@ class CustomUUIDField(CharField):
             return uuid.uuid5(self.namespace, self.name)
         else:
             raise ValueError("UUID version %s is not valid." % self.version)
-
-    def pre_save(self, model_instance, add):
-        value = super(CustomUUIDField, self).pre_save(model_instance, add)
-        if self.auto and add and value is None:
-            value = force_unicode(self.create_uuid())
-            setattr(model_instance, self.attname, value)
-            return value
-        else:
-            if self.auto and not value:
-                value = force_unicode(self.create_uuid())
-                setattr(model_instance, self.attname, value)
-        return value
-
-    def formfield(self, **kwargs):
-        if self.auto:
-            return None
-        return super(CustomUUIDField, self).formfield(**kwargs)
-
-    def deconstruct(self):
-        name, path, args, kwargs = super(CustomUUIDField, self).deconstruct()
-        if kwargs.get('max_length', None) == self.DEFAULT_MAX_LENGTH:
-            del kwargs['max_length']
-        if self.auto is not True:
-            kwargs['auto'] = self.auto
-        if self.version != 4:
-            kwargs['version'] = self.version
-        if self.node is not None:
-            kwargs['node'] = self.node
-        if self.clock_seq is not None:
-            kwargs['clock_seq'] = self.clock_seq
-        if self.namespace is not None:
-            kwargs['namespace'] = self.namespace
-        if self.uuid_name is not None:
-            kwargs['uuid_name'] = self.name
-        return name, path, args, kwargs
