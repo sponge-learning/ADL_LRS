@@ -57,6 +57,11 @@ class CustomUUIDField(CharField):
                 setattr(model_instance, self.attname, value)
         return value
 
+    def formfield(self, **kwargs):
+        if self.auto:
+            return None
+        return super(CustomUUIDField, self).formfield(**kwargs)
+
     def deconstruct(self):
         name, path, args, kwargs = super(CustomUUIDField, self).deconstruct()
         if kwargs.get('max_length', None) == self.DEFAULT_MAX_LENGTH:
