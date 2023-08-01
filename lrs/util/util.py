@@ -2,6 +2,7 @@ import ast
 import json
 import urllib
 import urlparse
+import uuid
 from isodate.isodatetime import parse_datetime
 
 from django.apps import apps
@@ -81,3 +82,7 @@ def autoregister(*app_list):
                 admin.site.register(model)
             except AlreadyRegistered:
                 pass
+
+
+def get_default_uuid_string():
+    return unicode(uuid.uuid4())
