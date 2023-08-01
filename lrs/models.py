@@ -744,7 +744,7 @@ class Statement(models.Model):
         max_length=36,
         db_index=True,
         unique=True,
-        default=util.get_default_uuid1_string,
+        default=util.get_default_uuid_string,
         editable=False,
         blank=True
     )
