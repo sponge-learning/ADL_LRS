@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 import django
 
-from django.conf.urls import patterns, url, include
-
-
-
 # in Django>=1.5 CustomUser models can be specified
 if django.VERSION >= (1, 5):
     from django.contrib.auth import get_user_model
