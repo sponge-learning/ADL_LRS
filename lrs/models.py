@@ -1,10 +1,10 @@
 import json
+import uuid
 from datetime import datetime
 
 from django.db.models.query import QuerySet
 from jsonfield import JSONField
 
-from django_extensions.db.fields import UUIDField
 from django.conf import settings
 from django.db import models
 from django.db import transaction
@@ -740,10 +740,13 @@ class StatementAttachment(models.Model):
 
 class Statement(models.Model):
     # If no statement_id is given, will create one automatically
-    statement_id = UUIDField(
-        version=1,
+    statement_id = models.CharField(
+        max_length=36,
         db_index=True,
-        unique=True
+        unique=True,
+        default=util.get_default_uuid_string,
+        editable=False,
+        blank=True
     )
     object_agent = models.ForeignKey(
         Agent,
