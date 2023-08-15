@@ -1,5 +1,5 @@
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from django.conf import settings
 from django.http import HttpResponseBadRequest
 
@@ -15,7 +15,7 @@ class XAPIVersionHeader(object):
             except:
                 version = request.META.get('X_Experience_API_Version', None)
                 if not version:
-                    bdy = urllib.unquote_plus(request.body)
+                    bdy = urllib.parse.unquote_plus(request.body)
                     bdy_parts = bdy.split('&')
                     for part in bdy_parts:
                         v = re.search('X[-_]Experience[-_]API[-_]Version=(?P<num>.*)', part)

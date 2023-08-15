@@ -80,7 +80,7 @@ class ActivityStateManager():
                 if not isinstance(post_state, dict):
                     raise ParamError("The document was not able to be parsed into a JSON object.")
                 else:
-                    merged = json.dumps(dict(orig_state.items() + post_state.items()))
+                    merged = json.dumps(dict(list(orig_state.items()) + list(post_state.items())))
                 s.json_state = merged
                 s.etag = etag.create_tag(merged)
     

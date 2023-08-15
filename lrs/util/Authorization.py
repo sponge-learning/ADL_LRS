@@ -110,7 +110,7 @@ def validate_oauth_scope(req_dict):
         req_dict['auth']['define'] = False
 
 def http_auth_helper(request):
-    if request['headers'].has_key('Authorization'):
+    if 'Authorization' in request['headers']:
         auth = request['headers']['Authorization'].split()
         if len(auth) == 2:
             if auth[0].lower() == 'basic':

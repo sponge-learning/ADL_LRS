@@ -1,11 +1,11 @@
 import json
-import urlparse
+import urllib.parse
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, QueryDict
 from django.utils.translation import ugettext as _
 from django.views.generic.base import TemplateView
 from django.core.exceptions import ObjectDoesNotExist
-from oauth2.models import Client
+from .oauth2.models import Client
 from . import constants, scope
 
 
@@ -71,7 +71,7 @@ class Mixin(object):
         """
         Clear all OAuth related data from the session store.
         """
-        for key in request.session.keys():
+        for key in list(request.session.keys()):
             if key.startswith(constants.SESSION_KEY):
                 del request.session[key]
 
@@ -255,7 +255,7 @@ class Authorize(OAuthView, Mixin):
 
         try:
             client, data = self._validate_client(request, data)
-        except OAuthError, e:
+        except OAuthError as e:
             return self.error_response(request, e.args[0], status=400)
 
         authorization_form = self.get_authorization_form(request, client,
@@ -320,7 +320,7 @@ class Redirect(OAuthView, Mixin):
 
         redirect_uri = data.get('redirect_uri', None) or client.redirect_uri
 
-        parsed = urlparse.urlparse(redirect_uri)
+        parsed = urllib.parse.urlparse(redirect_uri)
 
         query = QueryDict('', mutable=True)
 
@@ -336,7 +336,7 @@ class Redirect(OAuthView, Mixin):
 
         parsed = parsed[:4] + (query.urlencode(), '')
 
-        redirect_uri = urlparse.ParseResult(*parsed).geturl()
+        redirect_uri = urllib.parse.ParseResult(*parsed).geturl()
 
         self.clear_data(request)
 
@@ -596,5 +596,5 @@ class AccessToken(OAuthView, Mixin):
 
         try:
             return handler(request, request.POST, client)
-        except OAuthError, e:
+        except OAuthError as e:
             return self.error_response(e.args[0])

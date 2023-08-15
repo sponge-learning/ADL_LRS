@@ -80,5 +80,5 @@ class AcceptMiddleware(object):
     def process_request(self, request):
         accept = parse_accept_header(request.META.get("HTTP_ACCEPT", ""))
         request.accept = accept
-        request.accepted_types = map(lambda (t, p, q): t, accept)
+        request.accepted_types = [t_p_q[0] for t_p_q in accept]
         

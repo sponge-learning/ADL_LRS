@@ -1,5 +1,5 @@
 import hashlib
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import os
 import json
 import base64
@@ -27,7 +27,7 @@ class ActivityStateTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print "\n%s" % __name__
+        print("\n%s" % __name__)
 
     def setUp(self):
         self.username = "test"
@@ -39,22 +39,22 @@ class ActivityStateTests(TestCase):
 
 
         self.testparams1 = {"stateId": self.stateId, "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(self.testparams1))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(self.testparams1))
         self.teststate1 = {"test":"put activity state 1","obj":{"agent":"test"}}
         self.put1 = self.client.put(path, json.dumps(self.teststate1), content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
         self.testparams2 = {"stateId": self.stateId2, "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(self.testparams2))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(self.testparams2))
         self.teststate2 = {"test":"put activity state 2","obj":{"agent":"test"}}
         self.put2 = self.client.put(path, json.dumps(self.teststate2), content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
         self.testparams3 = {"stateId": self.stateId3, "activityId": self.activityId2, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(self.testparams3))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(self.testparams3))
         self.teststate3 = {"test":"put activity state 3","obj":{"agent":"test"}}
         self.put3 = self.client.put(path, json.dumps(self.teststate3), content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
         self.testparams4 = {"stateId": self.stateId4, "activityId": self.activityId2, "agent": self.otheragent}
-        path = '%s?%s' % (self.url, urllib.urlencode(self.testparams4))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(self.testparams4))
         self.teststate4 = {"test":"put activity state 4","obj":{"agent":"other"}}
         self.put4 = self.client.put(path, json.dumps(self.teststate4), content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -69,7 +69,7 @@ class ActivityStateTests(TestCase):
             file_path = os.path.join(attach_folder_path, the_file)
             try:
                 os.unlink(file_path)
-            except Exception, e:
+            except Exception as e:
                 raise e
 
     def test_put(self):
@@ -87,7 +87,7 @@ class ActivityStateTests(TestCase):
      
     def test_put_no_existing_activity(self):
         testparams = {"stateId": self.stateId3, "activityId": "http://foobar", "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparams))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparams))
         teststate = {"test":"put activity state","obj":{"agent":"test"}}
         put = self.client.put(path, teststate, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -97,14 +97,14 @@ class ActivityStateTests(TestCase):
 
     def test_put_with_registration(self):
         testparamsregid = {"registration": "not-uuid", "stateId": self.stateId, "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamsregid))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamsregid))
         teststateregid = {"test":"put activity state w/ registration","obj":{"agent":"test"}}
         put1 = self.client.put(path, teststateregid, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
         self.assertEqual(put1.status_code, 400)
 
         testparamsregid = {"registration": self.registration, "stateId": self.stateId, "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamsregid))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamsregid))
         teststateregid = {"test":"put activity state w/ registration","obj":{"agent":"test"}}
         put1 = self.client.put(path, teststateregid, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -125,7 +125,7 @@ class ActivityStateTests(TestCase):
 
     def test_put_without_auth(self):
         testparamsregid = {"registration": self.registration, "stateId": self.stateId, "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamsregid))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamsregid))
         teststateregid = {"test":"put activity state w/ registration","obj":{"agent":"test"}}
         put1 = self.client.put(path, teststateregid, content_type=self.content_type, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -133,7 +133,7 @@ class ActivityStateTests(TestCase):
 
     def test_put_etag_conflict_if_none_match(self):
         teststateetaginm = {"test":"etag conflict - if none match *","obj":{"agent":"test"}}
-        path = '%s?%s' % (self.url, urllib.urlencode(self.testparams1))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(self.testparams1))
         r = self.client.put(path, teststateetaginm, content_type=self.content_type, If_None_Match='*', Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 412)
         self.assertEqual(r.content, 'Resource detected')
@@ -148,7 +148,7 @@ class ActivityStateTests(TestCase):
     def test_put_etag_conflict_if_match(self):
         teststateetagim = {"test":"etag conflict - if match wrong hash","obj":{"agent":"test"}}
         new_etag = '"%s"' % hashlib.sha1('wrong etag value').hexdigest()
-        path = '%s?%s' % (self.url, urllib.urlencode(self.testparams1))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(self.testparams1))
         r = self.client.put(path, teststateetagim, content_type=self.content_type, If_Match=new_etag, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 412)
         self.assertIn('No resources matched', r.content)
@@ -163,7 +163,7 @@ class ActivityStateTests(TestCase):
     def test_put_etag_no_conflict_if_match(self):
         teststateetagim = {"test":"etag no conflict - if match good hash","obj":{"agent":"test"}}
         new_etag = '"%s"' % hashlib.sha1(json.dumps(self.teststate1)).hexdigest()
-        path = '%s?%s' % (self.url, urllib.urlencode(self.testparams1))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(self.testparams1))
         r = self.client.put(path, teststateetagim, content_type=self.content_type, If_Match=new_etag, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 204)
         self.assertEqual(r.content, '')
@@ -177,7 +177,7 @@ class ActivityStateTests(TestCase):
 
     def test_put_etag_missing_on_change(self):
         teststateetagim = {'test': 'etag no need for etag', 'obj': {'agent': 'test'}}
-        path = '%s?%s' % (self.url, urllib.urlencode(self.testparams1))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(self.testparams1))
         r = self.client.put(path, teststateetagim, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 204)
         
@@ -191,7 +191,7 @@ class ActivityStateTests(TestCase):
 
     def test_put_without_activityid(self):
         testparamsbad = {"stateId": "bad_state", "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamsbad))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamsbad))
         teststatebad = {"test":"put activity state BAD no activity id","obj":{"agent":"test"}}
         put1 = self.client.put(path, teststatebad, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -201,7 +201,7 @@ class ActivityStateTests(TestCase):
     
     def test_put_without_agent(self):
         testparamsbad = {"stateId": "bad_state", "activityId": self.activityId}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamsbad))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamsbad))
         teststatebad = {"test":"put activity state BAD no agent","obj":{"agent":"none"}}
         put1 = self.client.put(path, teststatebad, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -211,7 +211,7 @@ class ActivityStateTests(TestCase):
     
     def test_put_without_stateid(self):
         testparamsbad = {"activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamsbad))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamsbad))
         teststatebad = {"test":"put activity state BAD no state id","obj":{"agent":"test"}}
         put1 = self.client.put(path, teststatebad, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -277,7 +277,7 @@ class ActivityStateTests(TestCase):
     def test_get_with_since(self):
         state_id = "old_state_test"
         testparamssince = {"stateId": state_id, "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamssince))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamssince))
         teststatesince = {"test":"get w/ since","obj":{"agent":"test"}}
         updated = "2012-06-12T12:00:00Z"
         put1 = self.client.put(path, teststatesince, content_type=self.content_type, updated=updated, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -308,7 +308,7 @@ class ActivityStateTests(TestCase):
     def test_get_with_since_tz(self):
         state_id = "old_state_test"
         testparamssince = {"stateId": state_id, "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamssince))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamssince))
         teststatesince = {"test":"get w/ since","obj":{"agent":"test"}}
         updated = "2012-06-12:T12:00:00Z"
         put1 = self.client.put(path, teststatesince, content_type=self.content_type, updated=updated, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -326,7 +326,7 @@ class ActivityStateTests(TestCase):
 
         state_id2 = "new_tz_state_test"
         testparamssince2 = {"stateId": state_id2, "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamssince2))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamssince2))
         teststatesince2 = {"test":"get w/ since TZ","obj":{"agent":"test"}}
         updated_tz =  "2012-07-01T13:30:00+04:00"
         put2 = self.client.put(path, teststatesince2, content_type=self.content_type, updated=updated_tz, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -360,7 +360,7 @@ class ActivityStateTests(TestCase):
         # create old state w/ no registration id
         state_id = "old_state_test_no_reg"
         testparamssince = {"stateId": state_id, "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamssince))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamssince))
         teststatesince = {"test":"get w/ since","obj":{"agent":"test","stateId":state_id}}
         updated = "2012-06-12:T12:00:00Z"
         put1 = self.client.put(path, teststatesince, content_type=self.content_type, updated=updated, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -380,7 +380,7 @@ class ActivityStateTests(TestCase):
         regid = str(uuid.uuid1())
         state_id2 = "old_state_test_w_reg"
         testparamssince2 = {"registration": regid, "activityId": self.activityId, "agent": self.testagent, "stateId":state_id2}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamssince2))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamssince2))
         teststatesince2 = {"test":"get w/ since and registration","obj":{"agent":"test","stateId":state_id2}}
         put2 = self.client.put(path, teststatesince2, content_type=self.content_type, updated=updated, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -398,7 +398,7 @@ class ActivityStateTests(TestCase):
         # create new state w/ registration id
         state_id3 = "old_state_test_w_new_reg"
         testparamssince3 = {"registration": regid, "activityId": self.activityId, "agent": self.testagent, "stateId":state_id3}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamssince3))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamssince3))
         teststatesince3 = {"test":"get w/ since and registration","obj":{"agent":"test","stateId":state_id3}}
         put3 = self.client.put(path, teststatesince3, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -473,7 +473,7 @@ class ActivityStateTests(TestCase):
 
     def test_delete_without_activityid(self):
         testparamsregid = {"registration": self.registration, "stateId": self.stateId, "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamsregid))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamsregid))
         teststateregid = {"test":"delete activity state w/o activityid","obj":{"agent":"test"}}
         put1 = self.client.put(path, teststateregid, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -498,7 +498,7 @@ class ActivityStateTests(TestCase):
     
     def test_delete_without_agent(self):
         testparamsregid = {"registration": self.registration, "stateId": self.stateId, "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamsregid))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamsregid))
         teststateregid = {"test":"delete activity state w/o agent","obj":{"agent":"test"}}
         put1 = self.client.put(path, teststateregid, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -522,7 +522,7 @@ class ActivityStateTests(TestCase):
     
     def test_delete_set(self):
         testparamsdelset1 = {"registration": self.registration, "stateId": "del_state_set_1", "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamsdelset1))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamsdelset1))
         teststatedelset1 = {"test":"delete set #1","obj":{"agent":"test"}}
         put1 = self.client.put(path, teststatedelset1, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -538,7 +538,7 @@ class ActivityStateTests(TestCase):
         self.assertEqual(r['etag'], '"%s"' % hashlib.sha1(r.content).hexdigest())
 
         testparamsdelset2 = {"registration": self.registration, "stateId": "del_state_set_2", "activityId": self.activityId, "agent": self.testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparamsdelset2))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparamsdelset2))
         teststatedelset2 = {"test":"delete set #2","obj":{"agent":"test"}}
         put1 = self.client.put(path, teststatedelset2, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -574,7 +574,7 @@ class ActivityStateTests(TestCase):
 
         testagent = '{"name":"another test","mbox":"mailto:anothertest@example.com"}'
         sid = "test_ie_cors_put_delete_set_1"
-        path = '%s?%s' % (self.url, urllib.urlencode({"method":"PUT"}))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode({"method":"PUT"}))
         
         content = {"test":"test_ie_cors_put_delete","obj":{"actor":"another test"}}
         param = "stateId=%s&activityId=%s&agent=%s&content=%s&Content-Type=application/x-www-form-urlencoded&Authorization=%s&X-Experience-API-Version=1.0.0" % (sid, self.activityId,
@@ -594,7 +594,7 @@ class ActivityStateTests(TestCase):
         self.assertEqual(r['etag'], '"%s"' % hashlib.sha1('%s' % content).hexdigest())
  
         dparam = "agent=%s&activityId=%s&Authorization=%s&Content-Type=application/x-www-form-urlencoded&X-Experience-API-Version=1.0.0" % (testagent,self.activityId,auth)
-        path = '%s?%s' % (self.url, urllib.urlencode({"method":"DELETE"}))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode({"method":"DELETE"}))
         f_r = self.client.post(path, dparam, content_type='application/x-www-form-urlencoded')
         self.assertEqual(f_r.status_code, 204)
 
@@ -613,7 +613,7 @@ class ActivityStateTests(TestCase):
                     {"name":"agent2","mbox":"mailto:agent2@example.com"}]
         testagent = json.dumps({"objectType":ot, "name":name, "mbox":mbox,"member":members})
         testparams1 = {"stateId": "group.state.id", "activityId": self.activityId, "agent": testagent}
-        path = '%s?%s' % (self.url, urllib.urlencode(testparams1))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(testparams1))
         teststate1 = {"test":"put activity state using group as agent","obj":{"agent":"group of 2 agents"}}
         put1 = self.client.put(path, teststate1, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -631,7 +631,7 @@ class ActivityStateTests(TestCase):
 
     def test_post_new_state(self):
         param = {"stateId": "test:postnewstate", "activityId": "act:test/post.new.state", "agent": '{"mbox":"mailto:testagent@example.com"}'}
-        path = '%s?%s' % (self.url, urllib.urlencode(param))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(param))
         state = {"post":"testing new state", "obj":{"f1":"v1","f2":"v2"}}
 
         r = self.client.post(path, json.dumps(state), content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -645,7 +645,7 @@ class ActivityStateTests(TestCase):
 
     def test_post_blank_state(self):
         param = {"stateId": "test:postnewblankstate", "activityId": "act:test/post.new.blank.state", "agent": '{"mbox":"mailto:testagent@example.com"}'}
-        path = '%s?%s' % (self.url, urllib.urlencode(param))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(param))
         state = ""
 
         r = self.client.post(path, state, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -654,7 +654,7 @@ class ActivityStateTests(TestCase):
 
     def test_post_update_state(self):
         param = {"stateId": "test:postupdatestate", "activityId": "act:test/post.update.state", "agent": '{"mbox":"mailto:test@example.com"}'}
-        path = '%s?%s' % (self.url, urllib.urlencode(param))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(param))
         state = {"field1":"value1", "obj":{"ofield1":"oval1","ofield2":"oval2"}}
 
         r = self.client.post(path, json.dumps(state), content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -679,7 +679,7 @@ class ActivityStateTests(TestCase):
 
     def test_nonjson_put_state(self):
         param = {"stateId": "thisisnotjson", "activityId": "act:test/non.json.accepted", "agent": '{"mbox":"mailto:test@example.com"}'}
-        path = '%s?%s' % (self.url, urllib.urlencode(param))
+        path = '%s?%s' % (self.url, urllib.parse.urlencode(param))
         state = "this is not json"
 
         r = self.client.put(path, state, content_type="text/plain", Authorization=self.auth, X_Experience_API_Version="1.0.1")

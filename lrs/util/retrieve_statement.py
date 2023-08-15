@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models import Q
 
-from util import convert_to_utc, convert_to_dict
+from .util import convert_to_utc, convert_to_dict
 from ..models import Statement, Agent
 from ..exceptions import NotFound, IDNotFoundError
 

@@ -1,6 +1,6 @@
-import StringIO
+import io
 import email
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import json
 import itertools
 from base64 import b64decode, b64encode
@@ -10,9 +10,9 @@ from isodate.isodatetime import parse_datetime
 from django.http.multipartparser import MultiPartParser
 from django.core.cache import caches
 
-from util import convert_to_dict, convert_post_body_to_dict
-from etag import get_etag_info
-from jws import JWS, JWSException
+from .util import convert_to_dict, convert_post_body_to_dict
+from .etag import get_etag_info
+from .jws import JWS, JWSException
 from ..exceptions import OauthUnauthorized, OauthBadRequest, ParamError, BadRequest
 from ..models import Agent
 
@@ -64,7 +64,7 @@ def parse(request, more_id=None):
         bdy = convert_post_body_to_dict(request.body)
         # 'content' is in body for the IE cors POST
         if 'content' in bdy:
-            r_dict['body'] = urllib.unquote(bdy.pop('content'))
+            r_dict['body'] = urllib.parse.unquote(bdy.pop('content'))
         # headers are in the body too for IE CORS, we removes them
         r_dict['headers'].update(get_headers(bdy))
         for h in r_dict['headers']:
@@ -252,9 +252,9 @@ def parse_body(r, request):
     if request.method == 'POST' or request.method == 'PUT':
         # Parse out profiles/states if the POST dict is not empty
         if 'multipart/form-data' in request.META['CONTENT_TYPE']:
-            if request.POST.dict().keys():
+            if list(request.POST.dict().keys()):
                 r['params'].update(request.POST.dict())
-                parser = MultiPartParser(request.META, StringIO.StringIO(request.raw_post_data),request.upload_handlers)
+                parser = MultiPartParser(request.META, io.StringIO(request.raw_post_data),request.upload_handlers)
                 post, files = parser.parse()
                 r['files'] = files
         # If it is multipart/mixed, parse out all data

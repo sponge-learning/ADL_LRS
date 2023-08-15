@@ -9,8 +9,8 @@ from django.http import HttpResponse, HttpResponseNotFound
 from django.conf import settings
 from django.db import transaction
 from django.utils.timezone import utc
-from util import convert_to_dict
-from retrieve_statement import complex_get, get_more_statement_request
+from .util import convert_to_dict
+from .retrieve_statement import complex_get, get_more_statement_request
 from ..models import Statement, StatementAttachment, Agent, Activity
 from ..managers.ActivityProfileManager import ActivityProfileManager
 from ..managers.ActivityStateManager import ActivityStateManager 
@@ -30,13 +30,13 @@ def process_statements(stmts, auth, version):
                     st['version'] = version
     
                 if 'context' in st and 'contextActivities' in st['context']:
-                    for k, v in st['context']['contextActivities'].items():
+                    for k, v in list(st['context']['contextActivities'].items()):
                         if isinstance(v, dict):
                             st['context']['contextActivities'][k] = [v]
                 
                 if 'objectType' in st['object'] and st['object']['objectType'] == 'SubStatement':
                     if 'context' in st['object'] and 'contextActivities' in st['object']['context']:
-                        for k, v in st['object']['context']['contextActivities'].items():
+                        for k, v in list(st['object']['context']['contextActivities'].items()):
                             if isinstance(v, dict):
                                 st['object']['context']['contextActivities'][k] = [v]
 
@@ -54,7 +54,7 @@ def process_statements(stmts, auth, version):
                 # If it DNE that's OK
                 try:
                     Statement.objects.get(statement_id=stmt_id).delete()
-                except Exception, e:
+                except Exception as e:
                     pass
     else:
         if not 'id' in stmts:
@@ -64,13 +64,13 @@ def process_statements(stmts, auth, version):
             stmts['version'] = version
 
         if 'context' in stmts and 'contextActivities' in stmts['context']:
-            for k, v in stmts['context']['contextActivities'].items():
+            for k, v in list(stmts['context']['contextActivities'].items()):
                 if isinstance(v, dict):
                     stmts['context']['contextActivities'][k] = [v]
 
         if 'objectType' in stmts['object'] and stmts['object']['objectType'] == 'SubStatement':
             if 'context' in stmts['object'] and 'contextActivities' in stmts['object']['context']:
-                for k, v in stmts['object']['context']['contextActivities'].items():
+                for k, v in list(stmts['object']['context']['contextActivities'].items()):
                     if isinstance(v, dict):
                         stmts['object']['context']['contextActivities'][k] = [v]
 
@@ -169,7 +169,7 @@ def statements_more_get(req_dict):
         resp = HttpResponse(stmt_result, content_type=mime_type, status=200)
     # If not, just dump the stmt_result
     else:
-        if isinstance(stmt_result, basestring):
+        if isinstance(stmt_result, str):
             resp = HttpResponse(stmt_result, content_type=mime_type, status=200)
         else:
             resp = HttpResponse(json.dumps(stmt_result), content_type=mime_type, status=200)

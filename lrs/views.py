@@ -1,6 +1,6 @@
 import json
 import logging
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from base64 import b64decode
 
 from django.conf import settings
@@ -64,7 +64,7 @@ def stmt_validator(request):
             try:
                 validator = StatementValidator.StatementValidator(form.cleaned_data['jsondata'])
                 valid = validator.validate()
-            except ParamError, e:
+            except ParamError as e:
                 clean_data = form.cleaned_data['jsondata']
                 return render_to_response('validator.html', {"form": form, "error_message": e.message, "clean_data":clean_data},
                     context_instance=context)
@@ -346,7 +346,7 @@ def my_activity_state(request):
             return HttpResponseBadRequest("More than one agent returned with email")
 
         try:
-            state = ActivityState.objects.get(activity_id=urllib.unquote(act_id), agent=ag, state_id=urllib.unquote(state_id))
+            state = ActivityState.objects.get(activity_id=urllib.parse.unquote(act_id), agent=ag, state_id=urllib.parse.unquote(state_id))
         except ActivityState.DoesNotExist:
             return HttpResponseNotFound("Activity state does not exist")
         except ActivityState.MultipleObjectsReturned:
@@ -402,7 +402,7 @@ def delete_token2(request):
         return HttpResponse("Unknown token", status=400)
     try:
         token.delete()
-    except Exception, e:
+    except Exception as e:
         return HttpResponse(e.message, status=400)
     return HttpResponse("", status=204)
 
@@ -417,7 +417,7 @@ def delete_client(request):
         return HttpResponse("Unknown client", status=400)
     try:
         client.delete()
-    except Exception, e:
+    except Exception as e:
         return HttpResponse(e.message, status=400)
     return HttpResponse("", status=204)
 

@@ -44,7 +44,7 @@ class Verb(models.Model):
                 return self.display['en']
             except:
                 pass
-        return self.display.values()[0]
+        return list(self.display.values())[0]
 
     def __unicode__(self):
         return json.dumps(self.to_dict())
@@ -64,7 +64,7 @@ class AgentManager(models.Manager):
             member = kwargs.pop('member', None)
             if member:
                 has_member = True
-                if isinstance(member, basestring):
+                if isinstance(member, str):
                     member = json.loads(member)
 
         if ifp_sent:
@@ -717,14 +717,14 @@ class StatementAttachment(models.Model):
             if lang:
                 ret['display'] = util.get_lang(self.display, lang)
             else:
-                first = self.display.iteritems().next()
+                first = next(iter(self.display.items()))
                 ret['display'] = {first[0]: first[1]}
 
         if self.description:
             if lang:
                 ret['description'] = util.get_lang(self.description, lang)
             else:
-                first = self.description.iteritems().next()
+                first = next(iter(self.description.items()))
                 ret['description'] = {first[0]: first[1]}
 
         ret['contentType'] = self.contentType

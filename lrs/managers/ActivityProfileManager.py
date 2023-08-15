@@ -61,7 +61,7 @@ class ActivityProfileManager():
                     raise ParamError("The document was not able to be parsed into a JSON object.")
                 else:
                     # json.dumps changes the format of the string rep of the dict
-                    merged = json.dumps(dict(orig_prof.items() + post_profile.items()))
+                    merged = json.dumps(dict(list(orig_prof.items()) + list(post_profile.items())))
                 p.json_profile = merged
                 p.etag = etag.create_tag(merged)
             

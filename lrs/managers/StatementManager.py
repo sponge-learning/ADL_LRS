@@ -46,7 +46,7 @@ class StatementManager():
         
         # Save context activities
         # Can have multiple groupings
-        for con_act_group in con_act_data.items():
+        for con_act_group in list(con_act_data.items()):
             ca = SubStatementContextActivity.objects.create(key=con_act_group[0], substatement=sub)
             # Incoming contextActivities can either be a list or dict
             if isinstance(con_act_group[1], list):
@@ -84,7 +84,7 @@ class StatementManager():
 
         # Save context activities
         # Can have multiple groupings
-        for con_act_group in con_act_data.items():
+        for con_act_group in list(con_act_data.items()):
             ca = StatementContextActivity.objects.create(key=con_act_group[0], statement=stmt)
             # Incoming contextActivities can either be a list or dict
             if isinstance(con_act_group[1], list):
@@ -102,11 +102,11 @@ class StatementManager():
         if 'result' in self.data:
             result = self.data['result']
 
-            for k,v in result.iteritems():
+            for k,v in result.items():
                 self.data['result_' + k] = v
 
             if 'result_score' in self.data:
-                for k,v in self.data['result_score'].iteritems():
+                for k,v in self.data['result_score'].items():
                     self.data['result_score_' + k] = v
                 del self.data['result']['score']
                 del self.data['result_score']
@@ -164,10 +164,10 @@ class StatementManager():
 
                     # Save displays
                     if 'display' in attach:
-                        attachment.display = dict(existing_displays.items() + attach['display'].items())
+                        attachment.display = dict(list(existing_displays.items()) + list(attach['display'].items()))
 
                     if 'description' in attach:
-                        attachment.description = dict(existing_descriptions.items() + attach['description'].items())
+                        attachment.description = dict(list(existing_descriptions.items()) + list(attach['description'].items()))
                     attachment.save()
 
                 # Add each attach to the stmt
@@ -182,7 +182,7 @@ class StatementManager():
         if 'context' in self.data:
             context = self.data['context']
 
-            for k,v in context.iteritems():
+            for k,v in context.items():
                 self.data['context_' + k] = v
 
             if 'context_instructor' in self.data:
@@ -217,7 +217,7 @@ class StatementManager():
 
         # Save verb displays
         if 'display' in incoming_verb:
-            verb_object.display = dict(existing_lang_maps.items() + incoming_verb['display'].items())
+            verb_object.display = dict(list(existing_lang_maps.items()) + list(incoming_verb['display'].items()))
             verb_object.save()
         self.data['verb'] = verb_object
 

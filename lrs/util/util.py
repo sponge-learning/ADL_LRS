@@ -1,7 +1,7 @@
 import ast
 import json
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 import uuid
 from isodate.isodatetime import parse_datetime
 
@@ -58,7 +58,7 @@ def convert_to_dict(incoming_data):
 
 
 def convert_post_body_to_dict(incoming_data):
-    qs = urlparse.parse_qsl(urllib.unquote_plus(incoming_data))
+    qs = urllib.parse.parse_qsl(urllib.parse.unquote_plus(incoming_data))
     return dict((k, v) for k, v in qs)
 
 
@@ -70,7 +70,7 @@ def get_lang(langdict, lang):
         except KeyError:
             pass
 
-    first = langdict.iteritems().next()
+    first = next(iter(langdict.items()))
     return {first[0]: first[1]}
 
 
@@ -85,4 +85,4 @@ def autoregister(*app_list):
 
 
 def get_default_uuid_string():
-    return unicode(uuid.uuid4())
+    return str(uuid.uuid4())
