@@ -1,11 +1,10 @@
-FROM python:2.7.18
-
-COPY . /adl_lrs
-WORKDIR /adl_lrs
+FROM python:3.7
 
 RUN apt-get update
 RUN apt-get install -y postgresql
-RUN pip install pip==20.3.4 'fabric<2.0' virtualenv
+
+COPY . /adl_lrs
+WORKDIR /adl_lrs
 RUN pip install -r requirements.txt
 
 # This Dockerfile is incomplete, but sufficient to test the installation of the code via `pip install .`
