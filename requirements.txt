@@ -1,7 +1,7 @@
 Django==1.11.29
 pytz==2012c
 bencode==1.0
-psycopg2==2.7.5
+psycopg2==2.8.6
 isodate==0.4.9
 pycrypto==2.5
 django-extensions==2.0.7
