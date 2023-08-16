@@ -1,5 +1,3 @@
-from string import lower
-
 def webkit_workaround(bestq, result):
     """The next part is a workaround, to avoid the problem, webkit browsers
     generate, by putting application/xml as the first item in theire 
@@ -25,11 +23,11 @@ def webkit_workaround(bestq, result):
             if mediatype[2] == bestq:
                 bestresult.append(mediatype)
                 length = length + 1
-                if not hasxhtml and lower(mediatype[0]) == "application/xhtml+xml":
+                if not hasxhtml and mediatype[0].lower() == "application/xhtml+xml":
                     hasxhtml = True
-                if not hashtml and lower(mediatype[0]) == "text/html":
+                if not hashtml and mediatype[0].lower() == "text/html":
                     hashtml = True
-            if lower(mediatype[0]) == "text/html":
+            if mediatype[0].lower() == "text/html":
                 idxhtml = i
             i = i+1
         

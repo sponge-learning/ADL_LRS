@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import authenticate
-from django.utils.encoding import smart_unicode
+from django.utils.encoding import smart_str
 from django.utils.translation import ugettext as _
 from .. import scope
 from ..constants import RESPONSE_TYPE_CHOICES, SCOPES
@@ -65,7 +65,7 @@ class ScopeChoiceField(forms.ChoiceField):
             value = value.split(' ')
 
         # Split values into list
-        return ' '.join([smart_unicode(val) for val in value]).split(' ')
+        return ' '.join([smart_str(val) for val in value]).split(' ')
 
     def validate(self, value):
         """
