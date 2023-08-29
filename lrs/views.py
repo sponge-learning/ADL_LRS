@@ -6,7 +6,7 @@ from base64 import b64decode
 from django.conf import settings
 from django.contrib.auth import logout, login, authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import SuspiciousOperation
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
@@ -16,10 +16,12 @@ from django.utils.decorators import decorator_from_middleware
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
 
-from .exceptions import BadRequest, ParamError, Unauthorized, Forbidden, NotFound, Conflict, PreconditionFail, OauthUnauthorized, OauthBadRequest
+from .exceptions import BadRequest, ParamError, Unauthorized, Forbidden, NotFound, Conflict, PreconditionFail, \
+    OauthUnauthorized, OauthBadRequest
 from .forms import ValidatorForm, RegisterForm, RegClientForm
 from .models import Statement, Verb, Agent, Activity, StatementAttachment, ActivityState
-from .util import req_validate, req_parse, req_process, XAPIVersionHeaderMiddleware, accept_middleware, StatementValidator
+from .util import req_validate, req_parse, req_process, XAPIVersionHeaderMiddleware, accept_middleware, \
+    StatementValidator
 
 from oauth_provider.consts import ACCEPTED, CONSUMER_STATES
 from oauth_provider.models import Consumer, Token
@@ -32,6 +34,7 @@ User = get_user_model()
 # This uses the lrs logger for LRS specific information
 logger = logging.getLogger(__name__)
 LOGIN_URL = "/accounts/login"
+
 
 @decorator_from_middleware(accept_middleware.AcceptMiddleware)
 @csrf_protect
@@ -47,7 +50,8 @@ def home(request):
 
     if request.method == 'GET':
         form = RegisterForm()
-        return render_to_response('home.html', {'stats':stats, "form": form}, context_instance=context)
+        return render_to_response('home.html', {'stats': stats, "form": form}, context_instance=context)
+
 
 @decorator_from_middleware(accept_middleware.AcceptMiddleware)
 @csrf_protect
@@ -66,136 +70,140 @@ def stmt_validator(request):
                 valid = validator.validate()
             except ParamError as e:
                 clean_data = form.cleaned_data['jsondata']
-                return render_to_response('validator.html', {"form": form, "error_message": e.message, "clean_data":clean_data},
-                    context_instance=context)
+                return render_to_response('validator.html',
+                                          {"form": form, "error_message": e.message, "clean_data": clean_data},
+                                          context_instance=context)
             else:
                 clean_data = json.dumps(json.loads(form.cleaned_data['jsondata']), indent=4, sort_keys=True)
-                return render_to_response('validator.html', {"form": form,"valid_message": valid, "clean_data":clean_data},
-                    context_instance=context)
+                return render_to_response('validator.html',
+                                          {"form": form, "valid_message": valid, "clean_data": clean_data},
+                                          context_instance=context)
     return render_to_response('validator.html', {"form": form}, context_instance=context)
+
 
 @decorator_from_middleware(accept_middleware.AcceptMiddleware)
 def about(request):
-    lrs_data = { 
+    lrs_data = {
         "version": [settings.XAPI_VERSION],
-        "extensions":{
+        "extensions": {
             "xapi": {
                 "statements":
-                {
-                    "name": "Statements",
-                    "methods": ["GET", "POST", "PUT", "HEAD"],
-                    "endpoint": reverse('lrs.views.statements'),
-                    "description": "Endpoint to submit and retrieve XAPI statements.",
-                },
+                    {
+                        "name": "Statements",
+                        "methods": ["GET", "POST", "PUT", "HEAD"],
+                        "endpoint": reverse('lrs.views.statements'),
+                        "description": "Endpoint to submit and retrieve XAPI statements.",
+                    },
                 "activities":
-                {
-                    "name": "Activities",
-                    "methods": ["GET", "HEAD"],
-                    "endpoint": reverse('lrs.views.activities'),
-                    "description": "Endpoint to retrieve a complete activity object.",
-                },
+                    {
+                        "name": "Activities",
+                        "methods": ["GET", "HEAD"],
+                        "endpoint": reverse('lrs.views.activities'),
+                        "description": "Endpoint to retrieve a complete activity object.",
+                    },
                 "activities_state":
-                {
-                    "name": "Activities State",
-                    "methods": ["PUT","POST","GET","DELETE", "HEAD"],
-                    "endpoint": reverse('lrs.views.activity_state'),
-                    "description": "Stores, fetches, or deletes the document specified by the given stateId that exists in the context of the specified activity, agent, and registration (if specified).",
-                },
+                    {
+                        "name": "Activities State",
+                        "methods": ["PUT", "POST", "GET", "DELETE", "HEAD"],
+                        "endpoint": reverse('lrs.views.activity_state'),
+                        "description": "Stores, fetches, or deletes the document specified by the given stateId that exists in the context of the specified activity, agent, and registration (if specified).",
+                    },
                 "activities_profile":
-                {
-                    "name": "Activities Profile",
-                    "methods": ["PUT","POST","GET","DELETE", "HEAD"],
-                    "endpoint": reverse('lrs.views.activity_profile'),
-                    "description": "Saves/retrieves/deletes the specified profile document in the context of the specified activity.",
-                },
+                    {
+                        "name": "Activities Profile",
+                        "methods": ["PUT", "POST", "GET", "DELETE", "HEAD"],
+                        "endpoint": reverse('lrs.views.activity_profile'),
+                        "description": "Saves/retrieves/deletes the specified profile document in the context of the specified activity.",
+                    },
                 "agents":
-                {
-                    "name": "Agents",
-                    "methods": ["GET", "HEAD"],
-                    "endpoint": reverse('lrs.views.agents'),
-                    "description": "Returns a special, Person object for a specified agent.",
-                },
+                    {
+                        "name": "Agents",
+                        "methods": ["GET", "HEAD"],
+                        "endpoint": reverse('lrs.views.agents'),
+                        "description": "Returns a special, Person object for a specified agent.",
+                    },
                 "agents_profile":
-                {
-                    "name": "Agent Profile",
-                    "methods": ["PUT","POST","GET","DELETE", "HEAD"],
-                    "endpoint": reverse('lrs.views.agent_profile'),
-                    "description": "Saves/retrieves/deletes the specified profile document in the context of the specified agent.",
-                }
+                    {
+                        "name": "Agent Profile",
+                        "methods": ["PUT", "POST", "GET", "DELETE", "HEAD"],
+                        "endpoint": reverse('lrs.views.agent_profile'),
+                        "description": "Saves/retrieves/deletes the specified profile document in the context of the specified agent.",
+                    }
             },
-            "lrs":{
+            "lrs": {
                 "user_register":
-                {
-                    "name": "User Registration",
-                    "methods": ["POST"],
-                    "endpoint": reverse('lrs.views.register'),
-                    "description": "Registers a user within the LRS.",
-                },
+                    {
+                        "name": "User Registration",
+                        "methods": ["POST"],
+                        "endpoint": reverse('lrs.views.register'),
+                        "description": "Registers a user within the LRS.",
+                    },
                 "client_register":
-                {
-                    "name": "OAuth1 Client Registration",
-                    "methods": ["POST"],
-                    "endpoint": reverse('lrs.views.reg_client'),
-                    "description": "Registers an OAuth client applicaton with the LRS.",
-                },
+                    {
+                        "name": "OAuth1 Client Registration",
+                        "methods": ["POST"],
+                        "endpoint": reverse('lrs.views.reg_client'),
+                        "description": "Registers an OAuth client applicaton with the LRS.",
+                    },
                 "client_register2":
-                {
-                    "name": "OAuth2 Client Registration",
-                    "methods": ["POST"],
-                    "endpoint": reverse('lrs.views.reg_client2'),
-                    "description": "Registers an OAuth2 client applicaton with the LRS.",
-                }                
+                    {
+                        "name": "OAuth2 Client Registration",
+                        "methods": ["POST"],
+                        "endpoint": reverse('lrs.views.reg_client2'),
+                        "description": "Registers an OAuth2 client applicaton with the LRS.",
+                    }
             },
             "oauth":
-            {
-                "initiate":
                 {
-                    "name": "Oauth Initiate",
-                    "methods": ["POST"],
-                    "endpoint": reverse('oauth:oauth_provider.views.request_token'),
-                    "description": "Authorize a client and return temporary credentials.",
+                    "initiate":
+                        {
+                            "name": "Oauth Initiate",
+                            "methods": ["POST"],
+                            "endpoint": reverse('oauth:oauth_provider.views.request_token'),
+                            "description": "Authorize a client and return temporary credentials.",
+                        },
+                    "authorize":
+                        {
+                            "name": "Oauth Authorize",
+                            "methods": ["GET"],
+                            "endpoint": reverse('oauth:oauth_provider.views.user_authorization'),
+                            "description": "Authorize a user for Oauth1.",
+                        },
+                    "token":
+                        {
+                            "name": "Oauth Token",
+                            "methods": ["POST"],
+                            "endpoint": reverse('oauth:oauth_provider.views.access_token'),
+                            "description": "Provides Oauth token to the client.",
+                        }
                 },
-                "authorize":
-                {
-                    "name": "Oauth Authorize",
-                    "methods": ["GET"],
-                    "endpoint": reverse('oauth:oauth_provider.views.user_authorization'),
-                    "description": "Authorize a user for Oauth1.",
-                },
-                "token":
-                {
-                    "name": "Oauth Token",
-                    "methods": ["POST"],
-                    "endpoint": reverse('oauth:oauth_provider.views.access_token'),
-                    "description": "Provides Oauth token to the client.",
-                }
-            },
             "oauth2":
-            {
-                "authorize":
                 {
-                    "name": "Oauth2 Authorize",
-                    "methods": ["GET"],
-                    "endpoint": reverse('oauth2:authorize'),
-                    "description": "Authorize a user for Oauth2.",
-                },
-                "access_token":
-                {
-                    "name": "Oauth2 Token",
-                    "methods": ["POST"],
-                    "endpoint": reverse('oauth2:access_token'),
-                    "description": "Provides Oauth2 token to the client.",
+                    "authorize":
+                        {
+                            "name": "Oauth2 Authorize",
+                            "methods": ["GET"],
+                            "endpoint": reverse('oauth2:authorize'),
+                            "description": "Authorize a user for Oauth2.",
+                        },
+                    "access_token":
+                        {
+                            "name": "Oauth2 Token",
+                            "methods": ["POST"],
+                            "endpoint": reverse('oauth2:access_token'),
+                            "description": "Provides Oauth2 token to the client.",
+                        }
                 }
-            }            
         }
-    }    
+    }
     return HttpResponse(json.dumps(lrs_data), content_type="application/json", status=200)
+
 
 @csrf_protect
 @require_http_methods(["POST", "GET"])
 def register(request):
     context = RequestContext(request)
-    
+
     if request.method == 'GET':
         form = RegisterForm()
         return render_to_response('register.html', {"form": form}, context_instance=context)
@@ -205,18 +213,20 @@ def register(request):
             name = form.cleaned_data['username']
             pword = form.cleaned_data['password']
             email = form.cleaned_data['email']
-            
+
             if not User.objects.filter(username__exact=name).count():
                 if not User.objects.filter(email__exact=email).count():
                     user = User.objects.create_user(name, email, pword)
                 else:
-                    return render_to_response('register.html', {"form": form, "error_message": "Email %s is already registered." % email},
-                        context_instance=context)                    
+                    return render_to_response('register.html', {"form": form,
+                                                                "error_message": "Email %s is already registered." % email},
+                                              context_instance=context)
             else:
-                return render_to_response('register.html', {"form": form, "error_message": "User %s already exists." % name},
-                    context_instance=context)                
-            
-            # If a user is already logged in, log them out
+                return render_to_response('register.html',
+                                          {"form": form, "error_message": "User %s already exists." % name},
+                                          context_instance=context)
+
+                # If a user is already logged in, log them out
             if request.user.is_authenticated():
                 logout(request)
 
@@ -225,6 +235,7 @@ def register(request):
             return HttpResponseRedirect(reverse('lrs.views.home'))
         else:
             return render_to_response('register.html', {"form": form}, context_instance=context)
+
 
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["GET"])
@@ -247,6 +258,7 @@ def admin_attachments(request, path):
         response['Content-Disposition'] = 'attachment; filename="%s"' % path
         return response
 
+
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["POST", "GET"])
 def reg_client(request):
@@ -265,15 +277,19 @@ def reg_client(request):
                 client = Consumer.objects.get(name__exact=name)
             except Consumer.DoesNotExist:
                 client = Consumer.objects.create(name=name, description=description, user=request.user,
-                    status=ACCEPTED, secret=secret, rsa_signature=rsa_signature)
+                                                 status=ACCEPTED, secret=secret, rsa_signature=rsa_signature)
             else:
-                return render_to_response('regclient.html', {"form": form, "error_message": "Client %s already exists." % name}, context_instance=RequestContext(request))         
-            
+                return render_to_response('regclient.html',
+                                          {"form": form, "error_message": "Client %s already exists." % name},
+                                          context_instance=RequestContext(request))
+
             client.generate_random_codes()
-            d = {"name":client.name,"app_id":client.key, "secret":client.secret, "rsa":client.rsa_signature, "info_message": "Your Client Credentials"}
+            d = {"name": client.name, "app_id": client.key, "secret": client.secret, "rsa": client.rsa_signature,
+                 "info_message": "Your Client Credentials"}
             return render_to_response('reg_success.html', d, context_instance=RequestContext(request))
         else:
             return render_to_response('regclient.html', {"form": form}, context_instance=RequestContext(request))
+
 
 @transaction.atomic
 @login_required(login_url=LOGIN_URL)
@@ -284,14 +300,16 @@ def reg_client2(request):
         return render_to_response('regclient2.html', {"form": form}, context_instance=RequestContext(request))
     elif request.method == 'POST':
         form = ClientForm(request.POST)
-        if form.is_valid(): 
+        if form.is_valid():
             client = form.save(commit=False)
             client.user = request.user
             client.save()
-            d = {"name":client.name,"app_id":client.client_id, "secret":client.client_secret, "info_message": "Your Client Credentials"}
+            d = {"name": client.name, "app_id": client.client_id, "secret": client.client_secret,
+                 "info_message": "Your Client Credentials"}
             return render_to_response('reg_success.html', d, context_instance=RequestContext(request))
         else:
             return render_to_response('regclient2.html', {"form": form}, context_instance=RequestContext(request))
+
 
 @login_required(login_url=LOGIN_URL)
 def me(request, template='me.html'):
@@ -305,12 +323,13 @@ def me(request, template='me.html'):
         scopes = to_names(token.scope)
         access_token_scopes.append((token, scopes))
 
-    context = {'client_apps':client_apps,
-                'access_tokens':access_tokens,
-                'client_apps2': client_apps2,
-                'access_tokens2':access_token_scopes}
+    context = {'client_apps': client_apps,
+               'access_tokens': access_tokens,
+               'client_apps2': client_apps2,
+               'access_tokens2': access_token_scopes}
 
     return render_to_response(template, context, context_instance=RequestContext(request))
+
 
 @login_required(login_url="/accounts/login")
 @require_http_methods(["GET", "HEAD"])
@@ -322,6 +341,7 @@ def my_download_statements(request):
     response['Content-Length'] = len(result)
     return response
 
+
 @transaction.atomic
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["DELETE"])
@@ -332,6 +352,7 @@ def my_delete_statements(request):
         return HttpResponse(status=204)
     else:
         raise Exception("Unable to delete statements")
+
 
 @login_required(login_url=LOGIN_URL)
 def my_activity_state(request):
@@ -346,7 +367,8 @@ def my_activity_state(request):
             return HttpResponseBadRequest("More than one agent returned with email")
 
         try:
-            state = ActivityState.objects.get(activity_id=urllib.parse.unquote(act_id), agent=ag, state_id=urllib.parse.unquote(state_id))
+            state = ActivityState.objects.get(activity_id=urllib.parse.unquote(act_id), agent=ag,
+                                              state_id=urllib.parse.unquote(state_id))
         except ActivityState.DoesNotExist:
             return HttpResponseNotFound("Activity state does not exist")
         except ActivityState.MultipleObjectsReturned:
@@ -355,20 +377,23 @@ def my_activity_state(request):
         return HttpResponse(state.json_state, content_type=state.content_type, status=200)
     return HttpResponseBadRequest("Activity ID, State ID and are both required")
 
+
 @transaction.atomic
 @login_required(login_url=LOGIN_URL)
 def my_app_status(request):
     try:
         name = request.GET['app_name']
         status = request.GET['status']
-        new_status = [s[0] for s in CONSUMER_STATES if s[1] == status][0] #should only be 1
+        new_status = [s[0] for s in CONSUMER_STATES if s[1] == status][0]  # should only be 1
         client = Consumer.objects.get(name__exact=name, user=request.user)
         client.status = new_status
         client.save()
-        ret = {"app_name":client.name, "status":client.get_status_display()}
+        ret = {"app_name": client.name, "status": client.get_status_display()}
         return HttpResponse(json.dumps(ret), content_type="application/json", status=200)
     except:
-        return HttpResponse(json.dumps({"error_message":"unable to fulfill request"}), content_type="application/json", status=400)
+        return HttpResponse(json.dumps({"error_message": "unable to fulfill request"}), content_type="application/json",
+                            status=400)
+
 
 @transaction.atomic
 @login_required(login_url=LOGIN_URL)
@@ -380,16 +405,17 @@ def delete_token(request):
         consumer_id = ids[1]
         ts = ids[2]
         token = Token.objects.get(user=request.user,
-                                         key__startswith=token_key,
-                                         consumer__id=consumer_id,
-                                         timestamp=ts,
-                                         token_type=Token.ACCESS,
-                                         is_approved=True)
+                                  key__startswith=token_key,
+                                  consumer__id=consumer_id,
+                                  timestamp=ts,
+                                  token_type=Token.ACCESS,
+                                  is_approved=True)
         token.is_approved = False
         token.save()
         return HttpResponse("", status=204)
     except:
         return HttpResponse("Unknown token", status=400)
+
 
 @transaction.atomic
 @login_required(login_url=LOGIN_URL)
@@ -406,13 +432,14 @@ def delete_token2(request):
         return HttpResponse(e.message, status=400)
     return HttpResponse("", status=204)
 
+
 @transaction.atomic
 @login_required(login_url=LOGIN_URL)
 @require_http_methods(["DELETE"])
 def delete_client(request):
     try:
         client_id = request.GET['id']
-        client = Client.objects.get(user=request.user,client_id=client_id)
+        client = Client.objects.get(user=request.user, client_id=client_id)
     except:
         return HttpResponse("Unknown client", status=400)
     try:
@@ -421,10 +448,12 @@ def delete_client(request):
         return HttpResponse(e.message, status=400)
     return HttpResponse("", status=204)
 
+
 def logout_view(request):
     logout(request)
     # Redirect to a success page.
     return HttpResponseRedirect(reverse('lrs.views.home'))
+
 
 # Called when user queries GET statement endpoint and returned list is larger than server limit (10)
 @decorator_from_middleware(XAPIVersionHeaderMiddleware.XAPIVersionHeader)
@@ -432,7 +461,8 @@ def logout_view(request):
 def statements_more(request, more_id):
     return handle_request(request, more_id)
 
-@require_http_methods(["PUT","GET","POST", "HEAD"])
+
+@require_http_methods(["PUT", "GET", "POST", "HEAD"])
 @decorator_from_middleware(XAPIVersionHeaderMiddleware.XAPIVersionHeader)
 def statements(request):
     if request.method in ['GET', 'HEAD']:
@@ -440,32 +470,39 @@ def statements(request):
     else:
         return doputpost(request)
 
+
 def doget(request):
-    return handle_request(request)   
+    return handle_request(request)
+
 
 @decorator_from_middleware(XAPIVersionHeaderMiddleware.XAPIVersionHeader)
 def doputpost(request):
     return handle_request(request)
 
-@require_http_methods(["PUT","POST","GET","DELETE", "HEAD"])
+
+@require_http_methods(["PUT", "POST", "GET", "DELETE", "HEAD"])
 @decorator_from_middleware(XAPIVersionHeaderMiddleware.XAPIVersionHeader)
 def activity_state(request):
-    return handle_request(request)  
+    return handle_request(request)
 
-@require_http_methods(["PUT","POST","GET","DELETE", "HEAD"])
+
+@require_http_methods(["PUT", "POST", "GET", "DELETE", "HEAD"])
 @decorator_from_middleware(XAPIVersionHeaderMiddleware.XAPIVersionHeader)
 def activity_profile(request):
     return handle_request(request)
+
 
 @require_http_methods(["GET", "HEAD"])
 @decorator_from_middleware(XAPIVersionHeaderMiddleware.XAPIVersionHeader)
 def activities(request):
     return handle_request(request)
 
-@require_http_methods(["PUT","POST","GET","DELETE", "HEAD"])    
+
+@require_http_methods(["PUT", "POST", "GET", "DELETE", "HEAD"])
 @decorator_from_middleware(XAPIVersionHeaderMiddleware.XAPIVersionHeader)
 def agent_profile(request):
     return handle_request(request)
+
 
 # returns a 405 (Method Not Allowed) if not a GET
 @require_http_methods(["GET", "HEAD"])
@@ -473,146 +510,139 @@ def agent_profile(request):
 def agents(request):
     return handle_request(request)
 
+
 @login_required
 def user_profile(request):
     return render_to_response('registration/profile.html')
 
+
 @transaction.atomic
 def handle_request(request, more_id=None):
     validators = {
-        reverse(statements).lower() : {
-            "POST" : req_validate.statements_post,
-            "GET" : req_validate.statements_get,
-            "PUT" : req_validate.statements_put,
-            "HEAD" : req_validate.statements_get
+        reverse(statements).lower(): {
+            "POST": req_validate.statements_post,
+            "GET": req_validate.statements_get,
+            "PUT": req_validate.statements_put,
+            "HEAD": req_validate.statements_get
         },
-        reverse(activity_state).lower() : {
+        reverse(activity_state).lower(): {
             "POST": req_validate.activity_state_post,
-            "PUT" : req_validate.activity_state_put,
-            "GET" : req_validate.activity_state_get,
-            "HEAD" : req_validate.activity_state_get,
-            "DELETE" : req_validate.activity_state_delete
+            "PUT": req_validate.activity_state_put,
+            "GET": req_validate.activity_state_get,
+            "HEAD": req_validate.activity_state_get,
+            "DELETE": req_validate.activity_state_delete
         },
-        reverse(activity_profile).lower() : {
+        reverse(activity_profile).lower(): {
             "POST": req_validate.activity_profile_post,
-            "PUT" : req_validate.activity_profile_put,
-            "GET" : req_validate.activity_profile_get,
-            "HEAD" : req_validate.activity_profile_get,
-            "DELETE" : req_validate.activity_profile_delete
+            "PUT": req_validate.activity_profile_put,
+            "GET": req_validate.activity_profile_get,
+            "HEAD": req_validate.activity_profile_get,
+            "DELETE": req_validate.activity_profile_delete
         },
-        reverse(activities).lower() : {
-            "GET" : req_validate.activities_get,
-            "HEAD" : req_validate.activities_get
+        reverse(activities).lower(): {
+            "GET": req_validate.activities_get,
+            "HEAD": req_validate.activities_get
         },
-        reverse(agent_profile).lower() : {
+        reverse(agent_profile).lower(): {
             "POST": req_validate.agent_profile_post,
-            "PUT" : req_validate.agent_profile_put,
-            "GET" : req_validate.agent_profile_get,
-            "HEAD" : req_validate.agent_profile_get,
-            "DELETE" : req_validate.agent_profile_delete
+            "PUT": req_validate.agent_profile_put,
+            "GET": req_validate.agent_profile_get,
+            "HEAD": req_validate.agent_profile_get,
+            "DELETE": req_validate.agent_profile_delete
         },
-        reverse(agents).lower() : {
-            "GET" : req_validate.agents_get,
-            "HEAD" : req_validate.agents_get
+        reverse(agents).lower(): {
+            "GET": req_validate.agents_get,
+            "HEAD": req_validate.agents_get
         },
-        "/xapi/statements/more" : {
-                "GET" : req_validate.statements_more_get,
-                "HEAD" : req_validate.statements_more_get
+        "/xapi/statements/more": {
+            "GET": req_validate.statements_more_get,
+            "HEAD": req_validate.statements_more_get
         }
     }
-
     processors = {
-        reverse(statements).lower() : {
-            "POST" : req_process.statements_post,
-            "GET" : req_process.statements_get,
-            "HEAD" : req_process.statements_get,
-            "PUT" : req_process.statements_put
+        reverse(statements).lower(): {
+            "POST": req_process.statements_post,
+            "GET": req_process.statements_get,
+            "HEAD": req_process.statements_get,
+            "PUT": req_process.statements_put
         },
-        reverse(activity_state).lower() : {
+        reverse(activity_state).lower(): {
             "POST": req_process.activity_state_post,
-            "PUT" : req_process.activity_state_put,
-            "GET" : req_process.activity_state_get,
-            "HEAD" : req_process.activity_state_get,
-            "DELETE" : req_process.activity_state_delete
+            "PUT": req_process.activity_state_put,
+            "GET": req_process.activity_state_get,
+            "HEAD": req_process.activity_state_get,
+            "DELETE": req_process.activity_state_delete
         },
-        reverse(activity_profile).lower() : {
+        reverse(activity_profile).lower(): {
             "POST": req_process.activity_profile_post,
-            "PUT" : req_process.activity_profile_put,
-            "GET" : req_process.activity_profile_get,
-            "HEAD" : req_process.activity_profile_get,
-            "DELETE" : req_process.activity_profile_delete
+            "PUT": req_process.activity_profile_put,
+            "GET": req_process.activity_profile_get,
+            "HEAD": req_process.activity_profile_get,
+            "DELETE": req_process.activity_profile_delete
         },
-        reverse(activities).lower() : {
-            "GET" : req_process.activities_get,
-            "HEAD" : req_process.activities_get
+        reverse(activities).lower(): {
+            "GET": req_process.activities_get,
+            "HEAD": req_process.activities_get
         },
-        reverse(agent_profile).lower() : {
+        reverse(agent_profile).lower(): {
             "POST": req_process.agent_profile_post,
-            "PUT" : req_process.agent_profile_put,
-            "GET" : req_process.agent_profile_get,
-            "HEAD" : req_process.agent_profile_get,
-            "DELETE" : req_process.agent_profile_delete
+            "PUT": req_process.agent_profile_put,
+            "GET": req_process.agent_profile_get,
+            "HEAD": req_process.agent_profile_get,
+            "DELETE": req_process.agent_profile_delete
         },
-        reverse(agents).lower() : {
-            "GET" : req_process.agents_get,
-            "HEAD" : req_process.agents_get
+        reverse(agents).lower(): {
+            "GET": req_process.agents_get,
+            "HEAD": req_process.agents_get
         },
-        "/xapi/statements/more" : {
-                "GET" : req_process.statements_more_get,
-                "HEAD" : req_process.statements_more_get
-        }      
+        "/xapi/statements/more": {
+            "GET": req_process.statements_more_get,
+            "HEAD": req_process.statements_more_get
+        }
     }
 
     try:
         r_dict = req_parse.parse(request, more_id)
         path = request.path.lower()
-
         if path.endswith('/'):
             path = path.rstrip('/')
-
         # Cutoff more_id
         if '/xapi/statements/more' in path:
             path = '/xapi/statements/more'
 
         req_dict = validators[path][r_dict['method']](r_dict)
         return processors[path][req_dict['method']](req_dict)
-
-    except BadRequest as err:
-        log_exception(request.path, err)
-        return HttpResponse(err.message, status=400)
-    except ValidationError as ve:
-        log_exception(request.path, ve)
-        return HttpResponse(ve.messages[0], status=400)
-    except OauthBadRequest as oauth_err:
-        log_exception(request.path, oauth_err)
-        return HttpResponse(oauth_err.message, status=400)
-    except Unauthorized as autherr:
-        log_exception(request.path, autherr)
-        r = HttpResponse(autherr, status = 401)
-        r['WWW-Authenticate'] = 'Basic realm="ADLLRS"'
-        return r
-    except OauthUnauthorized as oauth_err:
-        log_exception(request.path, oauth_err)
-        return HttpResponse(oauth_err.message, status=401)
+    except (BadRequest, OauthBadRequest, SuspiciousOperation) as err:
+        status = 400
+        log_exception(status, request.path)
+        response = HttpResponse(str(err), status=status)
+    except (Unauthorized, OauthUnauthorized) as autherr:
+        status = 401
+        log_exception(status, request.path)
+        response = HttpResponse(autherr, status=status)
+        response['WWW-Authenticate'] = 'Basic realm="ADLLRS"'
     except Forbidden as forb:
-        log_exception(request.path, forb)
-        return HttpResponse(forb.message, status=403)
+        status = 403
+        log_exception(status, request.path)
+        response = HttpResponse(str(msg), status=status)
     except NotFound as nf:
-        log_exception(request.path, nf)
-        return HttpResponse(nf.message, status=404)
+        status = 404
+        log_exception(status, request.path)
+        response = HttpResponse(str(nf), status=status)
     except Conflict as c:
-        log_exception(request.path, c)
-        return HttpResponse(c.message, status=409)
+        status = 409
+        log_exception(status, request.path)
+        response = HttpResponse(str(c), status=status)
     except PreconditionFail as pf:
-        log_exception(request.path, pf)
-        return HttpResponse(pf.message, status=412)
-    # Added BadResponse for OAuth validation
-    except HttpResponseBadRequest as br:
-        log_exception(request.path, br)
-        return br
+        status = 412
+        log_exception(status, request.path)
+        response = HttpResponse(str(pf), status=status)
     except Exception as err:
-        log_exception(request.path, err)
-        return HttpResponse(err.message, status=500)
+        status = 500
+        log_exception(status, request.path)
+        response = HttpResponse(str(err), status=status)
+    return response
+
 
 def log_exception(path, ex):
     logger.info("\nException while processing: %s" % path)
