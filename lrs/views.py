@@ -6,7 +6,7 @@ from base64 import b64decode
 from django.conf import settings
 from django.contrib.auth import logout, login, authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import SuspiciousOperation
+from django.core.exceptions import SuspiciousOperation, ValidationError
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
@@ -612,7 +612,7 @@ def handle_request(request, more_id=None):
 
         req_dict = validators[path][r_dict['method']](r_dict)
         return processors[path][req_dict['method']](req_dict)
-    except (BadRequest, OauthBadRequest, SuspiciousOperation) as err:
+    except (BadRequest, OauthBadRequest, ValidationError, SuspiciousOperation) as err:
         status = 400
         log_exception(status, request.path)
         response = HttpResponse(str(err), status=status)
