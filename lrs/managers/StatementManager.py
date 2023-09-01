@@ -77,7 +77,7 @@ class StatementManager():
         try:
             stmt = Statement.objects.create(**self.data)
         except IntegrityError as e:
-            if e.message.startswith('duplicate key value violates unique constraint "lrs_statement_statement_id_key"'):
+            if str(e).startswith('duplicate key value violates unique constraint "lrs_statement_statement_id_key"'):
                 err_msg = "A statement with ID %s already exists" % self.data.get('statement_id')
                 raise ParamConflict(err_msg)
             raise
