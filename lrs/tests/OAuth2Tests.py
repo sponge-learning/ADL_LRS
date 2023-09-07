@@ -7,7 +7,7 @@ import urllib.request, urllib.parse, urllib.error
 
 from django.http import QueryDict
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.utils.html import escape
 from django.test import TestCase
 from django.contrib.auth.models import User
