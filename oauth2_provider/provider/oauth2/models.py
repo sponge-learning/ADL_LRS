@@ -100,7 +100,7 @@ class Grant(models.Model):
     * :attr:`scope`
     """
     user = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE)
-    client = models.ForeignKey(Client)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
     code = models.CharField(max_length=255, default=long_token)
     expires = models.DateTimeField(default=get_code_expiry)
     redirect_uri = models.CharField(max_length=255, blank=True)
