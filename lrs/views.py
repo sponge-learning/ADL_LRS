@@ -227,7 +227,7 @@ def register(request):
                                           context_instance=context)
 
                 # If a user is already logged in, log them out
-            if request.user.is_authenticated():
+            if request.user.is_authenticated:
                 logout(request)
 
             new_user = authenticate(username=name, password=pword)

@@ -33,7 +33,7 @@ def parse(request, more_id=None):
     r_dict['auth'] = {}
 
     # If we already have an authenticated Django user, use this instead of checking the Authorization header.
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         user = request.user
         r_dict['auth'] = {
             'type': 'django',
