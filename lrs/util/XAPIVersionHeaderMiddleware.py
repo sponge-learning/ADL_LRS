@@ -2,8 +2,10 @@ import re
 import urllib.request, urllib.parse, urllib.error
 from django.conf import settings
 from django.http import HttpResponseBadRequest
+from django.utils.deprecation import MiddlewareMixin
 
-class XAPIVersionHeader(object):
+
+class XAPIVersionHeader(MiddlewareMixin):
     def process_request(self, request):
         try:
             version = request.META['X-Experience-API-Version']
