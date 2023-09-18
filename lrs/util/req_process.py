@@ -5,9 +5,8 @@ from base64 import b64decode
 
 from datetime import datetime
 
-from django.http import HttpResponse, HttpResponseNotFound
+from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
 from django.conf import settings
-from django.db import transaction
 from django.utils.timezone import utc
 from .util import convert_to_dict
 from .retrieve_statement import complex_get, get_more_statement_request
@@ -292,31 +291,37 @@ def activity_state_put(req_dict):
     actstate.put_state(req_dict)
     return HttpResponse("", status=204)
 
+
 def activity_state_get(req_dict):
     # add ETag for concurrency
     state_id = req_dict['params'].get('stateId', None)
     activity_id = req_dict['params']['activityId']
     agent = req_dict['params']['agent']
-    a = Agent.objects.retrieve_or_create(**agent)[0]
-    registration = req_dict['params'].get('registration', None)
-    actstate = ActivityStateManager(a)
-    # state id means we want only 1 item
-    if state_id:
-        resource = actstate.get_state(activity_id, registration, state_id)
-        if resource.state:
-            response = HttpResponse(resource.state.read(), content_type=resource.content_type)
-        else:
-            response = HttpResponse(resource.json_state, content_type=resource.content_type)
-        response['ETag'] = '"%s"' % resource.etag
-    # no state id means we want an array of state ids
+    a = Agent.objects.retrieve_or_create(**agent)
+    if not a:
+        response = HttpResponseNotFound("No agent found for activity state")
     else:
-        since = req_dict['params'].get('since', None)
-        resource = actstate.get_state_ids(activity_id, registration, since)
-        response = HttpResponse(json.dumps([k for k in resource]), content_type="application/json")
-    
+        registration = req_dict['params'].get('registration', None)
+        actstate = ActivityStateManager(a)
+        # state id means we want only 1 item
+        if state_id:
+            resource = actstate.get_state(activity_id, registration, state_id)
+            if resource.state:
+                response = HttpResponse(
+                    resource.state.read(), content_type=resource.content_type)
+            else:
+                response = HttpResponse(
+                    resource.json_state, content_type=resource.content_type)
+            response['ETag'] = '"%s"' % resource.etag
+        # no state id means we want an array of state ids
+        else:
+            since = req_dict['params'].get('since', None)
+            resource = actstate.get_state_ids(activity_id, registration, since)
+            response = JsonResponse([k for k in resource], safe=False)
+
     # If it's a HEAD request
-    if req_dict['method'].lower() != 'get':
-        response.body = ''
+    # if req_dict['method'].lower() != 'get':
+    #     response.body = ''
 
     return response
 
