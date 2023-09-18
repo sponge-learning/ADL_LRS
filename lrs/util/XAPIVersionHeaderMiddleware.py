@@ -29,15 +29,12 @@ class XAPIVersionHeader(MiddlewareMixin):
                     request.META['X-Experience-API-Version'] = version
                     request.META.pop('X_Experience_API_Version', None)
 
-        if version:
-            regex = re.compile("^1\.0(\.[0-2])?$")
-            if regex.match(version):
-                return None
-            else:
-                return HttpResponseBadRequest("X-Experience-API-Version is not supported")
-        else:
+        if not version:
             return HttpResponseBadRequest("X-Experience-API-Version header missing")
-
+        
+        regex = re.compile("^1\.0(\.[0-2])?$")
+        if not regex.match(version):
+            return HttpResponseBadRequest("X-Experience-API-Version is not supported")
 
     def process_response(self, request, response):
         response['X-Experience-API-Version'] = settings.XAPI_VERSION
