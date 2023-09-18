@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from django.db.models.query import QuerySet
-from jsonfield import JSONField
+from django.contrib.postgres.fields import JSONField
 
 from django.conf import settings
 from django.db import models
@@ -314,18 +314,18 @@ class ActivityManager(models.Manager):
 class Activity(models.Model):
     activity_id = models.CharField(max_length=MAX_URL_LENGTH, db_index=True)
     objectType = models.CharField(max_length=8, blank=True, default="Activity")
-    activity_definition_name = JSONField(default={}, blank=True)
-    activity_definition_description = JSONField(default={}, blank=True)
+    activity_definition_name = JSONField(default=dict, blank=True)
+    activity_definition_description = JSONField(default=dict, blank=True)
     activity_definition_type = models.CharField(max_length=MAX_URL_LENGTH, blank=True)
     activity_definition_moreInfo = models.CharField(max_length=MAX_URL_LENGTH, blank=True)
     activity_definition_interactionType = models.CharField(max_length=25, blank=True)
-    activity_definition_extensions = JSONField(default={}, blank=True)
-    activity_definition_crpanswers = JSONField(default={}, blank=True)
-    activity_definition_choices = JSONField(default={}, blank=True)
-    activity_definition_scales = JSONField(default={}, blank=True)
-    activity_definition_sources = JSONField(default={}, blank=True)
-    activity_definition_targets = JSONField(default={}, blank=True)
-    activity_definition_steps = JSONField(default={}, blank=True)
+    activity_definition_extensions = JSONField(default=dict, blank=True)
+    activity_definition_crpanswers = JSONField(default=dict, blank=True)
+    activity_definition_choices = JSONField(default=dict, blank=True)
+    activity_definition_scales = JSONField(default=dict, blank=True)
+    activity_definition_sources = JSONField(default=dict, blank=True)
+    activity_definition_targets = JSONField(default=dict, blank=True)
+    activity_definition_steps = JSONField(default=dict, blank=True)
     authority = models.ForeignKey(Agent, on_delete=models.CASCADE, null=True)
     canonical_version = models.BooleanField(default=True)
     
@@ -451,7 +451,7 @@ class ActivityState(models.Model):
     state_id = models.CharField(max_length=MAX_URL_LENGTH)
     updated = models.DateTimeField(auto_now_add=True, blank=True, db_index=True)
     state = models.FileField(upload_to=ACTIVITY_STATE_UPLOAD_TO, null=True)
-    json_state = models.TextField(blank=True)
+    json_state = JSONField(default=dict, blank=True)
     agent = models.ForeignKey(Agent, on_delete=models.CASCADE, db_index=True)
     activity_id = models.CharField(max_length=MAX_URL_LENGTH, db_index=True)
     registration_id = models.CharField(max_length=40)
@@ -541,7 +541,7 @@ class SubStatement(models.Model):
         null=True
     )
     result_extensions = JSONField(
-        default={},
+        default=dict,
         blank=True
     )
     timestamp = models.DateTimeField(
@@ -581,7 +581,7 @@ class SubStatement(models.Model):
         blank=True
     )
     context_extensions = JSONField(
-        default={},
+        default=dict,
         blank=True
     )
     # context also has a stmt field which is a statementref
@@ -706,8 +706,8 @@ class StatementAttachment(models.Model):
     sha2 = models.CharField(max_length=128, blank=True)
     fileUrl = models.CharField(max_length=MAX_URL_LENGTH, blank=True)
     payload = models.FileField(upload_to=STATEMENT_ATTACHMENT_UPLOAD_TO, null=True)
-    display = JSONField(default={}, blank=True)
-    description = JSONField(default={}, blank=True)
+    display = JSONField(default=dict, blank=True)
+    description = JSONField(default=dict, blank=True)
 
     def to_dict(self, lang=None):
         ret = {}
@@ -815,7 +815,7 @@ class Statement(models.Model):
         null=True
     )
     result_extensions = JSONField(
-        default={},
+        default=dict,
         blank=True
     )
     # If no stored or timestamp given - will create automatically (only happens if using StatementManager directly)
@@ -870,7 +870,7 @@ class Statement(models.Model):
         blank=True
     )
     context_extensions = JSONField(
-        default={},
+        default=dict,
         blank=True
     )
     # context also has a stmt field which is a statementref
