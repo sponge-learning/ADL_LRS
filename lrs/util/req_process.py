@@ -297,7 +297,7 @@ def activity_state_get(req_dict):
     state_id = req_dict['params'].get('stateId', None)
     activity_id = req_dict['params']['activityId']
     agent = req_dict['params']['agent']
-    a = Agent.objects.retrieve_or_create(**agent)
+    a = Agent.objects.retrieve_or_create(**agent)[0]
     if not a:
         response = HttpResponseNotFound("No agent found for activity state")
     else:
