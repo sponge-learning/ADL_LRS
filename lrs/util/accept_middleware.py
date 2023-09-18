@@ -1,3 +1,6 @@
+from django.utils.deprecation import MiddlewareMixin
+
+
 def webkit_workaround(bestq, result):
     """The next part is a workaround, to avoid the problem, webkit browsers
     generate, by putting application/xml as the first item in theire 
@@ -74,7 +77,7 @@ def parse_accept_header(accept):
     
     return result
 
-class AcceptMiddleware(object):
+class AcceptMiddleware(MiddlewareMixin):
     def process_request(self, request):
         accept = parse_accept_header(request.META.get("HTTP_ACCEPT", ""))
         request.accept = accept
