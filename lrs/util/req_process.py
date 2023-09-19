@@ -320,8 +320,8 @@ def activity_state_get(req_dict):
             response = JsonResponse([k for k in resource], safe=False)
 
     # If it's a HEAD request
-    # if req_dict['method'].lower() != 'get':
-    #     response.body = ''
+    if req_dict['method'].lower() != 'get':
+        response.body = ''
 
     return response
 
