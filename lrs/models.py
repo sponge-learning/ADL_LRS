@@ -1,5 +1,5 @@
 import json
-import uuid
+import ast
 from datetime import datetime
 
 from django.db.models.query import QuerySet
@@ -286,6 +286,25 @@ class AgentProfile(models.Model):
     content_type = models.CharField(max_length=255, blank=True)
     etag = models.CharField(max_length=50, blank=True)
 
+    def save(self, *args, **kwargs):
+
+        if isinstance(self.json_profile, bytes):
+            self.json_profile = self.json_profile.decode("utf-8")
+
+        if self.json_profile and isinstance(self.json_profile, str):
+            try:
+                json.loads(self.json_profile)
+            except Exception:
+                try:
+                    ast.literal_eval(self.json_profile)
+                except Exception:
+                    raise BadRequest(
+                        f"[1] The Agent Profile body is not valid JSON, instead got:: {type(self.json_profile)}:: {self.json_profile}")
+        elif self.json_profile and not isinstance(self.json_profile, str):
+            raise BadRequest(
+                f"[2] The Agent Profile body is not valid JSON, instead got:: {type(self.json_profile)}:: {self.json_profile}")
+        super(AgentProfile, self).save(*args, **kwargs)
+
     def delete(self, *args, **kwargs):
         if self.profile:
             self.profile.delete()
@@ -458,6 +477,24 @@ class ActivityState(models.Model):
     content_type = models.CharField(max_length=255, blank=True)
     etag = models.CharField(max_length=50, blank=True)
 
+    def save(self, *args, **kwargs):
+
+        if isinstance(self.json_state, bytes):
+            self.json_state = self.json_state.decode("utf-8")
+
+        if self.json_state and isinstance(self.json_state, str):
+            try:
+                json.loads(self.json_state)
+            except Exception:
+                try:
+                    ast.literal_eval(self.json_state)
+                except Exception:
+                    raise BadRequest(
+                        f"[1] The Activity State body is not valid JSON, instead got:: {type(self.json_state)}:: {self.json_state}")
+        elif self.json_state and isinstance(self.json_state, bytes):
+            raise BadRequest(
+                f"[2] The Activity State body is not valid JSON, instead got:: {type(self.json_state)}:: {self.json_state}")
+        super(ActivityState, self).save(*args, **kwargs)
     def delete(self, *args, **kwargs):
         if self.state:
             self.state.delete()
@@ -472,6 +509,25 @@ class ActivityProfile(models.Model):
     json_profile = models.TextField(blank=True)
     content_type = models.CharField(max_length=255, blank=True)
     etag = models.CharField(max_length=50, blank=True)
+
+    def save(self, *args, **kwargs):
+
+        if isinstance(self.json_profile, bytes):
+            self.json_profile = self.json_profile.decode("utf-8")
+
+        if self.json_profile and isinstance(self.json_profile, str):
+            try:
+                json.loads(self.json_profile)
+            except Exception:
+                try:
+                    ast.literal_eval(self.json_profile)
+                except Exception:
+                    raise BadRequest(
+                        f"[1] The Activity Profile body is not valid JSON, instead got:: {type(self.json_profile)}:: {self.json_profile}")
+        elif self.json_profile and not isinstance(self.json_profile, str):
+            raise BadRequest(
+                f"[2] The Activity Profile body is not valid JSON, instead got:: {type(self.json_profile)}:: {self.json_profile}")
+        super(ActivityProfile, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         if self.profile:
