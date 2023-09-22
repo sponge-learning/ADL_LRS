@@ -52,7 +52,7 @@ def parse(request, more_id=None):
         # OAuth will always be dict, not http auth. Set required fields for oauth module and type for authentication
         # module
         set_authorization(r_dict, request)     
-    elif 'Authorization' in request.body or 'HTTP_AUTHORIZATION' in request.body:
+    elif 'Authorization' in request.body.decode('utf-8') or 'HTTP_AUTHORIZATION' in request.body.decode('utf-8'):
         # Authorization could be passed into body if cross origin request
         r_dict['auth']['type'] = 'http'
     else:
@@ -61,7 +61,7 @@ def parse(request, more_id=None):
     r_dict['params'] = {}
     # lookin for weird IE CORS stuff.. it'll be a post with a 'method' url param
     if request.method == 'POST' and 'method' in request.GET:
-        bdy = convert_post_body_to_dict(request.body)
+        bdy = convert_post_body_to_dict(request.body.decode('utf-8'))
         # 'content' is in body for the IE cors POST
         if 'content' in bdy:
             r_dict['body'] = urllib.parse.unquote(bdy.pop('content'))
@@ -264,9 +264,9 @@ def parse_body(r, request):
         else:
             if request.body:
                 # profile uses the request body
-                r['raw_body'] = request.body
+                r['raw_body'] = request.body.decode('utf-8')
                 # Body will be some type of string, not necessarily JSON
-                r['body'] = convert_to_dict(request.body)
+                r['body'] = convert_to_dict(request.body.decode('utf-8'))
             else:
                 raise BadRequest("No body in request")
     return r
