@@ -10,8 +10,7 @@ from django.core.exceptions import SuspiciousOperation, ValidationError
 from django.urls import reverse
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotFound
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render
 from django.utils.decorators import decorator_from_middleware
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_http_methods
@@ -39,7 +38,6 @@ LOGIN_URL = "/accounts/login"
 @decorator_from_middleware(accept_middleware.AcceptMiddleware)
 @csrf_protect
 def home(request):
-    context = RequestContext(request)
 
     stats = {}
     stats['usercnt'] = User.objects.all().count()
@@ -50,16 +48,16 @@ def home(request):
 
     if request.method == 'GET':
         form = RegisterForm()
-        return render_to_response('home.html', {'stats': stats, "form": form}, context_instance=context)
+        context = {"stats": stats, "form": form}
+        return render(request, "home.html", context)
 
 
 @decorator_from_middleware(accept_middleware.AcceptMiddleware)
 @csrf_protect
 def stmt_validator(request):
-    context = RequestContext(request)
     if request.method == 'GET':
         form = ValidatorForm()
-        return render_to_response('validator.html', {"form": form}, context_instance=context)
+        return render(request, "validator.html", {"form": form})
     elif request.method == 'POST':
         form = ValidatorForm(request.POST)
         # Form should always be valid - only checks if field is required and that's handled client side
@@ -70,15 +68,13 @@ def stmt_validator(request):
                 valid = validator.validate()
             except ParamError as e:
                 clean_data = form.cleaned_data['jsondata']
-                return render_to_response('validator.html',
-                                          {"form": form, "error_message": e.message, "clean_data": clean_data},
-                                          context_instance=context)
+                context = {"form": form, "error_message": e.message, "clean_data": clean_data}
+                return render(request, "validator.html", context)
             else:
                 clean_data = json.dumps(json.loads(form.cleaned_data['jsondata']), indent=4, sort_keys=True)
-                return render_to_response('validator.html',
-                                          {"form": form, "valid_message": valid, "clean_data": clean_data},
-                                          context_instance=context)
-    return render_to_response('validator.html', {"form": form}, context_instance=context)
+                context = {"form": form, "valid_message": valid, "clean_data": clean_data}
+                return render(request, "validator.html", context)
+    return render(request, "validator.html", {"form": form})
 
 
 @decorator_from_middleware(accept_middleware.AcceptMiddleware)
@@ -202,11 +198,9 @@ def about(request):
 @csrf_protect
 @require_http_methods(["POST", "GET"])
 def register(request):
-    context = RequestContext(request)
-
     if request.method == 'GET':
         form = RegisterForm()
-        return render_to_response('register.html', {"form": form}, context_instance=context)
+        return render(request, "register.html", {"form": form})
     elif request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
@@ -218,13 +212,11 @@ def register(request):
                 if not User.objects.filter(email__exact=email).count():
                     user = User.objects.create_user(name, email, pword)
                 else:
-                    return render_to_response('register.html', {"form": form,
-                                                                "error_message": "Email %s is already registered." % email},
-                                              context_instance=context)
+                    context = {"form": form, "error_message": "Email %s is already registered." % email}
+                    return render(request, "register.html", context)
             else:
-                return render_to_response('register.html',
-                                          {"form": form, "error_message": "User %s already exists." % name},
-                                          context_instance=context)
+                context = {"form": form, "error_message": "User %s already exists." % name}
+                return render(request, "register.html", context)
 
                 # If a user is already logged in, log them out
             if request.user.is_authenticated:
@@ -234,7 +226,7 @@ def register(request):
             login(request, new_user)
             return HttpResponseRedirect(reverse('lrs.views.home'))
         else:
-            return render_to_response('register.html', {"form": form}, context_instance=context)
+            return render(request, "register.html", {"form": form})
 
 
 @login_required(login_url=LOGIN_URL)
@@ -264,7 +256,7 @@ def admin_attachments(request, path):
 def reg_client(request):
     if request.method == 'GET':
         form = RegClientForm()
-        return render_to_response('regclient.html', {"form": form}, context_instance=RequestContext(request))
+        return render(request, "regclient.html", {"form": form})
     elif request.method == 'POST':
         form = RegClientForm(request.POST)
         if form.is_valid():
@@ -279,16 +271,20 @@ def reg_client(request):
                 client = Consumer.objects.create(name=name, description=description, user=request.user,
                                                  status=ACCEPTED, secret=secret, rsa_signature=rsa_signature)
             else:
-                return render_to_response('regclient.html',
-                                          {"form": form, "error_message": "Client %s already exists." % name},
-                                          context_instance=RequestContext(request))
+                context = {"form": form, "error_message": "Client %s already exists." % name}
+                return render(request, "regclient.html", context)
 
             client.generate_random_codes()
-            d = {"name": client.name, "app_id": client.key, "secret": client.secret, "rsa": client.rsa_signature,
-                 "info_message": "Your Client Credentials"}
-            return render_to_response('reg_success.html', d, context_instance=RequestContext(request))
+            context = {
+                "name": client.name,
+                "app_id": client.key,
+                "secret": client.secret,
+                "rsa": client.rsa_signature,
+                "info_message": "Your Client Credentials"
+            }
+            return render(request, "reg_success.html", context)
         else:
-            return render_to_response('regclient.html', {"form": form}, context_instance=RequestContext(request))
+            return render(request, "regclient.html", {"form": form})
 
 
 @transaction.atomic
@@ -297,18 +293,22 @@ def reg_client(request):
 def reg_client2(request):
     if request.method == 'GET':
         form = ClientForm()
-        return render_to_response('regclient2.html', {"form": form}, context_instance=RequestContext(request))
+        return render(request, "regclient2.html", {"form": form})
     elif request.method == 'POST':
         form = ClientForm(request.POST)
         if form.is_valid():
             client = form.save(commit=False)
             client.user = request.user
             client.save()
-            d = {"name": client.name, "app_id": client.client_id, "secret": client.client_secret,
-                 "info_message": "Your Client Credentials"}
-            return render_to_response('reg_success.html', d, context_instance=RequestContext(request))
+            context = {
+                "name": client.name,
+                "app_id": client.client_id,
+                "secret": client.client_secret,
+                "info_message": "Your Client Credentials"
+            }
+            return render(request, "reg_success.html", context)
         else:
-            return render_to_response('regclient2.html', {"form": form}, context_instance=RequestContext(request))
+            return render(request, "regclient2.html", {"form": form})
 
 
 @login_required(login_url=LOGIN_URL)
@@ -323,12 +323,13 @@ def me(request, template='me.html'):
         scopes = to_names(token.scope)
         access_token_scopes.append((token, scopes))
 
-    context = {'client_apps': client_apps,
-               'access_tokens': access_tokens,
-               'client_apps2': client_apps2,
-               'access_tokens2': access_token_scopes}
-
-    return render_to_response(template, context, context_instance=RequestContext(request))
+    context = {
+        "client_apps": client_apps,
+        "access_tokens": access_tokens,
+        "client_apps2": client_apps2,
+        "access_tokens2": access_token_scopes
+    }
+    return render(request, template, context)
 
 
 @login_required(login_url="/accounts/login")
@@ -513,7 +514,7 @@ def agents(request):
 
 @login_required
 def user_profile(request):
-    return render_to_response('registration/profile.html')
+    return render(request, "registration/profile.html")
 
 
 @transaction.atomic

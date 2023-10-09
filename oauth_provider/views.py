@@ -9,8 +9,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedire
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext as _
 from django.urls import get_callable
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render
 from oauth_provider.forms import AuthorizeRequestTokenForm
 from oauth_provider.compat import UnsafeRedirect
 from .store import store, InvalidConsumerError, InvalidTokenError
@@ -212,27 +211,29 @@ def access_token(request):
     })
     return HttpResponse(ret, content_type='application/x-www-form-urlencoded')
 
+
 # LRS CHANGE - ADDED OUR REAL VIEWS
 @login_required(login_url="/accounts/login")
 def authorize_client(request, token=None, callback=None, params=None, form=None):
     if not form:
         form = AuthorizeRequestTokenForm(initial={'scopes': token.scope_to_list(),
                                       'obj_id': token.pk})
-    d = {}
-    d['oauth_scopes'] = settings.OAUTH_SCOPES
-    d['scopes'] = json.dumps(token.scope_to_list())
-    d['form'] = form
-    d['name'] = token.consumer.name
-    d['description'] = token.consumer.description
-    d['params'] = params
-    d['oauth_token'] = token.key
-    return render_to_response('oauth_authorize_client.html', d, context_instance=RequestContext(request))
+    context = {}
+    context['oauth_scopes'] = settings.OAUTH_SCOPES
+    context['scopes'] = json.dumps(token.scope_to_list())
+    context['form'] = form
+    context['name'] = token.consumer.name
+    context['description'] = token.consumer.description
+    context['params'] = params
+    context['oauth_token'] = token.key
+    return render(request, "oauth_authorize_client.html", context)
+
 
 @login_required(login_url="/accounts/login")
 def callback_view(request, **args):
-    d = {}
+    context = {}
     if 'error' in args:
-        d['error'] = args['error']
+        context['error'] = args['error']
 
     try:
         oauth_token = Token.objects.get(key=args['oauth_token'])
@@ -240,5 +241,5 @@ def callback_view(request, **args):
         send_oauth_error(e)
     except Token.DoesNotExist as e:
         send_oauth_error(e)
-    d['verifier'] = oauth_token.verifier
-    return render_to_response('oauth_verifier_pin.html', d, context_instance=RequestContext(request))
+    context['verifier'] = oauth_token.verifier
+    return render(request, "oauth_verifier_pin.html", context)
