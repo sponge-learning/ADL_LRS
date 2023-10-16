@@ -3,7 +3,6 @@ import uuid
 from datetime import datetime
 
 from django.db.models.query import QuerySet
-from jsonfield import JSONField
 
 from django.conf import settings
 from django.db import models
@@ -22,7 +21,7 @@ STATEMENT_ATTACHMENT_UPLOAD_TO = "attachment_payloads"
 
 class Verb(models.Model):
     verb_id = models.CharField(max_length=MAX_URL_LENGTH, db_index=True, unique=True)
-    display = JSONField(default={}, blank=True)
+    display = util.CustomLRSJSONField(default=dict, blank=True)
 
     def to_dict(self, lang=None):
         ret = {}
@@ -314,18 +313,18 @@ class ActivityManager(models.Manager):
 class Activity(models.Model):
     activity_id = models.CharField(max_length=MAX_URL_LENGTH, db_index=True)
     objectType = models.CharField(max_length=8, blank=True, default="Activity")
-    activity_definition_name = JSONField(default={}, blank=True)
-    activity_definition_description = JSONField(default={}, blank=True)
+    activity_definition_name = util.CustomLRSJSONField(default=dict, blank=True)
+    activity_definition_description = util.CustomLRSJSONField(default=dict, blank=True)
     activity_definition_type = models.CharField(max_length=MAX_URL_LENGTH, blank=True)
     activity_definition_moreInfo = models.CharField(max_length=MAX_URL_LENGTH, blank=True)
     activity_definition_interactionType = models.CharField(max_length=25, blank=True)
-    activity_definition_extensions = JSONField(default={}, blank=True)
-    activity_definition_crpanswers = JSONField(default={}, blank=True)
-    activity_definition_choices = JSONField(default={}, blank=True)
-    activity_definition_scales = JSONField(default={}, blank=True)
-    activity_definition_sources = JSONField(default={}, blank=True)
-    activity_definition_targets = JSONField(default={}, blank=True)
-    activity_definition_steps = JSONField(default={}, blank=True)
+    activity_definition_extensions = util.CustomLRSJSONField(default=dict, blank=True)
+    activity_definition_crpanswers = util.CustomLRSJSONField(default=dict, blank=True)
+    activity_definition_choices = util.CustomLRSJSONField(default=dict, blank=True)
+    activity_definition_scales = util.CustomLRSJSONField(default=dict, blank=True)
+    activity_definition_sources = util.CustomLRSJSONField(default=dict, blank=True)
+    activity_definition_targets = util.CustomLRSJSONField(default=dict, blank=True)
+    activity_definition_steps = util.CustomLRSJSONField(default=dict, blank=True)
     authority = models.ForeignKey(Agent, on_delete=models.CASCADE, null=True)
     canonical_version = models.BooleanField(default=True)
     
@@ -540,8 +539,8 @@ class SubStatement(models.Model):
         blank=True,
         null=True
     )
-    result_extensions = JSONField(
-        default={},
+    result_extensions = util.CustomLRSJSONField(
+        default=dict,
         blank=True
     )
     timestamp = models.DateTimeField(
@@ -580,8 +579,8 @@ class SubStatement(models.Model):
         max_length=50,
         blank=True
     )
-    context_extensions = JSONField(
-        default={},
+    context_extensions = util.CustomLRSJSONField(
+        default=dict,
         blank=True
     )
     # context also has a stmt field which is a statementref
@@ -706,8 +705,8 @@ class StatementAttachment(models.Model):
     sha2 = models.CharField(max_length=128, blank=True)
     fileUrl = models.CharField(max_length=MAX_URL_LENGTH, blank=True)
     payload = models.FileField(upload_to=STATEMENT_ATTACHMENT_UPLOAD_TO, null=True)
-    display = JSONField(default={}, blank=True)
-    description = JSONField(default={}, blank=True)
+    display = util.CustomLRSJSONField(default=dict, blank=True)
+    description = util.CustomLRSJSONField(default=dict, blank=True)
 
     def to_dict(self, lang=None):
         ret = {}
@@ -814,8 +813,8 @@ class Statement(models.Model):
         blank=True,
         null=True
     )
-    result_extensions = JSONField(
-        default={},
+    result_extensions = util.CustomLRSJSONField(
+        default=dict,
         blank=True
     )
     # If no stored or timestamp given - will create automatically (only happens if using StatementManager directly)
@@ -869,8 +868,8 @@ class Statement(models.Model):
         max_length=50,
         blank=True
     )
-    context_extensions = JSONField(
-        default={},
+    context_extensions = util.CustomLRSJSONField(
+        default=dict,
         blank=True
     )
     # context also has a stmt field which is a statementref
@@ -890,7 +889,7 @@ class Statement(models.Model):
         db_index=True,
         on_delete=models.SET_NULL,
     )
-    full_statement = JSONField()
+    full_statement = util.CustomLRSJSONField()
 
     def to_dict(self, lang=None, format='exact'):
         if format == 'exact':

@@ -8,7 +8,9 @@ from isodate.isodatetime import parse_datetime
 from django.apps import apps
 from django.contrib import admin
 from django.contrib.admin.sites import AlreadyRegistered
-
+from django.contrib.postgres.fields import JSONField # Field
+from django.contrib.postgres.forms import JSONField as JSONFieldForm # Form
+from django.contrib.postgres.forms.jsonb import InvalidJSONInput
 from ..exceptions import ParamError
 
 agent_ifps_can_only_be_one = ['mbox', 'mbox_sha1sum', 'openid', 'account']
@@ -86,3 +88,24 @@ def autoregister(*app_list):
 
 def get_default_uuid_string():
     return str(uuid.uuid4())
+
+
+class CustomFormLRSJSONField(JSONFieldForm):
+    def bound_data(self, data, initial):
+        if self.disabled:
+            return initial
+        # Added this condition to make json.loads(data) work
+        if data == None:
+            data = ''
+        try:
+                return json.loads(data)
+        except json.JSONDecodeError:
+            return InvalidJSONInput(data)
+
+
+class CustomLRSJSONField(JSONField):
+    def formfield(self, **kwargs):
+        return super().formfield(**{
+            'form_class': CustomFormLRSJSONField,
+            **kwargs,
+        })
