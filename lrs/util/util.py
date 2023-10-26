@@ -1,23 +1,26 @@
 import ast
 import json
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
+import uuid
 from isodate.isodatetime import parse_datetime
 
-from django.db.models import get_models, get_app
+from django.apps import apps
 from django.contrib import admin
 from django.contrib.admin.sites import AlreadyRegistered
 
 from ..exceptions import ParamError
 
 agent_ifps_can_only_be_one = ['mbox', 'mbox_sha1sum', 'openid', 'account']
+
+
 def get_agent_ifp(data):
-    ifp_sent = [a for a in agent_ifps_can_only_be_one if data.get(a, None) != None]    
+    ifp_sent = [a for a in agent_ifps_can_only_be_one if data.get(a, None) != None]
 
     ifp = ifp_sent[0]
     canonical_version = data.get('canonical_version', True)
     ifp_dict = {'canonical_version': canonical_version}
-    
+
     if not 'account' == ifp:
         ifp_dict[ifp] = data[ifp]
     else:
@@ -30,12 +33,14 @@ def get_agent_ifp(data):
         ifp_dict['account_name'] = account['name']
     return ifp_dict
 
+
 def convert_to_utc(timestr):
     try:
         date_object = parse_datetime(timestr)
     except ValueError as e:
         raise ParamError("There was an error while parsing the date from %s -- Error: %s" % (timestr, e.message))
     return date_object
+
 
 def convert_to_dict(incoming_data):
     data = {}
@@ -51,26 +56,33 @@ def convert_to_dict(incoming_data):
             data = incoming_data
     return data
 
+
 def convert_post_body_to_dict(incoming_data):
-    qs = urlparse.parse_qsl(urllib.unquote_plus(incoming_data))
-    return dict((k,v) for k, v in qs)
+    qs = urllib.parse.parse_qsl(urllib.parse.unquote_plus(incoming_data))
+    return dict((k, v) for k, v in qs)
+
 
 def get_lang(langdict, lang):
     if lang:
         # Return where key = lang
         try:
-            return {lang:langdict[lang]}
+            return {lang: langdict[lang]}
         except KeyError:
             pass
 
-    first = langdict.iteritems().next()      
-    return {first[0]:first[1]}
+    first = next(iter(langdict.items()))
+    return {first[0]: first[1]}
+
 
 def autoregister(*app_list):
     for app_name in app_list:
-        app_models = get_app(app_name)
-        for model in get_models(app_models):
+        application = apps.get_app_config(app_name)
+        for model in application.get_models():
             try:
                 admin.site.register(model)
             except AlreadyRegistered:
-                pass    
+                pass
+
+
+def get_default_uuid_string():
+    return str(uuid.uuid4())

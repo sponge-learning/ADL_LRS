@@ -1,4 +1,4 @@
-import bencode
+import bcoding
 import hashlib
 import json
 from datetime import datetime
@@ -9,7 +9,7 @@ from django.conf import settings
 from django.core.paginator import Paginator
 from django.db.models import Q
 
-from util import convert_to_utc, convert_to_dict
+from .util import convert_to_utc, convert_to_dict
 from ..models import Statement, Agent
 from ..exceptions import NotFound, IDNotFoundError
 
@@ -157,7 +157,10 @@ def create_cache_key(stmt_list):
     hash_data.append(str(stmt_list))
 
     # Create cache key from hashed data (always 32 digits)
-    key = hashlib.md5(bencode.bencode(hash_data)).hexdigest()
+    bcode = bcoding.bencode(hash_data)
+    assert bcode is not None
+
+    key = hashlib.md5(bcode).hexdigest()
     return key
 
 def initial_cache_return(stmt_list, stored, limit, language, format, attachments):

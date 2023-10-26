@@ -94,14 +94,14 @@ class ActivityManager():
                 # Update name and desc if needed
                 if 'name' in act_def:
                     if self.Activity.activity_definition_name:
-                        self.Activity.activity_definition_name = dict(self.Activity.activity_definition_name.items() + act_def['name'].items())
+                        self.Activity.activity_definition_name = dict(list(self.Activity.activity_definition_name.items()) + list(act_def['name'].items()))
                     else:
                         self.Activity.activity_definition_name = act_def['name']
                     self.Activity.save()
 
                 if 'description' in act_def:
                     if self.Activity.activity_definition_description:
-                        self.Activity.activity_definition_description = dict(self.Activity.activity_definition_description.items() + act_def['description'].items())
+                        self.Activity.activity_definition_description = dict(list(self.Activity.activity_definition_description.items()) + list(act_def['description'].items()))
                     else:
                         self.Activity.activity_definition_description = act_def['description']
                     self.Activity.save()

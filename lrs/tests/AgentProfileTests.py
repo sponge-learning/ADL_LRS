@@ -1,5 +1,5 @@
 import hashlib
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import base64
 import json
 import ast
@@ -21,7 +21,7 @@ class AgentProfileTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print "\n%s" % __name__
+        print("\n%s" % __name__)
 
     def setUp(self):
         self.username = "tester"
@@ -32,22 +32,22 @@ class AgentProfileTests(TestCase):
         self.client.post(reverse(register),form, X_Experience_API_Version=settings.XAPI_VERSION)
         
         self.testparams1 = {"profileId": self.testprofileId1, "agent": self.testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(self.testparams1))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(self.testparams1))
         self.testprofile1 = {"test":"put profile 1","obj":{"agent":"test"}}
         self.put1 = self.client.put(path, self.testprofile1, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
         self.testparams2 = {"profileId": self.testprofileId2, "agent": self.testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(self.testparams2))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(self.testparams2))
         self.testprofile2 = {"test":"put profile 2","obj":{"agent":"test"}}
         self.put2 = self.client.put(path, self.testprofile2, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
         self.testparams3 = {"profileId": self.testprofileId3, "agent": self.testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(self.testparams3))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(self.testparams3))
         self.testprofile3 = {"test":"put profile 3","obj":{"agent":"test"}}
         self.put3 = self.client.put(path, self.testprofile3, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
         self.testparams4 = {"profileId": self.otherprofileId1, "agent": self.otheragent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(self.testparams4))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(self.testparams4))
         self.otherprofile1 = {"test":"put profile 1","obj":{"agent":"other"}}
         self.put4 = self.client.put(path, self.otherprofile1, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -78,7 +78,7 @@ class AgentProfileTests(TestCase):
         self.assertEqual(self.put4.content, '')
 
     def test_put_etag_missing_on_change(self):
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(self.testparams1))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(self.testparams1))
         profile = {"test":"error - trying to put new profile w/o etag header","obj":{"agent":"test"}}
         response = self.client.put(path, profile, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -92,7 +92,7 @@ class AgentProfileTests(TestCase):
         self.assertEqual(robj['obj']['agent'], self.testprofile1['obj']['agent'])
 
     def test_put_etag_right_on_change(self):
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(self.testparams1))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(self.testparams1))
         profile = {"test":"good - trying to put new profile w/ etag header","obj":{"agent":"test"}}
         thehash = '"%s"' % hashlib.sha1('%s' % self.testprofile1).hexdigest()
         response = self.client.put(path, profile, content_type=self.content_type, If_Match=thehash, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -106,7 +106,7 @@ class AgentProfileTests(TestCase):
         self.assertEqual(robj['obj']['agent'], profile['obj']['agent'])
 
     def test_put_etag_wrong_on_change(self):
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(self.testparams1))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(self.testparams1))
         profile = {"test":"error - trying to put new profile w/ wrong etag value","obj":{"agent":"test"}}
         thehash = '"%s"' % hashlib.sha1('%s' % 'wrong hash').hexdigest()
         response = self.client.put(path, profile, content_type=self.content_type, If_Match=thehash, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -121,7 +121,7 @@ class AgentProfileTests(TestCase):
 
     def test_put_etag_if_none_match_good(self):
         params = {"profileId": 'http://etag.nomatch.good', "agent": self.testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(params))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(params))
         profile = {"test":"good - trying to put new profile w/ if none match etag header","obj":{"agent":"test"}}
         response = self.client.put(path, profile, content_type=self.content_type, If_None_Match='*', Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -137,7 +137,7 @@ class AgentProfileTests(TestCase):
         r = self.client.delete(reverse(agent_profile), params, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
     def test_put_etag_if_none_match_bad(self):
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(self.testparams1))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(self.testparams1))
         profile = {"test":"error - trying to put new profile w/ if none match etag but one exists","obj":{"agent":"test"}}
         response = self.client.put(path, profile, content_type=self.content_type, If_None_Match='*', Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -209,7 +209,7 @@ class AgentProfileTests(TestCase):
     def test_delete(self):
         prof_id = "http://deleteme"
         params = {"profileId": prof_id, "agent": self.testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(params))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(params))
         profile = {"test":"delete profile","obj":{"agent":"test"}}
         response = self.client.put(path, profile, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 204)
@@ -230,7 +230,7 @@ class AgentProfileTests(TestCase):
         prof_id = "http://oldprofile/time"
         updated = "2012-06-12:T12:00:00Z"
         params = {"profileId": prof_id, "agent": self.testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(params))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(params))
 
         profile = {"test1":"agent profile since time: %s" % updated,"obj":{"agent":"test"}}
         response = self.client.put(path, profile, content_type=self.content_type, updated=updated, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -253,7 +253,7 @@ class AgentProfileTests(TestCase):
         prof_id = "http://oldprofile/time"
         updated = "2012-06-12:T12:00:00Z"
         params = {"profileId": prof_id, "agent": self.testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(params))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(params))
 
         profile = {"test2":"agent profile since time: %s" % updated,"obj":{"agent":"test"}}
         response = self.client.put(path, profile, content_type=self.content_type, updated=updated, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -268,7 +268,7 @@ class AgentProfileTests(TestCase):
         updated2 =  "2012-07-01T08:30:00-04:00"
 
         params2 = {"profileId": prof_id2, "agent": self.testagent}
-        path2 = '%s?%s' % (reverse(agent_profile), urllib.urlencode(params2))
+        path2 = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(params2))
 
         profile2 = {"test3":"agent profile since time: %s" % updated2,"obj":{"agent":"test"}}
         response = self.client.put(path2, profile2, content_type=self.content_type, updated=updated2, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -293,7 +293,7 @@ class AgentProfileTests(TestCase):
 
     def test_post_put_delete(self):
         prof_id = "http://deleteme.too"
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode({"method":"PUT"}))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode({"method":"PUT"}))
         content = {"test":"delete profile","obj":{"actor":"test", "testcase":"ie cors post for put and delete"}}
         thedata = "profileId=%s&agent=%s&content=%s&Authorization=%s&Content-Type=application/json&X-Experience-API-Version=1.0.0" % (prof_id, self.testagent, content, self.auth)
         response = self.client.post(path, thedata, content_type="application/x-www-form-urlencoded")
@@ -305,7 +305,7 @@ class AgentProfileTests(TestCase):
         self.assertEqual(c['test'], content['test'])
  
         thedata = "profileId=%s&agent=%s&Authorization=%s&X-Experience-API-Version=1.0" % (prof_id, self.testagent, self.auth)
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode({"method":"DELETE"}))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode({"method":"DELETE"}))
         r = self.client.post(path, thedata, content_type="application/x-www-form-urlencoded", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(r.status_code, 204)
 
@@ -321,7 +321,7 @@ class AgentProfileTests(TestCase):
         testagent = json.dumps({"objectType":ot, "name":name, "mbox":mbox,"member":members})
         testprofileId = "http://profile.test.id/group.as.agent/"
         testparams1 = {"profileId": testprofileId, "agent": testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(testparams1))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(testparams1))
         testprofile = {"test":"put profile - group as agent","obj":{"agent":"group"}}
         put1 = self.client.put(path, testprofile, content_type=self.content_type, Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
 
@@ -337,7 +337,7 @@ class AgentProfileTests(TestCase):
 
     def test_post_new_profile(self):
         params = {"profileId": "prof:test_post_new_profile", "agent": self.testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(params))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(params))
         prof = {"test":"post new profile","obj":{"agent":"mailto:test@example.com"}}
         
         post = self.client.post(path, prof, content_type="application/json", Authorization=self.auth,  X_Experience_API_Version=settings.XAPI_VERSION)
@@ -351,7 +351,7 @@ class AgentProfileTests(TestCase):
 
     def test_post_blank_profile(self):
         params = {"profileId": "prof:test_post_new_profile", "agent": self.testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(params))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(params))
         prof = ""
         
         post = self.client.post(path, prof, content_type="application/json", Authorization=self.auth,  X_Experience_API_Version=settings.XAPI_VERSION)
@@ -396,7 +396,7 @@ class AgentProfileTests(TestCase):
 
     def test_post_and_put_profile(self):
         params = {"profileId": "prof:test_post_and_put_profile", "agent": self.testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(params))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(params))
         prof = {"test":"post and put profile","obj":{"agent":"mailto:test@example.com"}}
         
         post = self.client.post(path, json.dumps(prof), content_type="application/json", Authorization=self.auth,  X_Experience_API_Version=settings.XAPI_VERSION)
@@ -408,7 +408,7 @@ class AgentProfileTests(TestCase):
         self.assertEqual(get.get('etag'), '"%s"' % hashlib.sha1(get.content).hexdigest())
 
         params = {"profileId": "prof:test_post_and_put_profile", "agent": self.testagent}
-        path = '%s?%s' % (reverse(agent_profile), urllib.urlencode(params))
+        path = '%s?%s' % (reverse(agent_profile), urllib.parse.urlencode(params))
         prof = {"wipe":"new data"}
         thehash = get.get('etag')
         

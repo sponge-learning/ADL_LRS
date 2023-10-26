@@ -1,6 +1,6 @@
 from oauth_provider.compat import url, patterns
 
-from views import request_token, user_authorization, access_token
+from .views import request_token, user_authorization, access_token
 
 # LRS CHANGE - ADDED SPEC COMPLIANT ENDPOINTS
 urlpatterns = patterns('',

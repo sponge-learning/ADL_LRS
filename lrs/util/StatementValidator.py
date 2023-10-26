@@ -4,7 +4,7 @@ from isodate.isoduration import parse_duration
 from isodate.isoerror import ISO8601Error
 
 from ..exceptions import ParamError
-from util import convert_to_dict
+from .util import convert_to_dict
 
 SCHEME = 2
 EMAIL = 5
@@ -62,7 +62,7 @@ class StatementValidator():
 		raise ParamError(err_msg)
 
 	def validate_email(self, email):
-		if isinstance(email, basestring):
+		if isinstance(email, str):
 			if email.startswith("mailto:"):
 				email_re = re.compile("[^@]+@[^@]+\.[^@]+")
 				if not email_re.match(email[7:]):
@@ -86,21 +86,21 @@ class StatementValidator():
 				self.return_error("%s contains a null value" % field)
 
 	def validate_email_sha1sum(self, sha1sum):
-		if isinstance(sha1sum, basestring):
+		if isinstance(sha1sum, str):
 			if not sha1sum_re.match(sha1sum):
 				self.return_error("mbox_sha1sum value [%s] is not a valid sha1sum" % sha1sum)
 		else:
 			self.return_error("mbox_sha1sum value must be a string type")	
 
 	def validate_iri(self, iri_value, field):
-		if isinstance(iri_value, basestring):
+		if isinstance(iri_value, str):
 			if not iri_re.match(iri_value).group(SCHEME):
 				self.return_error("%s with value %s was not a valid IRI" % (field, iri_value))
 		else:
 			self.return_error("%s must be a string type" % field)
 		
 	def validate_uuid(self, uuid, field):
-		if isinstance(uuid, basestring):
+		if isinstance(uuid, str):
 			id_regex = re.compile("[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$")
 			if not id_regex.match(uuid):
 				self.return_error("%s - %s is not a valid UUID" % (field, uuid))
@@ -117,7 +117,7 @@ class StatementValidator():
 
 	def check_allowed_fields(self, allowed, obj, obj_name):
 		# Check for fields that aren't in spec
-		failed_list = [x for x in obj.keys() if not x in allowed]
+		failed_list = [x for x in list(obj.keys()) if not x in allowed]
 		if failed_list:
 			self.return_error("Invalid field(s) found in %s - %s" % (obj_name, ', '.join(failed_list)))
 
@@ -134,7 +134,7 @@ class StatementValidator():
 
 		# If version included in stmt (usually in header instead) make sure it is 1.0.0 +
 		if 'version' in stmt:
-			if isinstance(stmt['version'], basestring):
+			if isinstance(stmt['version'], str):
 				version_regex = re.compile("^1\.0(\.\d+)?$")
 				if not version_regex.match(stmt['version']):
 					self.return_error("%s is not a supported version" % stmt['version'])
@@ -184,7 +184,7 @@ class StatementValidator():
 
 	def validate_authority(self, authority):
 		if authority['objectType'] == 'Group':
-			contains_account = len([x for m in authority['member'] for x in m.keys() if 'account' in x]) > 0
+			contains_account = len([x for m in authority['member'] for x in list(m.keys()) if 'account' in x]) > 0
 			if contains_account:
 				if len(authority['member']) == 2:
 					for agent in authority['member']:
@@ -218,7 +218,7 @@ class StatementValidator():
 					self.return_error("Attachment sha2 is required when no fileUrl is given")
 
 				# Ensure sha2 is submitted as string
-				if not isinstance(attach['sha2'], basestring):
+				if not isinstance(attach['sha2'], str):
 					self.return_error("Attachment sha2 must be a string")
 
 			# Ensure length is an int
@@ -226,24 +226,24 @@ class StatementValidator():
 				self.return_error("Attachment length must be an integer")
 
 			# Ensure contentType is submitted as a string
-			if not isinstance(attach['contentType'], basestring):
+			if not isinstance(attach['contentType'], str):
 				self.return_error("Attachment contentType must be a string")
 
 			# Ensure display is a dict (language map)
 			self.check_if_dict(attach['display'], "Attachment display")
-			self.validate_lang_tag(attach['display'].keys(), "attachment display")			
+			self.validate_lang_tag(list(attach['display'].keys()), "attachment display")			
 
 			# If description included, ensure it is a dict (language map)
 			if 'description' in attach:
 				self.check_if_dict(attach['description'], "Attachment description")
-				self.validate_lang_tag(attach['description'].keys(), "attachment description")
+				self.validate_lang_tag(list(attach['description'].keys()), "attachment description")
 
 	def validate_extensions(self, extensions, field):
 		# Ensure incoming extensions is a dict
 		self.check_if_dict(extensions, "%s extensions" % field)
 		
 		# Ensure each key in extensions is a valid IRI
-		for k, v in extensions.items():
+		for k, v in list(extensions.items()):
 			self.validate_iri(k, field)
 
 	def validate_agent(self, agent, placement):
@@ -271,12 +271,12 @@ class StatementValidator():
 
 		if agent['objectType'] == 'Agent':
 			# If agent, if name given, ensure name is string and validate the IFI
-			if 'name' in agent and not isinstance(agent['name'], basestring):
+			if 'name' in agent and not isinstance(agent['name'], str):
 				self.return_error("If name is given in Agent, it must be a string")
 			self.validate_ifi(ifis[0], agent[ifis[0]])
 		else:
 			# If group, if name given, ensure name is string
-			if 'name' in agent and not isinstance(agent['name'], basestring):
+			if 'name' in agent and not isinstance(agent['name'], str):
 				self.return_error("If name is given in Group, it must be a string")
 
 			# If no IFIs, it is an anonymous group which must contain the member property 
@@ -327,7 +327,7 @@ class StatementValidator():
 		self.validate_iri(account['homePage'], 'homePage')
 
 		# Ensure name is a string
-		if not isinstance(account['name'], basestring):
+		if not isinstance(account['name'], str):
 			self.return_error("account name must be a string")
 
 	def validate_verb(self, verb, stmt_object=None):
@@ -350,8 +350,8 @@ class StatementValidator():
 		# If display given, ensure it's a dict (language map)
 		if 'display' in verb:
 			self.check_if_dict(verb['display'], "Verb display")
-			self.validate_lang_tag(verb['display'].keys(), "verb display")
-			self.validate_dict_values(verb['display'].values(), "verb display")
+			self.validate_lang_tag(list(verb['display'].keys()), "verb display")
+			self.validate_dict_values(list(verb['display'].values()), "verb display")
 
 	def validate_object(self, stmt_object):
 		# Ensure incoming object is a dict
@@ -413,10 +413,10 @@ class StatementValidator():
 		# If name or description included, ensure it is a dict (language map)
 		if 'name' in definition:
 			self.check_if_dict(definition['name'], "Activity definition name")
-			self.validate_lang_tag(definition['name'].keys(), "activity definition name")
+			self.validate_lang_tag(list(definition['name'].keys()), "activity definition name")
 		if 'description' in definition:
 			self.check_if_dict(definition['description'], "Activity definition description")
-			self.validate_lang_tag(definition['description'].keys(), "activity definition description")
+			self.validate_lang_tag(list(definition['description'].keys()), "activity definition description")
 
 		# If type or moreInfo included, ensure it is valid IRI
 		if 'type' in definition:
@@ -427,7 +427,7 @@ class StatementValidator():
 		interactionType = None
 		# If interactionType included, ensure it is a string
 		if 'interactionType' in definition and 'correctResponsesPattern' in definition:
-			if not isinstance(definition['interactionType'], basestring):
+			if not isinstance(definition['interactionType'], str):
 				self.return_error("Activity definition interactionType must be a string")
 
 			scorm_interaction_types = ['true-false', 'choice', 'fill-in', 'long-fill-in', 'matching', 'performance',
@@ -442,7 +442,7 @@ class StatementValidator():
 			self.check_if_list(definition['correctResponsesPattern'], "Activity definition correctResponsesPattern")
 			for answer in definition['correctResponsesPattern']:
 				# For each answer, ensure it is a string
-				if not isinstance(answer, basestring):
+				if not isinstance(answer, str):
 					self.return_error("Activity definition correctResponsesPattern answers must all be strings")
 		elif 'interactionType' not in definition and 'correctResponsesPattern' not in definition:
 			pass
@@ -511,14 +511,14 @@ class StatementValidator():
 			self.check_required_fields(int_act_fields, act, "Activity definition %s" % field)
 
 			# Ensure id value is string
-			if not isinstance(act['id'], basestring):
+			if not isinstance(act['id'], str):
 				self.return_error("Interaction activity in component %s has an id that is not a string" % field)
 
 			id_list.append(act['id'])
 			if 'description' in act:
 				# Ensure description is a dict (language map)
 				self.check_if_dict(act['description'], "%s interaction component description" % field)
-				self.validate_lang_tag(act['description'].keys(), "%s interaction component description" % field)
+				self.validate_lang_tag(list(act['description'].keys()), "%s interaction component description" % field)
 
 		# Check and make sure all ids being listed are unique
 		dups = set([i for i in id_list if id_list.count(i) > 1])
@@ -581,7 +581,7 @@ class StatementValidator():
 
 		# If response in result, ensure it is a string
 		if 'response' in result:
-			if not isinstance(result['response'], basestring):
+			if not isinstance(result['response'], str):
 				self.return_error("Result response must be a string")
 
 		# If extensions, validate
@@ -657,7 +657,7 @@ class StatementValidator():
 		
 		if 'revision' in context:
 			# Check revision is string
-			if not isinstance(context['revision'], basestring):
+			if not isinstance(context['revision'], str):
 				self.return_error("Context revision must be a string")
 
 			if object_type != 'Activity':
@@ -665,7 +665,7 @@ class StatementValidator():
 
 		if 'platform' in context:
 			# Check platform is string
-			if not isinstance(context['platform'], basestring):
+			if not isinstance(context['platform'], str):
 				self.return_error("Context platform must be a string")
 
 			if object_type != 'Activity':
@@ -673,7 +673,7 @@ class StatementValidator():
 
 		# If language given, ensure it is string
 		if 'language' in context:
-			if not isinstance(context['language'], basestring):
+			if not isinstance(context['language'], str):
 				self.return_error("Context language must be a string")
 
 		# If statement given, ensure it is a valid StatementRef
@@ -693,7 +693,7 @@ class StatementValidator():
 		self.check_if_dict(conacts, "Context activity")
 		context_activity_types = ['parent', 'grouping', 'category', 'other']
 		if conacts:
-			for conact in conacts.items():
+			for conact in list(conacts.items()):
 				# Check if conact is a valid type
 				if not conact[0] in context_activity_types:
 					self.return_error("Context activity type is not valid - %s - must be %s" % (conact[0], ', '.join(context_activity_types)))

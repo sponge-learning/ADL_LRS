@@ -11,7 +11,7 @@ from ..models import Agent
 class AgentTests(TestCase):
     @classmethod
     def setUpClass(cls):
-        print "\n%s" % __name__
+        print("\n%s" % __name__)
 
     def setUp(self):
         self.username = "tester"

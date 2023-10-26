@@ -14,7 +14,7 @@ CURRENT_SITE = settings.SITE_SCHEME + '://' + Site.objects.get_current().domain
 class ActivityManagerTests(TestCase):    
     @classmethod
     def setUpClass(cls):
-        print "\n%s" % __name__
+        print("\n%s" % __name__)
 
     def setUp(self): 
         self.username = "tester1"
@@ -40,8 +40,8 @@ class ActivityManagerTests(TestCase):
     # fields and values. All extensions are created with the same three values and keys
     def do_activity_definition_extensions_model(self, act, key1, key2, key3, value1, value2, value3):
         #Create list comprehesions to easier assess keys and values
-        ext_keys = act.activity_definition_extensions.keys()
-        ext_vals = act.activity_definition_extensions.values()
+        ext_keys = list(act.activity_definition_extensions.keys())
+        ext_vals = list(act.activity_definition_extensions.values())
 
         self.assertIn(key1, ext_keys)
         self.assertIn(key2, ext_keys)
@@ -131,11 +131,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-CH')
-        self.assertEqual(name_set.values()[0], 'testname')
+        self.assertEqual(list(name_set.keys())[0], 'en-CH')
+        self.assertEqual(list(name_set.values())[0], 'testname')
 
-        self.assertEqual(desc_set.keys()[0], 'en-US')
-        self.assertEqual(desc_set.values()[0], 'testdesc')
+        self.assertEqual(list(desc_set.keys())[0], 'en-US')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc')
 
         self.do_activity_model(act.id, 'act://var/www/adllrs/activity/example.json', 'Activity')        
         self.do_activity_definition_model(act, 'type:course', 'other')
@@ -159,11 +159,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
         
-        self.assertEqual(name_set.keys()[0], 'en-GB')
-        self.assertEqual(name_set.values()[0], 'testname')
+        self.assertEqual(list(name_set.keys())[0], 'en-GB')
+        self.assertEqual(list(name_set.values())[0], 'testname')
 
-        self.assertEqual(desc_set.keys()[0], 'en-GB')
-        self.assertEqual(desc_set.values()[0], 'testdesc1')
+        self.assertEqual(list(desc_set.keys())[0], 'en-GB')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc1')
 
         self.do_activity_model(act.id, CURRENT_SITE + reverse(home), 'Activity')        
         self.do_activity_definition_model(act, 'type:link', 'other')
@@ -211,11 +211,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
         
-        self.assertEqual(name_set.keys()[0], 'en-GB')
-        self.assertEqual(name_set.values()[0], 'testname')
+        self.assertEqual(list(name_set.keys())[0], 'en-GB')
+        self.assertEqual(list(name_set.values())[0], 'testname')
 
-        self.assertEqual(desc_set.keys()[0], 'en-US')
-        self.assertEqual(desc_set.values()[0], 'testdesc')
+        self.assertEqual(list(desc_set.keys())[0], 'en-US')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc')
 
         self.do_activity_model(act.id,'act:fooc', 'Activity')        
         self.do_activity_definition_model(act, 'type:course', 'other')
@@ -241,11 +241,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-FR')
-        self.assertEqual(name_set.values()[0], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-FR')
+        self.assertEqual(list(name_set.values())[0], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-CH')
-        self.assertEqual(desc_set.values()[0], 'testdesc2')
+        self.assertEqual(list(desc_set.keys())[0], 'en-CH')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc2')
 
         self.do_activity_model(act.id,'act:food', 'Activity')        
         self.do_activity_definition_model(act, 'type:course','other')
@@ -271,15 +271,15 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-US')
-        self.assertEqual(name_set.values()[0], 'testnameEN')
-        self.assertEqual(name_set.keys()[1], 'en-FR')
-        self.assertEqual(name_set.values()[1], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-US')
+        self.assertEqual(list(name_set.values())[0], 'testnameEN')
+        self.assertEqual(list(name_set.keys())[1], 'en-FR')
+        self.assertEqual(list(name_set.values())[1], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-GB')
-        self.assertEqual(desc_set.values()[0], 'testdescGB')
-        self.assertEqual(desc_set.keys()[1], 'en-CH')
-        self.assertEqual(desc_set.values()[1], 'testdesc2')
+        self.assertEqual(list(desc_set.keys())[0], 'en-GB')
+        self.assertEqual(list(desc_set.values())[0], 'testdescGB')
+        self.assertEqual(list(desc_set.keys())[1], 'en-CH')
+        self.assertEqual(list(desc_set.values())[1], 'testdesc2')
 
         self.do_activity_model(act.id,'act:food', 'Activity')        
         self.do_activity_definition_model(act, 'type:course', 'other')
@@ -325,11 +325,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-FR')
-        self.assertEqual(name_set.values()[0], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-FR')
+        self.assertEqual(list(name_set.values())[0], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-US')
-        self.assertEqual(desc_set.values()[0], 'testdesc2')        
+        self.assertEqual(list(desc_set.keys())[0], 'en-US')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc2')        
 
         self.do_activity_model(act.id,'act:fooe', 'Activity')                
         self.do_activity_definition_model(act, 'http://adlnet.gov/expapi/activities/cmi.interaction',
@@ -365,11 +365,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-US')
-        self.assertEqual(name_set.values()[0], 'testname1')
+        self.assertEqual(list(name_set.keys())[0], 'en-US')
+        self.assertEqual(list(name_set.values())[0], 'testname1')
 
-        self.assertEqual(desc_set.keys()[0], 'en-US')
-        self.assertEqual(desc_set.values()[0], 'testdesc1')
+        self.assertEqual(list(desc_set.keys())[0], 'en-US')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc1')
 
         self.do_activity_model(act.id,'act:foof', 'Activity')
         self.do_activity_definition_model(act, 'http://adlnet.gov/expapi/activities/cmi.interaction', 'choice')
@@ -407,11 +407,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-US')
-        self.assertEqual(name_set.values()[0], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-US')
+        self.assertEqual(list(name_set.values())[0], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-US')
-        self.assertEqual(desc_set.values()[0], 'testdesc2')
+        self.assertEqual(list(desc_set.keys())[0], 'en-US')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc2')
 
         self.do_activity_model(act.id,'http://wikipedia.org', 'Activity')
 
@@ -446,11 +446,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-FR')
-        self.assertEqual(name_set.values()[0], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-FR')
+        self.assertEqual(list(name_set.values())[0], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-FR')
-        self.assertEqual(desc_set.values()[0], 'testdesc2')
+        self.assertEqual(list(desc_set.keys())[0], 'en-FR')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc2')
 
         self.do_activity_model(act.id,'act:foog', 'Activity')
 
@@ -483,11 +483,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-FR')
-        self.assertEqual(name_set.values()[0], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-FR')
+        self.assertEqual(list(name_set.values())[0], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-FR')
-        self.assertEqual(desc_set.values()[0], 'testdesc2')
+        self.assertEqual(list(desc_set.keys())[0], 'en-FR')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc2')
 
         self.do_activity_model(act.id, 'act:fooh', 'Activity')
 
@@ -523,11 +523,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-CH')
-        self.assertEqual(name_set.values()[0], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-CH')
+        self.assertEqual(list(name_set.values())[0], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-CH')
-        self.assertEqual(desc_set.values()[0], 'testdesc2')
+        self.assertEqual(list(desc_set.keys())[0], 'en-CH')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc2')
 
         self.do_activity_model(act.id, 'act:fooi', 'Activity')
 
@@ -567,11 +567,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-CH')
-        self.assertEqual(name_set.values()[0], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-CH')
+        self.assertEqual(list(name_set.values())[0], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-CH')
-        self.assertEqual(desc_set.values()[0], 'testdesc2')
+        self.assertEqual(list(desc_set.keys())[0], 'en-CH')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc2')
 
         self.do_activity_model(act.id, 'act:fooj', 'Activity')
 
@@ -613,11 +613,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
         
-        self.assertEqual(name_set.keys()[0], 'en-US')
-        self.assertEqual(name_set.values()[0], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-US')
+        self.assertEqual(list(name_set.values())[0], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-US')
-        self.assertEqual(desc_set.values()[0], 'testdesc2')        
+        self.assertEqual(list(desc_set.keys())[0], 'en-US')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc2')        
 
         self.do_activity_model(act.id, 'act:fook', 'Activity')
 
@@ -656,11 +656,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-GB')
-        self.assertEqual(name_set.values()[0], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-GB')
+        self.assertEqual(list(name_set.values())[0], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-GB')
-        self.assertEqual(desc_set.values()[0], 'testdesc2')
+        self.assertEqual(list(desc_set.keys())[0], 'en-GB')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc2')
 
         self.do_activity_model(act.id, 'act:fool', 'Activity')
 
@@ -692,11 +692,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-CH')
-        self.assertEqual(name_set.values()[0], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-CH')
+        self.assertEqual(list(name_set.values())[0], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-CH')
-        self.assertEqual(desc_set.values()[0], 'testdesc2')
+        self.assertEqual(list(desc_set.keys())[0], 'en-CH')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc2')
 
         self.do_activity_model(act.id, 'act:foom', 'Activity')
 
@@ -729,11 +729,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-FR')
-        self.assertEqual(name_set.values()[0], 'testname2')
+        self.assertEqual(list(name_set.keys())[0], 'en-FR')
+        self.assertEqual(list(name_set.values())[0], 'testname2')
 
-        self.assertEqual(desc_set.keys()[0], 'en-FR')
-        self.assertEqual(desc_set.values()[0], 'testdesc2')
+        self.assertEqual(list(desc_set.keys())[0], 'en-FR')
+        self.assertEqual(list(desc_set.values())[0], 'testdesc2')
 
         self.do_activity_model(act.id, 'act:foon', 'Activity')
 
@@ -806,11 +806,11 @@ class ActivityManagerTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[0], 'en-US')
-        self.assertEqual(name_set.values()[0], 'actname')
+        self.assertEqual(list(name_set.keys())[0], 'en-US')
+        self.assertEqual(list(name_set.values())[0], 'actname')
 
-        self.assertEqual(desc_set.keys()[0], 'en-US')
-        self.assertEqual(desc_set.values()[0], 'actdesc')
+        self.assertEqual(list(desc_set.keys())[0], 'en-US')
+        self.assertEqual(list(desc_set.values())[0], 'actdesc')
         self.do_activity_model(act.id, 'act:foz', 'Activity')
 
         self.do_activity_definition_model(act, 'http://adlnet.gov/expapi/activities/cmi.interaction',
@@ -848,11 +848,11 @@ class ActivityManagerTests(TestCase):
         name_set1 = act1.activity_definition_name
         desc_set1 = act1.activity_definition_description
         
-        self.assertEqual(name_set1.keys()[0], 'en-US')
-        self.assertEqual(name_set1.values()[0], 'actname2')
+        self.assertEqual(list(name_set1.keys())[0], 'en-US')
+        self.assertEqual(list(name_set1.values())[0], 'actname2')
 
-        self.assertEqual(desc_set1.keys()[0], 'en-US')
-        self.assertEqual(desc_set1.values()[0], 'actdesc')        
+        self.assertEqual(list(desc_set1.keys())[0], 'en-US')
+        self.assertEqual(list(desc_set1.values())[0], 'actdesc')        
 
 
         self.do_activity_definition_model(act1, 'http://adlnet.gov/expapi/activities/cmi.interaction',
@@ -863,11 +863,11 @@ class ActivityManagerTests(TestCase):
         name_set2 = act2.activity_definition_name
         desc_set2 = act2.activity_definition_description
         
-        self.assertEqual(name_set2.keys()[0], 'en-US')
-        self.assertEqual(name_set2.values()[0], 'actname2')
+        self.assertEqual(list(name_set2.keys())[0], 'en-US')
+        self.assertEqual(list(name_set2.values())[0], 'actname2')
 
-        self.assertEqual(desc_set2.keys()[0], 'en-US')
-        self.assertEqual(desc_set2.values()[0], 'actdesc')        
+        self.assertEqual(list(desc_set2.keys())[0], 'en-US')
+        self.assertEqual(list(desc_set2.values())[0], 'actdesc')        
 
         self.do_activity_definition_model(act2, 'http://adlnet.gov/expapi/activities/cmi.interaction',
             'other')
@@ -906,11 +906,11 @@ class ActivityManagerTests(TestCase):
         name_set1 = act1.activity_definition_name
         desc_set1 = act1.activity_definition_description
         
-        self.assertEqual(name_set1.keys()[0], 'en-US')
-        self.assertEqual(name_set1.values()[0], 'actname')
+        self.assertEqual(list(name_set1.keys())[0], 'en-US')
+        self.assertEqual(list(name_set1.values())[0], 'actname')
 
-        self.assertEqual(desc_set1.keys()[0], 'en-US')
-        self.assertEqual(desc_set1.values()[0], 'actdesc2')
+        self.assertEqual(list(desc_set1.keys())[0], 'en-US')
+        self.assertEqual(list(desc_set1.values())[0], 'actdesc2')
         self.do_activity_definition_model(act1, 'http://adlnet.gov/expapi/activities/cmi.interaction', 'other')
 
         self.do_activity_model(act2.id, 'act:foobe', 'Activity')
@@ -918,11 +918,11 @@ class ActivityManagerTests(TestCase):
         name_set2 = act2.activity_definition_name
         desc_set2 = act2.activity_definition_description
 
-        self.assertEqual(name_set2.keys()[0], 'en-US')
-        self.assertEqual(name_set2.values()[0], 'actname')
+        self.assertEqual(list(name_set2.keys())[0], 'en-US')
+        self.assertEqual(list(name_set2.values())[0], 'actname')
 
-        self.assertEqual(desc_set2.keys()[0], 'en-US')
-        self.assertEqual(desc_set2.values()[0], 'actdesc2')        
+        self.assertEqual(list(desc_set2.keys())[0], 'en-US')
+        self.assertEqual(list(desc_set2.values())[0], 'actdesc2')        
         self.do_activity_definition_model(act2, 'http://adlnet.gov/expapi/activities/cmi.interaction', 'other')
 
         self.assertEqual(act1, act2)
@@ -959,11 +959,11 @@ class ActivityManagerTests(TestCase):
         name_set1 = act1.activity_definition_name
         desc_set1 = act1.activity_definition_description
         
-        self.assertEqual(name_set1.keys()[0], 'en-CH')
-        self.assertEqual(name_set1.values()[0], 'actname2')
+        self.assertEqual(list(name_set1.keys())[0], 'en-CH')
+        self.assertEqual(list(name_set1.values())[0], 'actname2')
 
-        self.assertEqual(desc_set1.keys()[0], 'en-FR')
-        self.assertEqual(desc_set1.values()[0], 'actdesc2')
+        self.assertEqual(list(desc_set1.keys())[0], 'en-FR')
+        self.assertEqual(list(desc_set1.values())[0], 'actdesc2')
 
         self.do_activity_definition_model(act1, 'http://adlnet.gov/expapi/activities/cmi.interaction', 'other')
 
@@ -972,11 +972,11 @@ class ActivityManagerTests(TestCase):
         name_set2 = act2.activity_definition_name
         desc_set2 = act2.activity_definition_description
         
-        self.assertEqual(name_set2.keys()[0], 'en-CH')
-        self.assertEqual(name_set2.values()[0], 'actname2')
+        self.assertEqual(list(name_set2.keys())[0], 'en-CH')
+        self.assertEqual(list(name_set2.values())[0], 'actname2')
 
-        self.assertEqual(desc_set2.keys()[0], 'en-FR')
-        self.assertEqual(desc_set2.values()[0], 'actdesc2')         
+        self.assertEqual(list(desc_set2.keys())[0], 'en-FR')
+        self.assertEqual(list(desc_set2.values())[0], 'actdesc2')         
         self.do_activity_definition_model(act2,'http://adlnet.gov/expapi/activities/cmi.interaction',
             'other')
 
@@ -1016,15 +1016,15 @@ class ActivityManagerTests(TestCase):
         name_set1 = act1.activity_definition_name
         desc_set1 = act1.activity_definition_description
         
-        self.assertEqual(name_set1.keys()[1], 'en-CH')
-        self.assertEqual(name_set1.values()[1], 'actname2')
-        self.assertEqual(name_set1.keys()[0], 'en-US')
-        self.assertEqual(name_set1.values()[0], 'altname')
+        self.assertEqual(list(name_set1.keys())[1], 'en-CH')
+        self.assertEqual(list(name_set1.values())[1], 'actname2')
+        self.assertEqual(list(name_set1.keys())[0], 'en-US')
+        self.assertEqual(list(name_set1.values())[0], 'altname')
 
-        self.assertEqual(desc_set1.keys()[1], 'en-FR')
-        self.assertEqual(desc_set1.values()[1], 'actdesc2')
-        self.assertEqual(desc_set1.keys()[0], 'en-GB')
-        self.assertEqual(desc_set1.values()[0], 'altdesc')
+        self.assertEqual(list(desc_set1.keys())[1], 'en-FR')
+        self.assertEqual(list(desc_set1.values())[1], 'actdesc2')
+        self.assertEqual(list(desc_set1.keys())[0], 'en-GB')
+        self.assertEqual(list(desc_set1.values())[0], 'altdesc')
 
         self.do_activity_definition_model(act1, 'http://adlnet.gov/expapi/activities/cmi.interaction',
             'other')

@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 from pkg_resources import parse_requirements
 from setuptools import setup
@@ -11,5 +11,5 @@ setup(
     version="0.0.1",
     author="ADL",
     packages=['lrs'],
-    install_requires=map(str, install_reqs),
+    install_requires=list(map(str, install_reqs)),
 )

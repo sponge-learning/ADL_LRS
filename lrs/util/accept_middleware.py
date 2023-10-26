@@ -1,4 +1,4 @@
-from string import lower
+from django.utils.deprecation import MiddlewareMixin
 
 def webkit_workaround(bestq, result):
     """The next part is a workaround, to avoid the problem, webkit browsers
@@ -25,11 +25,11 @@ def webkit_workaround(bestq, result):
             if mediatype[2] == bestq:
                 bestresult.append(mediatype)
                 length = length + 1
-                if not hasxhtml and lower(mediatype[0]) == "application/xhtml+xml":
+                if not hasxhtml and mediatype[0].lower() == "application/xhtml+xml":
                     hasxhtml = True
-                if not hashtml and lower(mediatype[0]) == "text/html":
+                if not hashtml and mediatype[0].lower() == "text/html":
                     hashtml = True
-            if lower(mediatype[0]) == "text/html":
+            if mediatype[0].lower() == "text/html":
                 idxhtml = i
             i = i+1
         
@@ -76,9 +76,9 @@ def parse_accept_header(accept):
     
     return result
 
-class AcceptMiddleware(object):
+class AcceptMiddleware(MiddlewareMixin):
     def process_request(self, request):
         accept = parse_accept_header(request.META.get("HTTP_ACCEPT", ""))
         request.accept = accept
-        request.accepted_types = map(lambda (t, p, q): t, accept)
+        request.accepted_types = [t_p_q[0] for t_p_q in accept]
         

@@ -17,7 +17,7 @@ class StatementMoreTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        print "\n%s" % __name__
+        print("\n%s" % __name__)
 
     def setUp(self):
         settings.SERVER_STMT_LIMIT=10    
@@ -342,7 +342,7 @@ class StatementMoreTests(TestCase):
             file_path = os.path.join(attach_folder_path, the_file)
             try:
                 os.unlink(file_path)
-            except Exception, e:
+            except Exception as e:
                 raise e
 
     def test_unknown_more_id_url(self):

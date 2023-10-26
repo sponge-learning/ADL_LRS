@@ -1,12 +1,5 @@
-Django==1.7
-pytz==2012c
-bencode==1.0
-psycopg2==2.7.5
-isodate==0.4.9
-pycrypto==2.5
-django-extensions==1.1.1
-jsonfield==0.9.19
-oauth2==1.5.211
+bcoding==1.5
+pycryptodome==3.12.0
+oauth2==1.9.0.post1
 shortuuid==0.4.2
 django-jsonify==0.3.0
-django-endless-pagination==2.0

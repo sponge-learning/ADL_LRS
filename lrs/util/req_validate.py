@@ -1,13 +1,13 @@
 import json
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from isodate.isodatetime import parse_datetime
 from isodate.isoerror import ISO8601Error
 
 from django.conf import settings
 
-from util import convert_to_dict, get_agent_ifp
-from Authorization import auth
-from StatementValidator import StatementValidator
+from .util import convert_to_dict, get_agent_ifp
+from .Authorization import auth
+from .StatementValidator import StatementValidator
 
 from ..models import Statement, Agent, Activity
 from ..exceptions import ParamConflict, ParamError, Forbidden, NotFound, BadRequest, IDNotFoundError
@@ -78,9 +78,9 @@ def get_act_def_data(act_data):
     act_url_data = {}
     # See if id resolves
     try:
-        req = urllib2.Request(act_data['id'])
+        req = urllib.request.Request(act_data['id'])
         req.add_header('Accept', 'application/json, */*')
-        act_resp = urllib2.urlopen(req, timeout=settings.ACTIVITY_ID_RESOLVE_TIMEOUT)
+        act_resp = urllib.request.urlopen(req, timeout=settings.ACTIVITY_ID_RESOLVE_TIMEOUT)
     except Exception:
         # Doesn't resolve-hopefully data is in payload
         pass
@@ -94,7 +94,7 @@ def get_act_def_data(act_data):
 
         # If there was data from the URL and a defintion in received JSON already
         if act_url_data and 'definition' in act_data:
-            act_data['definition'] = dict(act_url_data.items() + act_data['definition'].items())
+            act_data['definition'] = dict(list(act_url_data.items()) + list(act_data['definition'].items()))
         # If there was data from the URL and no definition in the JSON
         elif act_url_data and not 'definition' in act_data:
             act_data['definition'] = act_url_data
@@ -122,9 +122,9 @@ def server_validation(stmt_set, auth, payload_sha2s):
             try:
                 validator = StatementValidator()
                 validator.validate_activity(stmt_set['object'])
-            except Exception, e:
+            except Exception as e:
                 raise BadRequest(e.message)
-            except ParamError, e:
+            except ParamError as e:
                 raise ParamError(e.message)
 
         auth_validated = validate_stmt_authority(stmt_set, auth, auth_validated)
@@ -135,18 +135,18 @@ def server_validation(stmt_set, auth, payload_sha2s):
 
 @auth
 def statements_post(req_dict):
-    if req_dict['params'].keys() and not ignore_rogue_params:
-        raise ParamError("The post statements request contained unexpected parameters: %s" % ", ".join(req_dict['params'].keys()))
+    if list(req_dict['params'].keys()) and not ignore_rogue_params:
+        raise ParamError("The post statements request contained unexpected parameters: %s" % ", ".join(list(req_dict['params'].keys())))
 
-    if isinstance(req_dict['body'], basestring):
+    if isinstance(req_dict['body'], str):
         req_dict['body'] = convert_to_dict(req_dict['body'])
 
     try:
         validator = StatementValidator(req_dict['body'])
         validator.validate()
-    except Exception, e:
+    except Exception as e:
         raise BadRequest(e.message)
-    except ParamError, e:
+    except ParamError as e:
         raise ParamError(e.message)
 
     server_validation(req_dict['body'], req_dict['auth'], req_dict.get('payload_sha2s', None))
@@ -259,13 +259,13 @@ def statements_put(req_dict):
         statement_id = req_dict['params']['statementId']
 
     # Convert data so it can be parsed
-    if isinstance(req_dict['body'], basestring):
+    if isinstance(req_dict['body'], str):
         req_dict['body'] = convert_to_dict(req_dict['body'])
 
     # Try to get id if in body
     try:
         statement_body_id = req_dict['body']['id']
-    except Exception, e:
+    except Exception as e:
         statement_body_id = None
 
     # If ids exist in both places, check if they are equal
@@ -288,9 +288,9 @@ def statements_put(req_dict):
     try:
         validator = StatementValidator(req_dict['body'])
         validator.validate()
-    except Exception, e:
+    except Exception as e:
         raise BadRequest(e.message)
-    except ParamError, e:
+    except ParamError as e:
         raise ParamError(e.message)
     server_validation(req_dict['body'], req_dict['auth'], req_dict.get('payload_sha2s', None))
     return req_dict

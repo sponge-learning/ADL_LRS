@@ -2,9 +2,9 @@ import oauth2 as oauth
 
 from django.utils.translation import ugettext as _
 
-from responses import INVALID_PARAMS_RESPONSE, INVALID_CONSUMER_RESPONSE, COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE, INVALID_SCOPE_RESPONSE
-from utils import send_oauth_error, get_oauth_request, verify_oauth_request
-from store import store, InvalidTokenError, InvalidConsumerError
+from .responses import INVALID_PARAMS_RESPONSE, INVALID_CONSUMER_RESPONSE, COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE, INVALID_SCOPE_RESPONSE
+from .utils import send_oauth_error, get_oauth_request, verify_oauth_request
+from .store import store, InvalidTokenError, InvalidConsumerError
 from functools import wraps
 
 

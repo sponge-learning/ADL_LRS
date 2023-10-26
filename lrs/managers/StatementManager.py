@@ -1,13 +1,14 @@
 from django.db import transaction, IntegrityError
 from django.core.files.base import ContentFile
-from django.core.cache import get_cache
+from django.core.cache import caches
 
 from lrs.exceptions import ParamConflict
 
 from .ActivityManager import ActivityManager
 from ..models import Verb, Statement, StatementRef, StatementAttachment, StatementContextActivity, SubStatement, SubStatementContextActivity, Agent 
 
-att_cache = get_cache('attachment_cache')
+att_cache = caches['attachment_cache']
+
 
 class StatementManager():
     def __init__(self, data, auth, full_stmt={}):
@@ -45,7 +46,7 @@ class StatementManager():
         
         # Save context activities
         # Can have multiple groupings
-        for con_act_group in con_act_data.items():
+        for con_act_group in list(con_act_data.items()):
             ca = SubStatementContextActivity.objects.create(key=con_act_group[0], substatement=sub)
             # Incoming contextActivities can either be a list or dict
             if isinstance(con_act_group[1], list):
@@ -76,14 +77,14 @@ class StatementManager():
         try:
             stmt = Statement.objects.create(**self.data)
         except IntegrityError as e:
-            if e.message.startswith('duplicate key value violates unique constraint "lrs_statement_statement_id_key"'):
+            if str(e).startswith('duplicate key value violates unique constraint "lrs_statement_statement_id_key"'):
                 err_msg = "A statement with ID %s already exists" % self.data.get('statement_id')
                 raise ParamConflict(err_msg)
             raise
 
         # Save context activities
         # Can have multiple groupings
-        for con_act_group in con_act_data.items():
+        for con_act_group in list(con_act_data.items()):
             ca = StatementContextActivity.objects.create(key=con_act_group[0], statement=stmt)
             # Incoming contextActivities can either be a list or dict
             if isinstance(con_act_group[1], list):
@@ -101,11 +102,11 @@ class StatementManager():
         if 'result' in self.data:
             result = self.data['result']
 
-            for k,v in result.iteritems():
+            for k,v in result.items():
                 self.data['result_' + k] = v
 
             if 'result_score' in self.data:
-                for k,v in self.data['result_score'].iteritems():
+                for k,v in self.data['result_score'].items():
                     self.data['result_score_' + k] = v
                 del self.data['result']['score']
                 del self.data['result_score']
@@ -126,7 +127,7 @@ class StatementManager():
             raw_payload = att_cache.get(sha2)
             try:
                 payload = ContentFile(raw_payload)
-            except Exception, e:
+            except Exception as e:
                 raise e    
             # Save ContentFile payload to attachment model object
             attachment.payload.save(sha2, payload)
@@ -163,10 +164,10 @@ class StatementManager():
 
                     # Save displays
                     if 'display' in attach:
-                        attachment.display = dict(existing_displays.items() + attach['display'].items())
+                        attachment.display = dict(list(existing_displays.items()) + list(attach['display'].items()))
 
                     if 'description' in attach:
-                        attachment.description = dict(existing_descriptions.items() + attach['description'].items())
+                        attachment.description = dict(list(existing_descriptions.items()) + list(attach['description'].items()))
                     attachment.save()
 
                 # Add each attach to the stmt
@@ -181,7 +182,7 @@ class StatementManager():
         if 'context' in self.data:
             context = self.data['context']
 
-            for k,v in context.iteritems():
+            for k,v in context.items():
                 self.data['context_' + k] = v
 
             if 'context_instructor' in self.data:
@@ -216,8 +217,9 @@ class StatementManager():
 
         # Save verb displays
         if 'display' in incoming_verb:
-            verb_object.display = dict(existing_lang_maps.items() + incoming_verb['display'].items())
-            verb_object.save()
+            verb_object.display = dict(list(existing_lang_maps.items()) + list(incoming_verb['display'].items()))
+            if verb_object.display != existing_lang_maps:
+                verb_object.save()
         self.data['verb'] = verb_object
 
     def build_statement_object(self):

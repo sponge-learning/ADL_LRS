@@ -1,6 +1,6 @@
 import uuid
 import json
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import os
 import base64
 import time
@@ -29,7 +29,7 @@ TOKEN_ENDPOINT = TEST_SERVER + "/XAPI/OAuth/token"
 class OAuthTests(TestCase):
     @classmethod
     def setUpClass(cls):
-        print "\n%s" % __name__
+        print("\n%s" % __name__)
 
     def setUp(self):
         if not settings.OAUTH_ENABLED:
@@ -83,7 +83,7 @@ class OAuthTests(TestCase):
             file_path = os.path.join(attach_folder_path, the_file)
             try:
                 os.unlink(file_path)
-            except Exception, e:
+            except Exception as e:
                 raise e
 
     def oauth_handshake(self, scope=True, scope_type=None, parameters=None, param_type='qs', change_scope=[],
@@ -118,7 +118,7 @@ class OAuthTests(TestCase):
 
         # Add non oauth params in query string or form
         if param_type == 'qs':
-            request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(request_token_params))
+            request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(request_token_params))
         else:
             request_token_path = INITIATE_ENDPOINT
 
@@ -138,7 +138,7 @@ class OAuthTests(TestCase):
                 http_url=request_token_path, parameters=oauth_header_request_token_params_dict)
         else:
             oauth_request = oauth.Request.from_consumer_and_token(consumer, token=None, http_method='POST',
-                http_url=request_token_path, parameters=dict(oauth_header_request_token_params_dict.items()+request_token_params.items()))
+                http_url=request_token_path, parameters=dict(list(oauth_header_request_token_params_dict.items())+list(request_token_params.items())))
 
         # create signature and add it to the header params
         signature_method = oauth.SignatureMethod_HMAC_SHA1()
@@ -165,7 +165,7 @@ class OAuthTests(TestCase):
         # ============= AUTHORIZE =============
         # Create authorize path, must have oauth_token param
         authorize_param = {'oauth_token': request_token.key}
-        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.urlencode(authorize_param)) 
+        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.parse.urlencode(authorize_param)) 
 
         # Try to hit auth path, made to login
         auth_resp = self.client.get(authorize_path)
@@ -283,7 +283,7 @@ class OAuthTests(TestCase):
                 request_token_params['scope'] = "all"
 
         if param_type == 'qs':
-            request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(request_token_params))
+            request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(request_token_params))
         else:
             request_token_path = INITIATE_ENDPOINT
 
@@ -302,7 +302,7 @@ class OAuthTests(TestCase):
                 http_url=request_token_path, parameters=oauth_header_request_token_params_dict)
         else:
             oauth_request = oauth.Request.from_consumer_and_token(self.consumer2, token=None, http_method='POST',
-                http_url=request_token_path, parameters=dict(oauth_header_request_token_params_dict.items()+request_token_params.items()))
+                http_url=request_token_path, parameters=dict(list(oauth_header_request_token_params_dict.items())+list(request_token_params.items())))
 
         
         # create signature and add it to the header params
@@ -326,7 +326,7 @@ class OAuthTests(TestCase):
 
         # ============= AUTHORIZE =============
         authorize_param = {'oauth_token': request_token.key}
-        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.urlencode(authorize_param)) 
+        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.parse.urlencode(authorize_param)) 
 
         auth_resp = self.client.get(authorize_path)
         self.assertEqual(auth_resp.status_code, 302)
@@ -580,7 +580,7 @@ class OAuthTests(TestCase):
             oauth_header_request_token_params_dict[str(item[0]).strip()] = str(item[1]).strip('"')
 
         oauth_request = oauth.Request.from_consumer_and_token(self.consumer, token=None, http_method='GET',
-            http_url=INITIATE_ENDPOINT, parameters=dict(oauth_header_request_token_params_dict.items()+form_data.items()))
+            http_url=INITIATE_ENDPOINT, parameters=dict(list(oauth_header_request_token_params_dict.items())+list(form_data.items())))
         signature_method = oauth.SignatureMethod_HMAC_SHA1()
         signature = signature_method.sign(oauth_request, self.consumer, None)
 
@@ -617,7 +617,7 @@ class OAuthTests(TestCase):
         del oauth_header_request_token_params_dict['OAuth realm']
 
         oauth_request = oauth.Request.from_consumer_and_token(self.consumer, token=None, http_method='GET',
-            http_url=INITIATE_ENDPOINT, parameters=dict(oauth_header_request_token_params_dict.items()+form_data.items()))
+            http_url=INITIATE_ENDPOINT, parameters=dict(list(oauth_header_request_token_params_dict.items())+list(form_data.items())))
         signature_method = oauth.SignatureMethod_HMAC_SHA1()
         signature = signature_method.sign(oauth_request, self.consumer, None)
 
@@ -763,7 +763,7 @@ class OAuthTests(TestCase):
 
         # add scope to the existing params
         oauth_request = oauth.Request.from_consumer_and_token(self.consumer, token=None, http_method='POST',
-            http_url=INITIATE_ENDPOINT, parameters=dict(oauth_header_request_token_params_dict.items()+form_data.items()))
+            http_url=INITIATE_ENDPOINT, parameters=dict(list(oauth_header_request_token_params_dict.items())+list(form_data.items())))
         # create signature and add it to the header params
         signature_method = oauth.SignatureMethod_HMAC_SHA1()
         signature = signature_method.sign(oauth_request, self.consumer, None)
@@ -783,7 +783,7 @@ class OAuthTests(TestCase):
                     'scope':'all',
                     'consumer_name':'new_client'
                 }
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param)) 
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param)) 
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -823,7 +823,7 @@ class OAuthTests(TestCase):
                     'scope':'all',
                     'consumer_name':'new_client'
                 }
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param)) 
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param)) 
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -883,7 +883,7 @@ Lw03eHTNQghS0A==
                     'consumer_name':'new_client'
                 }
 
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param))
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param))
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -954,7 +954,7 @@ Lw03eHTNQghS0A==
                     'consumer_name': name
                 }
 
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param))
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param))
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -994,7 +994,7 @@ Lw03eHTNQghS0A==
         # ============= AUTHORIZE =============
         # Create authorize path, must have oauth_token param
         authorize_param = {'oauth_token': request_token.key}
-        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.urlencode(authorize_param)) 
+        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.parse.urlencode(authorize_param)) 
 
         # Try to hit auth path, made to login
         auth_resp = self.client.get(authorize_path)
@@ -1059,7 +1059,7 @@ Lw03eHTNQghS0A==
         content = access_resp.content.split('&')
         access_token_secret = content[0].split('=')[1]
         access_token_key = content[1].split('=')[1]
-        access_token = Token.objects.get(secret=urllib.unquote_plus(access_token_secret), key=access_token_key)
+        access_token = Token.objects.get(secret=urllib.parse.unquote_plus(access_token_secret), key=access_token_key)
         #  ============= END ACCESS TOKEN =============
 
         # Set oauth headers user will use when hitting xapi endpoing and access token
@@ -1118,7 +1118,7 @@ Lw03eHTNQghS0A==
                     'consumer_name':'new_client'
                 }
 
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param))
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param))
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -1146,7 +1146,7 @@ Lw03eHTNQghS0A==
                     'scope':'all',
                     'consumer_name':'new_client'
                 }
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param)) 
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param)) 
         # Header params we're passing in - wrong oauth_version
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -1183,7 +1183,7 @@ Lw03eHTNQghS0A==
                     'scope':'all',
                     'consumer_name':'new_client'
                 }
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param)) 
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param)) 
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -1212,7 +1212,7 @@ Lw03eHTNQghS0A==
                     'scope':'all',
                     'consumer_name':'new_client'
                 }
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param)) 
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param)) 
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -1251,7 +1251,7 @@ Lw03eHTNQghS0A==
 
         # Test AUTHORIZE
         param = {'oauth_token': token.key}
-        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.urlencode(param)) 
+        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.parse.urlencode(param)) 
 
         auth_resp = self.client.get(authorize_path)
         self.assertEqual(auth_resp.status_code, 302)
@@ -1282,7 +1282,7 @@ Lw03eHTNQghS0A==
                     'scope':'statements/read',
                     'consumer_name':'new_client'
                 }
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param)) 
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param)) 
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -1321,7 +1321,7 @@ Lw03eHTNQghS0A==
 
         # Test AUTHORIZE
         param = {'oauth_token': token.key}
-        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.urlencode(param)) 
+        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.parse.urlencode(param)) 
 
         auth_resp = self.client.get(authorize_path)
         self.assertEqual(auth_resp.status_code, 302)
@@ -1349,7 +1349,7 @@ Lw03eHTNQghS0A==
                     'scope':'statements/read',
                     'consumer_name':'new_client'
                 }
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param)) 
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param)) 
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -1388,7 +1388,7 @@ Lw03eHTNQghS0A==
 
         # Test AUTHORIZE
         param = {'oauth_token': token.key}
-        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.urlencode(param)) 
+        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.parse.urlencode(param)) 
 
         auth_resp = self.client.get(authorize_path)
         self.assertEqual(auth_resp.status_code, 302)
@@ -1407,7 +1407,7 @@ Lw03eHTNQghS0A==
                     'scope':'statements/read',
                     'consumer_name':'new_client'
                 }
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param)) 
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param)) 
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -1446,7 +1446,7 @@ Lw03eHTNQghS0A==
 
         # Test AUTHORIZE
         param = {'oauth_token': token.key}
-        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.urlencode(param)) 
+        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.parse.urlencode(param)) 
 
         auth_resp = self.client.get(authorize_path)
         self.assertEqual(auth_resp.status_code, 302)
@@ -1474,7 +1474,7 @@ Lw03eHTNQghS0A==
                     'scope':'all',
                     'consumer_name':'new_client'
                 }
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param)) 
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param)) 
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -1513,7 +1513,7 @@ Lw03eHTNQghS0A==
 
         # Test AUTHORIZE
         param = {'oauth_token': token.key}
-        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.urlencode(param)) 
+        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.parse.urlencode(param)) 
 
         auth_resp = self.client.get(authorize_path)
         self.assertEqual(auth_resp.status_code, 302)
@@ -1562,7 +1562,7 @@ Lw03eHTNQghS0A==
                     'scope':'all',
                     'consumer_name':'new_client'
                 }
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param)) 
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param)) 
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -1601,7 +1601,7 @@ Lw03eHTNQghS0A==
 
         # Test AUTHORIZE
         param = {'oauth_token': token.key}
-        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.urlencode(param)) 
+        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.parse.urlencode(param)) 
 
         auth_resp = self.client.get(authorize_path)
         self.assertEqual(auth_resp.status_code, 302)
@@ -1685,7 +1685,7 @@ Lw03eHTNQghS0A==
                     'scope':'all',
                     'consumer_name':'new_client'
                 }
-        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.urlencode(param)) 
+        request_token_path = "%s?%s" % (INITIATE_ENDPOINT, urllib.parse.urlencode(param)) 
         # Header params we're passing in
         oauth_header_request_token_params = "OAuth realm=\"test\","\
                "oauth_consumer_key=\"%s\","\
@@ -1714,7 +1714,7 @@ Lw03eHTNQghS0A==
         signature = signature_method.sign(oauth_request, self.consumer, None)
         oauth_header_request_token_params = oauth_header_request_token_params + ",oauth_signature=%s" % signature
 
-        request_resp = self.client.get(request_token_path, Authorization=unicode(oauth_header_request_token_params))
+        request_resp = self.client.get(request_token_path, Authorization=str(oauth_header_request_token_params))
         self.assertEqual(request_resp.status_code, 200)
         self.assertIn('oauth_token_secret', request_resp.content)
         self.assertIn('oauth_token', request_resp.content)
@@ -1724,7 +1724,7 @@ Lw03eHTNQghS0A==
 
         # ============= AUTHORIZE =============
         param = {'oauth_token': token.key}
-        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.urlencode(param)) 
+        authorize_path = "%s?%s" % (AUTHORIZATION_ENDPOINT, urllib.parse.urlencode(param)) 
 
         auth_resp = self.client.get(authorize_path)
         self.assertEqual(auth_resp.status_code, 302)
@@ -1778,7 +1778,7 @@ Lw03eHTNQghS0A==
         signature = signature_method.sign(oauth_request, self.consumer, request_token)
         oauth_header_access_params += ',oauth_signature="%s"' % signature
 
-        access_resp = self.client.get(TOKEN_ENDPOINT, Authorization=unicode(oauth_header_access_params))
+        access_resp = self.client.get(TOKEN_ENDPOINT, Authorization=str(oauth_header_access_params))
         self.assertEqual(access_resp.status_code, 200)
         content = access_resp.content.split('&')
         access_token_secret = content[0].split('=')[1]
@@ -1814,7 +1814,7 @@ Lw03eHTNQghS0A==
         signature = signature_method.sign(oauth_request, self.consumer, access_token)
         oauth_header_resource_params += ',oauth_signature="%s"' % signature
 
-        resp = self.client.get(path, Authorization=unicode(oauth_header_resource_params), X_Experience_API_Version=settings.XAPI_VERSION)
+        resp = self.client.get(path, Authorization=str(oauth_header_resource_params), X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(resp.status_code, 200)
 
     def test_oauth_disabled(self):
@@ -1827,7 +1827,7 @@ Lw03eHTNQghS0A==
             "verb":{"id": "http://adlnet.gov/expapi/verbs/accessed","display": {"en-US":"accessed"}},
             "object": {"id":"act:test_put"}})
         param = {"statementId":put_guid}
-        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.urlencode(param))
+        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.parse.urlencode(param))
         
         oauth_header_resource_params, access_token = self.oauth_handshake()
 
@@ -1861,7 +1861,7 @@ Lw03eHTNQghS0A==
             "verb":{"id": "http://adlnet.gov/expapi/verbs/accessed","display": {"en-US":"accessed"}},
             "object": {"id":"act:test_put"}})
         param = {"statementId":put_guid}
-        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.urlencode(param))
+        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.parse.urlencode(param))
         
         # Get oauth header params and access token
         oauth_header_resource_params, access_token = self.oauth_handshake()
@@ -1928,7 +1928,7 @@ Lw03eHTNQghS0A==
         self.assertEqual(stmt_post.status_code, 200)
 
         param = {"statementId":guid}        
-        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.urlencode(param))
+        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.parse.urlencode(param))
         oauth_header_resource_params, access_token = self.oauth_handshake()
 
         # from_token_and_callback takes a dictionary        
@@ -1961,7 +1961,7 @@ Lw03eHTNQghS0A==
         self.assertEqual(stmt_post.status_code, 200)
 
         param = {"activity":"act:test_complex_get"}
-        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.urlencode(param))
+        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.parse.urlencode(param))
 
         oauth_header_resource_params, access_token = self.oauth_handshake()
 
@@ -1994,7 +1994,7 @@ Lw03eHTNQghS0A==
         self.assertEqual(stmt_post.status_code, 200)
         
         param = {"statementId":guid}
-        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.urlencode(param))
+        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.parse.urlencode(param))
 
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type="statements/read profile")
 
@@ -2054,7 +2054,7 @@ Lw03eHTNQghS0A==
         activity.save()
         testparams = {"stateId": stateId, "activityId": activityId, "agent": testagent}
         teststate = {"test":"put activity state 1"}
-        path = '%s?%s' % (url, urllib.urlencode(testparams))
+        path = '%s?%s' % (url, urllib.parse.urlencode(testparams))
 
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type='state')
 
@@ -2089,7 +2089,7 @@ Lw03eHTNQghS0A==
         self.assertEqual(stmt_post.status_code, 200)
 
         param = {"statementId":guid}
-        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.urlencode(param))
+        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.parse.urlencode(param))
 
         # Use same oauth_headers as before and change the nonce
         oauth_header_resource_params_dict['oauth_nonce'] = 'differ_nonce'
@@ -2119,7 +2119,7 @@ Lw03eHTNQghS0A==
         self.assertEqual(stmt_post.status_code, 200)
 
         param = {"statementId":guid}
-        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.urlencode(param))
+        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.parse.urlencode(param))
 
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type="statements/read")
 
@@ -2147,7 +2147,7 @@ Lw03eHTNQghS0A==
 
         url = 'http://testserver/XAPI/agents/profile'
         params = {"agent": {"mbox":"mailto:test@example.com"}}
-        path = "%s?%s" %(url, urllib.urlencode(params))
+        path = "%s?%s" %(url, urllib.parse.urlencode(params))
 
         # Use same oauth header, change nonce
         oauth_header_resource_params_dict['oauth_nonce'] = 'differ_nonce'
@@ -2174,7 +2174,7 @@ Lw03eHTNQghS0A==
         self.assertEqual(stmt_post.status_code, 200)
 
         param = {"object":{"objectType": "Activity", "id":"act:test_complex_get"}}
-        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.urlencode(param))
+        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.parse.urlencode(param))
 
         oauth_header_resource_params, access_token = self.oauth_handshake()
 
@@ -2215,7 +2215,7 @@ Lw03eHTNQghS0A==
         self.client.logout()
 
         param = {"statementId":guid}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt = json.dumps({"verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:test_put"},"actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
 
@@ -2223,7 +2223,7 @@ Lw03eHTNQghS0A==
         self.assertEqual(put_resp.status_code, 204)
         
         param = {"statementId":guid}
-        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.urlencode(param))
+        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.parse.urlencode(param))
         # ====================================================
 
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type="statements/read/mine")
@@ -2265,7 +2265,7 @@ Lw03eHTNQghS0A==
         self.assertEqual(stmt_post.status_code, 200)
 
         param = {"statementId":guid}
-        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.urlencode(param))
+        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.parse.urlencode(param))
 
         # Use same oauth headers but replace the nonce 
         oauth_header_resource_params_dict['oauth_nonce'] = 'get_differ_nonce'
@@ -2295,7 +2295,7 @@ Lw03eHTNQghS0A==
 
         # Put statement
         param = {"statementId":guid}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt = json.dumps({"verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:test_put"},"actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
 
@@ -2304,7 +2304,7 @@ Lw03eHTNQghS0A==
         # =============================================
 
         param = {"statementId":guid}
-        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.urlencode(param))
+        path = "%s?%s" % ('http://testserver/XAPI/statements', urllib.parse.urlencode(param))
 
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type="statements/read/mine")
 
@@ -2394,7 +2394,7 @@ Lw03eHTNQghS0A==
         activity.save()
         testparams = {"stateId": stateId, "activityId": activityId, "agent": testagent}
         teststate = {"test":"put activity state 1"}
-        path = '%s?%s' % (url, urllib.urlencode(testparams))
+        path = '%s?%s' % (url, urllib.parse.urlencode(testparams))
 
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type='state')
 
@@ -2426,7 +2426,7 @@ Lw03eHTNQghS0A==
         # Agent is not in this auth
         url = 'http://testserver/XAPI/agents/profile'
         testparams = {"agent": '{"name":"joe","mbox":"mailto:joe@example.com"}'}
-        path = '%s?%s' % (url, urllib.urlencode(testparams))
+        path = '%s?%s' % (url, urllib.parse.urlencode(testparams))
 
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type='profile')
 
@@ -2473,7 +2473,7 @@ Lw03eHTNQghS0A==
             'interactionType': 'other', 'correctResponsesPattern':[]}}})
 
         param = {"statementId":put_guid}
-        path = "%s?%s" % (url, urllib.urlencode(param))
+        path = "%s?%s" % (url, urllib.parse.urlencode(param))
         
         # START PUT STMT
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type='statements/write statements/read')
@@ -2507,7 +2507,7 @@ Lw03eHTNQghS0A==
 
         # START GET STMT
         get_params = {"activity":"test://test/define/scope"}
-        path = "%s?%s" % (url, urllib.urlencode(get_params)) 
+        path = "%s?%s" % (url, urllib.parse.urlencode(get_params)) 
 
         # User same oauth headers, change nonce
         oauth_header_resource_params_dict['oauth_nonce'] = 'get_differ_nonce'
@@ -2574,20 +2574,20 @@ Lw03eHTNQghS0A==
         jane_agent = Agent.objects.get(mbox="mailto:jane@example.com")
         jane_oauth_group = Agent.objects.get(objectType='Group', member__in=[jane_agent])
         non_global_act_jane_oauth = Activity.objects.get(canonical_version=False, authority=jane_oauth_group)        
-        non_global_name_list_jane_oauth = non_global_act_jane_oauth.activity_definition_name.values()
+        non_global_name_list_jane_oauth = list(non_global_act_jane_oauth.activity_definition_name.values())
         self.assertIn('testname', non_global_name_list_jane_oauth)
         self.assertIn('altname', non_global_name_list_jane_oauth)
-        non_global_desc_list_jane_oauth = non_global_act_jane_oauth.activity_definition_description.values()
+        non_global_desc_list_jane_oauth = list(non_global_act_jane_oauth.activity_definition_description.values())
         self.assertIn('testdesc', non_global_desc_list_jane_oauth)
         self.assertIn('altdesc', non_global_desc_list_jane_oauth)
 
         dick_agent = Agent.objects.get(mbox="mailto:dick@example.com")
         dick_oauth_group = Agent.objects.get(objectType='Group', member__in=[dick_agent])
         non_global_act_dick_oauth = Activity.objects.get(canonical_version=False, authority=dick_oauth_group)        
-        non_global_name_list_dick_oauth = non_global_act_dick_oauth.activity_definition_name.values()
+        non_global_name_list_dick_oauth = list(non_global_act_dick_oauth.activity_definition_name.values())
         self.assertIn('definename', non_global_name_list_dick_oauth)
         self.assertIn('definealtname', non_global_name_list_dick_oauth)
-        non_global_desc_list_dick_oauth = non_global_act_dick_oauth.activity_definition_description.values()
+        non_global_desc_list_dick_oauth = list(non_global_act_dick_oauth.activity_definition_description.values())
         self.assertIn('definedesc', non_global_desc_list_dick_oauth)
         self.assertIn('definealtdesc', non_global_desc_list_dick_oauth)
 
@@ -2610,7 +2610,7 @@ Lw03eHTNQghS0A==
             "object": {"objectType":"Agent", "mbox":"mailto:tim@tim.com","name":"tim timson"}})
 
         param = {"statementId":put_guid}
-        path = "%s?%s" % (url, urllib.urlencode(param))
+        path = "%s?%s" % (url, urllib.parse.urlencode(param))
         
         # START PUT STMT
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type='statements/write statements/read')
@@ -2648,7 +2648,7 @@ Lw03eHTNQghS0A==
 
         # START GET STMT
         get_params = {"agent":{"objectType": "Agent", "mbox":"mailto:tim@tim.com"}, "related_agents":True}
-        path = "%s?%s" % (url, urllib.urlencode(get_params)) 
+        path = "%s?%s" % (url, urllib.parse.urlencode(get_params)) 
 
         # Use same oauth headers, replace nonce
         oauth_header_resource_params_dict['oauth_nonce'] = 'get_differ_nonce'
@@ -2799,7 +2799,7 @@ Lw03eHTNQghS0A==
             'interactionType': 'other', 'correctResponsesPattern':[]}}})
 
         param = {"statementId":put_guid}
-        path = "%s?%s" % (url, urllib.urlencode(param))
+        path = "%s?%s" % (url, urllib.parse.urlencode(param))
         
         # START PUT STMT
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type='statements/write statements/read define')
@@ -2840,7 +2840,7 @@ Lw03eHTNQghS0A==
             "mbox":"mailto:bob@bob.com", "name":"bob"},"verb":{"id": "http://adlnet.gov/expapi/verbs/passed",
             "display": {"en-US":"passed"}},"object": {"id":"test://test/define/scope"}}
         param = {"statementId":put_guid}
-        path = "%s?%s" % (url, urllib.urlencode(param))
+        path = "%s?%s" % (url, urllib.parse.urlencode(param))
         
         # START PUT STMT
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type='statements/write statements/read define')
@@ -2893,7 +2893,7 @@ Lw03eHTNQghS0A==
             "mbox":"mailto:bob@bob.com", "name":"bob"},"verb":{"id": "http://adlnet.gov/expapi/verbs/passed",
             "display": {"en-US":"passed"}},"object": {"id":"test://test/define/scope"}}
         param = {"statementId":put_guid}
-        path = "%s?%s" % (url, urllib.urlencode(param))
+        path = "%s?%s" % (url, urllib.parse.urlencode(param))
         
         # START PUT STMT
         oauth_header_resource_params, access_token = self.oauth_handshake(scope_type='statements/write statements/read define')
@@ -2926,7 +2926,7 @@ Lw03eHTNQghS0A==
             "mbox":"mailto:billbob@bob.com", "name":"bob"},"verb":{"id": "http://adlnet.gov/expapi/verbs/passed",
             "display": {"en-US":"passed"}},"object": {"id":"test://mult-test"}}
         param2 = {"statementId":put_guid2}
-        path2 = "%s?%s" % (url, urllib.urlencode(param2))
+        path2 = "%s?%s" % (url, urllib.parse.urlencode(param2))
         
         # START PUT STMT
         oauth_header_resource_params2, access_token2 = self.oauth_handshake(scope_type='statements/write define', consumer=self.consumer2jane)

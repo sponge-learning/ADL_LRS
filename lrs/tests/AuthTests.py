@@ -1,7 +1,7 @@
 import json
 import base64
 import uuid
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import hashlib
 from datetime import datetime, timedelta
 
@@ -18,7 +18,7 @@ class AuthTests(TestCase):
     # Want to test no auth, so have to disable both auths
     @classmethod
     def setUpClass(cls):
-        print "\n%s" % __name__
+        print("\n%s" % __name__)
 
     def setUp(self):
         if not settings.ALLOW_EMPTY_HTTP_AUTH:
@@ -138,7 +138,7 @@ class AuthTests(TestCase):
 
         # Put statements
         param = {"statementId":self.guid1}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt_payload = self.existStmt1
         self.putresponse1 = self.client.put(path, stmt_payload, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse1.status_code, 204)
@@ -147,7 +147,7 @@ class AuthTests(TestCase):
 
 
         param = {"statementId":self.guid3}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt_payload = self.existStmt3
         self.putresponse3 = self.client.put(path, stmt_payload, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse3.status_code, 204)
@@ -156,7 +156,7 @@ class AuthTests(TestCase):
 
         
         param = {"statementId":self.guid4}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt_payload = self.existStmt4
         self.putresponse4 = self.client.put(path, stmt_payload, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse4.status_code, 204)
@@ -166,7 +166,7 @@ class AuthTests(TestCase):
         self.secondTime = str((datetime.utcnow()+timedelta(seconds=4)).replace(tzinfo=utc).isoformat())
         
         param = {"statementId":self.guid2}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt_payload = self.existStmt2
         self.putresponse2 = self.client.put(path, stmt_payload, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse2.status_code, 204)
@@ -175,7 +175,7 @@ class AuthTests(TestCase):
 
 
         param = {"statementId":self.guid5}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt_payload = self.existStmt5
         self.putresponse5 = self.client.put(path, stmt_payload, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse5.status_code, 204)
@@ -184,7 +184,7 @@ class AuthTests(TestCase):
         
 
         param = {"statementId":self.guid6}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt_payload = self.existStmt6
         self.putresponse6 = self.client.put(path, stmt_payload, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse6.status_code, 204)
@@ -193,7 +193,7 @@ class AuthTests(TestCase):
 
         
         param = {"statementId":self.guid7}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt_payload = self.existStmt7        
         self.putresponse7 = self.client.put(path, stmt_payload, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse7.status_code, 204)
@@ -202,7 +202,7 @@ class AuthTests(TestCase):
         
 
         param = {"statementId":self.guid8}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt_payload = self.existStmt8        
         self.putresponse8 = self.client.put(path, stmt_payload, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse8.status_code, 204)
@@ -210,7 +210,7 @@ class AuthTests(TestCase):
         stmt = Statement.objects.filter(statement_id=self.guid8).update(stored=time)
         
         param = {"statementId": self.guid9}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt_payload = self.existStmt9        
         self.putresponse9 = self.client.put(path, stmt_payload, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse9.status_code, 204)
@@ -218,7 +218,7 @@ class AuthTests(TestCase):
         stmt = Statement.objects.filter(statement_id=self.guid9).update(stored=time)
 
         param = {"statementId": self.guid10}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt_payload = self.existStmt10        
         self.putresponse10 = self.client.put(path, stmt_payload, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse10.status_code, 204)
@@ -291,17 +291,17 @@ class AuthTests(TestCase):
         self.assertEqual(stmt1.verb.verb_id, "http://adlnet.gov/expapi/verbs/passed")
         self.assertEqual(stmt2.verb.verb_id, "http://adlnet.gov/expapi/verbs/failed")
         
-        self.assertEqual(lang_map1.keys()[0], "en-US")
-        self.assertEqual(lang_map1.values()[0], "passed")
-        self.assertEqual(lang_map2.keys()[0], "en-GB")
-        self.assertEqual(lang_map2.values()[0], "failed")
+        self.assertEqual(list(lang_map1.keys())[0], "en-US")
+        self.assertEqual(list(lang_map1.values())[0], "passed")
+        self.assertEqual(list(lang_map2.keys())[0], "en-GB")
+        self.assertEqual(list(lang_map2.values())[0], "failed")
 
 
     def test_put(self):
         guid = str(uuid.uuid1())
 
         param = {"statementId":guid}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt = json.dumps({"verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:test_put"},"actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
 
@@ -321,7 +321,7 @@ class AuthTests(TestCase):
         st_guid = str(uuid.uuid1())
 
         param = {"statementId": st_guid}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt = json.dumps({"actor":{"objectType":"Agent","mbox":"mailto:sass@sass.com"},
             "verb": {"id":"verb:verb/url/tested"}, "object":{"objectType":"SubStatement",
             "actor":{"objectType":"Agent","mbox":"mailto:ss@ss.com"},"verb": {"id":"verb:verb/url/nested"},
@@ -334,7 +334,7 @@ class AuthTests(TestCase):
              Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 204)
 
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))        
         get_response = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(get_response.status_code, 200)
         rsp = get_response.content
@@ -371,7 +371,7 @@ class AuthTests(TestCase):
         guid = str(uuid.uuid1())
         
         param = {"statementId":guid}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))        
         stmt = json.dumps({})
 
         putResponse = self.client.put(path, stmt, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -381,7 +381,7 @@ class AuthTests(TestCase):
         guid = str(uuid.uuid1())
 
         param = {"statementId":guid}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))        
         exist_stmt = json.dumps({"verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object": {"id":"act:activity"},"actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
         first_put = self.client.put(path, exist_stmt, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
@@ -401,7 +401,7 @@ class AuthTests(TestCase):
         self.assertEqual(post.status_code, 200)
 
         param = {"statementId":guid}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))        
         stmt = json.dumps({"verb":{"id": "http://adlnet.gov/expapi/verbs/passed","display": {"en-US":"passed"}},
             "object":{"id":"act:test_existing_put"}, "actor":{"objectType":"Agent", "mbox":"mailto:t@t.com"}})
 
@@ -417,7 +417,7 @@ class AuthTests(TestCase):
 
     def test_get(self):
         param = {"statementId":self.guid1}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))        
         getResponse = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(getResponse.status_code, 200)
         rsp = getResponse.content
@@ -425,7 +425,7 @@ class AuthTests(TestCase):
 
     def test_get_no_existing_ID(self):
         param = {"statementId":"aaaaaa"}
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))        
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))        
         getResponse = self.client.get(path, X_Experience_API_Version=settings.XAPI_VERSION, Authorization=self.auth)
         self.assertEqual(getResponse.status_code, 404)
 
@@ -462,15 +462,15 @@ class AuthTests(TestCase):
         name_set = act.activity_definition_name
         desc_set = act.activity_definition_description
 
-        self.assertEqual(name_set.keys()[1], "en-US")
-        self.assertEqual(name_set.values()[1], "testname3")
-        self.assertEqual(name_set.keys()[0], "en-GB")
-        self.assertEqual(name_set.values()[0], "altname")
+        self.assertEqual(list(name_set.keys())[1], "en-US")
+        self.assertEqual(list(name_set.values())[1], "testname3")
+        self.assertEqual(list(name_set.keys())[0], "en-GB")
+        self.assertEqual(list(name_set.values())[0], "altname")
 
-        self.assertEqual(desc_set.keys()[1], "en-US")
-        self.assertEqual(desc_set.values()[1], "testdesc3")
-        self.assertEqual(desc_set.keys()[0], "en-GB")
-        self.assertEqual(desc_set.values()[0], "altdesc")
+        self.assertEqual(list(desc_set.keys())[1], "en-US")
+        self.assertEqual(list(desc_set.values())[1], "testdesc3")
+        self.assertEqual(list(desc_set.keys())[0], "en-GB")
+        self.assertEqual(list(desc_set.values())[0], "altdesc")
 
     def test_cors_post_put(self):
         st_id = str(uuid.uuid1())
@@ -478,7 +478,7 @@ class AuthTests(TestCase):
             "object": {"id":"act:test_cors_post_put"}}
         
         bdy = "statementId=%s&content=%s&Content-Type=application/json&X-Experience-API-Version=1.0.0" % (st_id, content)
-        path = "%s?%s" % (reverse(statements), urllib.urlencode({"method":"PUT"}))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode({"method":"PUT"}))
         response = self.client.post(path, bdy, content_type="application/x-www-form-urlencoded", Authorization=self.auth)
         self.assertEqual(response.status_code, 204)
 
@@ -493,7 +493,7 @@ class AuthTests(TestCase):
             "registration":"6b1091be-2833-4886-b4a6-59e5e0b3c3f4"},
             "actor":{"mbox":"mailto:tom.creighton.ctr@adlnet.gov","name":"Tom Creighton"}})
 
-        path = "%s?%s" % (reverse(statements), urllib.urlencode({"statementId":stmt_id}))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode({"statementId":stmt_id}))
         put_stmt = self.client.put(path, stmt, content_type="application/json",  X_Experience_API_Version=settings.XAPI_VERSION,Authorization=self.auth)
         self.assertEqual(put_stmt.status_code, 204) 
 
@@ -508,10 +508,10 @@ class AuthTests(TestCase):
         response = self.client.post(reverse(statements), stmt, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(response.status_code, 200)
         g = Agent.objects.get(mbox="mailto:the.groupST@example.com")
-        self.assertEquals(g.name, name)
-        self.assertEquals(g.mbox, mbox)
+        self.assertEqual(g.name, name)
+        self.assertEqual(g.mbox, mbox)
         mems = g.member.values_list("name", flat=True)
-        self.assertEquals(len(mems), 2)
+        self.assertEqual(len(mems), 2)
         self.assertIn("agentA", mems)
         self.assertIn("agentB", mems)
 
@@ -526,7 +526,7 @@ class AuthTests(TestCase):
             "registration":"b7be7d9d-bfe2-4917-8ccd-41a0d18dd953"},
             "actor":{"name":"tom creighton","mbox":"mailto:tom@example.com"}})
 
-        path = '%s?%s' % (reverse(statements), urllib.urlencode({"statementId":stmt_id}))
+        path = '%s?%s' % (reverse(statements), urllib.parse.urlencode({"statementId":stmt_id}))
         put_stmt = self.client.put(path, stmt, content_type="application/json", Authorization=self.auth)
         self.assertEqual(put_stmt.status_code, 400)
 
@@ -540,7 +540,7 @@ class AuthTests(TestCase):
             "registration":"b7be7d9d-bfe2-4917-8ccd-41a0d18dd953"},
             "actor":{"name":"tom creighton","mbox":"mailto:tom@example.com"}})
 
-        path = '%s?%s' % (reverse(statements), urllib.urlencode({"statementId":stmt_id}))
+        path = '%s?%s' % (reverse(statements), urllib.parse.urlencode({"statementId":stmt_id}))
         put_stmt = self.client.put(path, stmt, content_type="application/json",  Authorization=self.auth, X_Experience_API_Version="0.90")
         self.assertEqual(put_stmt.status_code, 400)
 
@@ -549,7 +549,7 @@ class AuthTests(TestCase):
     def test_all_fields_activity_as_object(self):
         nested_st_id = str(uuid.uuid1())
         nest_param = {"statementId":nested_st_id}
-        nest_path = "%s?%s" % (reverse(statements), urllib.urlencode(nest_param))
+        nest_path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(nest_param))
         nested_stmt = json.dumps({"actor":{"objectType":"Agent","mbox": "mailto:tincan@adlnet.gov"},
             "verb":{"id": "http://adlnet.gov/expapi/verbs/assess","display": {"en-US":"assessed"}},
             "object":{"id":"http://example.adlnet.gov/tincan/example/simplestatement"}})
@@ -559,7 +559,7 @@ class AuthTests(TestCase):
         stmt_id = str(uuid.uuid1())
         context_id= str(uuid.uuid1())
         param = {"statementId":stmt_id} 
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt = json.dumps({"actor":{"objectType":"Agent","name": "Lou Wolford","account":{"homePage":"http://example.com", "name":"uniqueName"}},
             "verb":{"id": "http://adlnet.gov/expapi/verbs/created","display": {"en-US":"created", "en-GB":"made"}},
             "object": {"objectType": "Activity", "id":"http:adlnet.gov/my/Activity/URL",
@@ -622,7 +622,7 @@ class AuthTests(TestCase):
     def test_all_fields_agent_as_object(self):
         nested_st_id = str(uuid.uuid1())
         nest_param = {"statementId":nested_st_id}
-        nest_path = "%s?%s" % (reverse(statements), urllib.urlencode(nest_param))
+        nest_path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(nest_param))
         nested_stmt = json.dumps({"actor":{"objectType":"Agent","mbox": "mailto:tincan@adlnet.gov"},
             "verb":{"id": "http://adlnet.gov/expapi/verbs/assess","display": {"en-US":"assessed"}},
             "object":{"id":"http://example.adlnet.gov/tincan/example/simplestatement"}})
@@ -633,7 +633,7 @@ class AuthTests(TestCase):
         stmt_id = str(uuid.uuid1())
         context_id= str(uuid.uuid1())
         param = {"statementId":stmt_id} 
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         msha = hashlib.sha1("tom@example.com").hexdigest()                
         stmt = json.dumps({"actor":{"objectType":"Agent","name": "Lou Wolford","account":{"homePage":"http://example.com", "name":"louUniqueName"}},
             "verb":{"id": "http://adlnet.gov/expapi/verbs/helped","display": {"en-US":"helped", "en-GB":"assisted"}},
@@ -687,7 +687,7 @@ class AuthTests(TestCase):
     def test_all_fields_substatement_as_object(self):
         nested_st_id = str(uuid.uuid1())
         nest_param = {"statementId":nested_st_id}
-        nest_path = "%s?%s" % (reverse(statements), urllib.urlencode(nest_param))
+        nest_path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(nest_param))
         nested_stmt = json.dumps({"actor":{"objectType":"Agent","mbox": "mailto:tincannest@adlnet.gov"},
             "verb":{"id": "http://adlnet.gov/expapi/verbs/assess","display": {"en-US":"assessed", "en-GB":"graded"}},
             "object":{"id":"http://example.adlnet.gov/tincan/example/simplestatement"}})
@@ -697,7 +697,7 @@ class AuthTests(TestCase):
 
         nested_sub_st_id = str(uuid.uuid1())
         nest_sub_param = {"statementId":nested_sub_st_id}
-        nest_sub_path = "%s?%s" % (reverse(statements), urllib.urlencode(nest_sub_param))        
+        nest_sub_path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(nest_sub_param))        
         nested_sub_stmt = json.dumps({"actor":{"objectType":"Agent","mbox": "mailto:tincannestsub@adlnet.gov"},
             "verb":{"id": "http://adlnet.gov/expapi/verbs/verb","display": {"en-US":"verb", "en-GB":"altVerb"}},
             "object":{"id":"http://example.adlnet.gov/tincan/example/simplenestedsubstatement"}})
@@ -709,7 +709,7 @@ class AuthTests(TestCase):
         context_id= str(uuid.uuid1())
         sub_context_id= str(uuid.uuid1())        
         param = {"statementId":stmt_id} 
-        path = "%s?%s" % (reverse(statements), urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         
         stmt = json.dumps({"actor":{"objectType":"Agent","name": "Lou Wolford","account":{"homePage":"http://example.com", "name":"louUniqueName"}},
             "verb":{"id": "http://adlnet.gov/expapi/verbs/said","display": {"en-US":"said", "en-GB":"talked"}},
@@ -1085,14 +1085,14 @@ class AuthTests(TestCase):
         self.assertEqual(response_8.status_code, 200)
         act = Activity.objects.get(activity_id="act:test_activity_change", authority=user2_agent).to_dict()
         self.assertEqual(act["id"], "act:test_activity_change")
-        self.assertIn("definition", act.keys())
+        self.assertIn("definition", list(act.keys()))
         acts = Activity.objects.filter(activity_id="act:test_activity_change").count()
         self.assertEqual(acts, 2)
 
 
         # Check canonical of last stmt returned from query to make sure it contains the definition
         param = {"agent":{"mbox":"mailto:max@max.com"}, "format":"canonical", "activity":"act:test_activity_change"}
-        path = "%s?%s" % (reverse(statements),urllib.urlencode(param))
+        path = "%s?%s" % (reverse(statements),urllib.parse.urlencode(param))
         r = self.client.get(path, X_Experience_API_Version="1.0", Authorization=auth_1)
         self.assertEqual(r.status_code, 200)
         first_stmt = json.loads(r.content)["statements"][0]

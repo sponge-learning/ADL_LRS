@@ -207,7 +207,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django_extensions',
     'jsonify',
-    'endless_pagination'
 )
 
 REQUEST_HANDLER_LOG_DIR = path.join(PROJECT_ROOT, 'logs/django_request.log')
@@ -222,13 +221,13 @@ LOGGING = {
     'disable_existing_loggers': True,
     'formatters': {
         'verbose': {
-            'format': u'%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'standard': {
-            'format': u'%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
         },
         'simple': {
-            'format': u'%(levelname)s %(message)s'
+            'format': '%(levelname)s %(message)s'
         },
     },
     'handlers': {
