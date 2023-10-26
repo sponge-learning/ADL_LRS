@@ -218,7 +218,8 @@ class StatementManager():
         # Save verb displays
         if 'display' in incoming_verb:
             verb_object.display = dict(list(existing_lang_maps.items()) + list(incoming_verb['display'].items()))
-            verb_object.save()
+            if verb_object.display != existing_lang_maps:
+                verb_object.save()
         self.data['verb'] = verb_object
 
     def build_statement_object(self):
