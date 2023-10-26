@@ -514,8 +514,8 @@ class SubStatement(models.Model):
         null=True,
         on_delete=models.SET_NULL
     )
-    result_success = models.NullBooleanField()
-    result_completion = models.NullBooleanField()
+    result_success = models.BooleanField(null=True, blank=True)
+    result_completion = models.BooleanField(null=True, blank=True)
     result_response = models.TextField(
         blank=True
     )
@@ -788,8 +788,8 @@ class Statement(models.Model):
         null=True,
         on_delete=models.SET_NULL
     )
-    result_success = models.NullBooleanField()
-    result_completion = models.NullBooleanField()
+    result_success = models.BooleanField(null=True, blank=True)
+    result_completion = models.BooleanField(null=True, blank=True)
     result_response = models.TextField(
         blank=True
     )
@@ -835,7 +835,9 @@ class Statement(models.Model):
         db_index=True,
         on_delete=models.SET_NULL
     )
-    voided = models.NullBooleanField(
+    voided = models.BooleanField(
+        null=True,
+        blank=True,
         default=False
     )
     context_registration = models.CharField(
