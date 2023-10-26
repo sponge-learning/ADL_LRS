@@ -517,7 +517,6 @@ def user_profile(request):
     return render(request, "registration/profile.html")
 
 
-@transaction.atomic
 def handle_request(request, more_id=None):
     validators = {
         reverse(statements).lower(): {
