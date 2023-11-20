@@ -280,7 +280,7 @@ class Agent(models.Model):
 class AgentProfile(models.Model):
     profileId = models.CharField(max_length=MAX_URL_LENGTH, db_index=True)
     updated = models.DateTimeField(auto_now_add=True, blank=True)
-    agent = models.ForeignKey(Agent)
+    agent = models.ForeignKey(Agent, on_delete=models.CASCADE)
     profile = models.FileField(upload_to=AGENT_PROFILE_UPLOAD_TO, null=True)
     json_profile = models.TextField(blank=True)
     content_type = models.CharField(max_length=255, blank=True)
@@ -326,7 +326,7 @@ class Activity(models.Model):
     activity_definition_sources = JSONField(default={}, blank=True)
     activity_definition_targets = JSONField(default={}, blank=True)
     activity_definition_steps = JSONField(default={}, blank=True)
-    authority = models.ForeignKey(Agent, null=True)
+    authority = models.ForeignKey(Agent, on_delete=models.CASCADE, null=True)
     canonical_version = models.BooleanField(default=True)
     
     objects = ActivityManager()
@@ -426,7 +426,7 @@ class StatementRef(models.Model):
 class SubStatementContextActivity(models.Model):
     key = models.CharField(max_length=8)
     context_activity = models.ManyToManyField(Activity)
-    substatement = models.ForeignKey('SubStatement')
+    substatement = models.ForeignKey('SubStatement', on_delete=models.CASCADE)
 
     def to_dict(self, lang=None, format='exact'):
         ret = {}
@@ -438,7 +438,7 @@ class SubStatementContextActivity(models.Model):
 class StatementContextActivity(models.Model):
     key = models.CharField(max_length=8)
     context_activity = models.ManyToManyField(Activity)
-    statement = models.ForeignKey('Statement')
+    statement = models.ForeignKey('Statement', on_delete=models.CASCADE)
 
     def to_dict(self, lang=None, format='exact'):
         ret = {}
@@ -452,7 +452,7 @@ class ActivityState(models.Model):
     updated = models.DateTimeField(auto_now_add=True, blank=True, db_index=True)
     state = models.FileField(upload_to=ACTIVITY_STATE_UPLOAD_TO, null=True)
     json_state = models.TextField(blank=True)
-    agent = models.ForeignKey(Agent, db_index=True)
+    agent = models.ForeignKey(Agent, on_delete=models.CASCADE, db_index=True)
     activity_id = models.CharField(max_length=MAX_URL_LENGTH, db_index=True)
     registration_id = models.CharField(max_length=40)
     content_type = models.CharField(max_length=255, blank=True)
@@ -514,8 +514,8 @@ class SubStatement(models.Model):
         null=True,
         on_delete=models.SET_NULL
     )
-    result_success = models.NullBooleanField()
-    result_completion = models.NullBooleanField()
+    result_success = models.BooleanField(null=True, blank=True)
+    result_completion = models.BooleanField(null=True, blank=True)
     result_response = models.TextField(
         blank=True
     )
@@ -788,8 +788,8 @@ class Statement(models.Model):
         null=True,
         on_delete=models.SET_NULL
     )
-    result_success = models.NullBooleanField()
-    result_completion = models.NullBooleanField()
+    result_success = models.BooleanField(null=True, blank=True)
+    result_completion = models.BooleanField(null=True, blank=True)
     result_response = models.TextField(
         blank=True
     )
@@ -835,7 +835,9 @@ class Statement(models.Model):
         db_index=True,
         on_delete=models.SET_NULL
     )
-    voided = models.NullBooleanField(
+    voided = models.BooleanField(
+        null=True,
+        blank=True,
         default=False
     )
     context_registration = models.CharField(

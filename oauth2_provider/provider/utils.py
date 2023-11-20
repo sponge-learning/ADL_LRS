@@ -2,9 +2,9 @@ import hashlib
 import shortuuid
 from datetime import datetime
 from django.conf import settings
+from django.core.exceptions import FieldDoesNotExist
 from django.utils import dateparse
-from django.db.models.fields import (DateTimeField, DateField,
-                                      TimeField, FieldDoesNotExist)
+from django.db.models.fields import DateTimeField, DateField, TimeField
 from django.core.serializers.json import DjangoJSONEncoder
 from .constants import EXPIRE_DELTA, EXPIRE_DELTA_PUBLIC, EXPIRE_CODE_DELTA
 

@@ -6,7 +6,10 @@ IF_MATCH = "HTTP_IF_MATCH"
 IF_NONE_MATCH = "HTTP_IF_NONE_MATCH"
 
 def create_tag(resource):
-    return hashlib.sha1(resource).hexdigest()
+    try:
+        resource = resource.encode('utf-8')
+    finally:
+        return hashlib.sha1(resource).hexdigest()
 
 def get_etag_info(headers, required=True):
     etag = {}

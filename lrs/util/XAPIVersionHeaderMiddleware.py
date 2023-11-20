@@ -17,7 +17,7 @@ class XAPIVersionHeader(MiddlewareMixin):
             except:
                 version = request.META.get('X_Experience_API_Version', None)
                 if not version:
-                    bdy = urllib.parse.unquote_plus(request.body)
+                    bdy = urllib.parse.unquote_plus(request.body.decode('utf-8'))
                     bdy_parts = bdy.split('&')
                     for part in bdy_parts:
                         v = re.search('X[-_]Experience[-_]API[-_]Version=(?P<num>.*)', part)
