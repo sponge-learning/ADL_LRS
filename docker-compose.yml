@@ -1,0 +1,15 @@
+version: '3.4'
+services:
+
+  # This docker-compose file can be used to create a container and start the development
+  # server, but the project is currently configured to use a dummy db backend,
+  # so it's not complete
+  adl_lrs:
+    build:
+      dockerfile: Dockerfile
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - ./lrs/static:/static
+    environment:
+      PYTHONUNBUFFERED: "1"

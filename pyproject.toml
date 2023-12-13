@@ -1,0 +1,25 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "lrs"
+version = "0.1.0"
+authors = []
+description = ""
+readme = "readme.md"
+packages = [{include = "lrs"}]
+
+[tool.poetry.dependencies]
+python = "~3.7.0"
+django = "~3.2.0"
+bcoding = "~1.5"
+pycryptodome = "~3.12.0"
+oauth2 = "~1.9.0.post1"
+shortuuid = "~0.4.2"
+django-jsonify = "~0.3.0"
+django-extensions = ">=3.1.5"
+jsonfield = { git = "https://github.com/sponge-learning/jsonfield.git", rev = "87a564c1004d035bd11255665f0a7b0f55b4613a" }
+isodate = "~0.6.1"
+
+
