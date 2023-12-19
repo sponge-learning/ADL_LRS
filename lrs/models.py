@@ -312,6 +312,15 @@ class ActivityManager(models.Manager):
 
 
 class Activity(models.Model):
+
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["activity_id", "canonical_version"],
+                condition=models.Q(canonical_version__isnull=False),
+                name="idx_canonical_activity"
+            )
+        ]
     activity_id = models.CharField(max_length=MAX_URL_LENGTH, db_index=True)
     objectType = models.CharField(max_length=8, blank=True, default="Activity")
     activity_definition_name = JSONField(default={}, blank=True)
