@@ -316,9 +316,8 @@ class Activity(models.Model):
     class Meta:
         indexes = [
             models.Index(
-                fields=["activity_id", "canonical_version"],
-                condition=models.Q(canonical_version__isnull=False),
-                name="idx_canonical_activity"
+                name="idx_activity_authority_canonic",  # 30 char max length
+                fields=["activity_id", "authority_id", "canonical_version"],
             )
         ]
     activity_id = models.CharField(max_length=MAX_URL_LENGTH, db_index=True)
@@ -337,9 +336,9 @@ class Activity(models.Model):
     activity_definition_steps = JSONField(default={}, blank=True)
     authority = models.ForeignKey(Agent, on_delete=models.CASCADE, null=True)
     canonical_version = models.BooleanField(default=True)
-    
+
     objects = ActivityManager()
-  
+
     def add_interaction_type(self, i_type, ret, lang):
         if i_type == 'scale':
             interactions = self.activity_definition_scales
