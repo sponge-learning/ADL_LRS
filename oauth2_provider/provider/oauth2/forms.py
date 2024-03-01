@@ -229,7 +229,7 @@ class RefreshTokenGrantForm(ScopeMixin, OAuthForm):
 
         # Only check if we've actually got a scope in the data
         # (read: All fields have been cleaned)
-        if want_scope is not 0 and not scope.check(want_scope, has_scope):
+        if want_scope != 0 and not scope.check(want_scope, has_scope):
             raise OAuthValidationError({'error': 'invalid_scope'})
 
         return data
@@ -268,7 +268,7 @@ class AuthorizationCodeGrantForm(ScopeMixin, OAuthForm):
 
         # Only check if we've actually got a scope in the data
         # (read: All fields have been cleaned)
-        if want_scope is not 0 and not scope.check(want_scope, has_scope):
+        if want_scope != 0 and not scope.check(want_scope, has_scope):
             raise OAuthValidationError({'error': 'invalid_scope'})
 
         return data
