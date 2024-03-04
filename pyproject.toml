@@ -11,7 +11,7 @@ readme = "readme.md"
 packages = [{include = "lrs"}]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.10"
 django = "~4.2.10"
 bcoding = "~1.5"
 pycryptodome = "~3.12.0"
