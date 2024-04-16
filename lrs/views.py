@@ -24,9 +24,6 @@ from .util import req_validate, req_parse, req_process, XAPIVersionHeaderMiddlew
 
 from oauth_provider.consts import ACCEPTED, CONSUMER_STATES
 from oauth_provider.models import Consumer, Token
-from oauth2_provider.provider.scope import to_names
-from oauth2_provider.provider.oauth2.forms import ClientForm
-from oauth2_provider.provider.oauth2.models import Client, AccessToken
 
 User = get_user_model()
 
@@ -287,51 +284,6 @@ def reg_client(request):
             return render(request, "regclient.html", {"form": form})
 
 
-@transaction.atomic
-@login_required(login_url=LOGIN_URL)
-@require_http_methods(["POST", "GET"])
-def reg_client2(request):
-    if request.method == 'GET':
-        form = ClientForm()
-        return render(request, "regclient2.html", {"form": form})
-    elif request.method == 'POST':
-        form = ClientForm(request.POST)
-        if form.is_valid():
-            client = form.save(commit=False)
-            client.user = request.user
-            client.save()
-            context = {
-                "name": client.name,
-                "app_id": client.client_id,
-                "secret": client.client_secret,
-                "info_message": "Your Client Credentials"
-            }
-            return render(request, "reg_success.html", context)
-        else:
-            return render(request, "regclient2.html", {"form": form})
-
-
-@login_required(login_url=LOGIN_URL)
-def me(request, template='me.html'):
-    client_apps = Consumer.objects.filter(user=request.user)
-    access_tokens = Token.objects.filter(user=request.user, token_type=Token.ACCESS, is_approved=True)
-    client_apps2 = Client.objects.filter(user=request.user)
-    access_tokens2 = AccessToken.objects.filter(user=request.user)
-    access_token_scopes = []
-
-    for token in access_tokens2:
-        scopes = to_names(token.scope)
-        access_token_scopes.append((token, scopes))
-
-    context = {
-        "client_apps": client_apps,
-        "access_tokens": access_tokens,
-        "client_apps2": client_apps2,
-        "access_tokens2": access_token_scopes
-    }
-    return render(request, template, context)
-
-
 @login_required(login_url="/accounts/login")
 @require_http_methods(["GET", "HEAD"])
 def my_download_statements(request):
@@ -416,38 +368,6 @@ def delete_token(request):
         return HttpResponse("", status=204)
     except:
         return HttpResponse("Unknown token", status=400)
-
-
-@transaction.atomic
-@login_required(login_url=LOGIN_URL)
-@require_http_methods(["DELETE"])
-def delete_token2(request):
-    try:
-        token_key = request.GET['id']
-        token = AccessToken.objects.get(token=token_key)
-    except:
-        return HttpResponse("Unknown token", status=400)
-    try:
-        token.delete()
-    except Exception as e:
-        return HttpResponse(e.message, status=400)
-    return HttpResponse("", status=204)
-
-
-@transaction.atomic
-@login_required(login_url=LOGIN_URL)
-@require_http_methods(["DELETE"])
-def delete_client(request):
-    try:
-        client_id = request.GET['id']
-        client = Client.objects.get(user=request.user, client_id=client_id)
-    except:
-        return HttpResponse("Unknown client", status=400)
-    try:
-        client.delete()
-    except Exception as e:
-        return HttpResponse(e.message, status=400)
-    return HttpResponse("", status=204)
 
 
 def logout_view(request):
@@ -624,7 +544,7 @@ def handle_request(request, more_id=None):
     except Forbidden as forb:
         status = 403
         log_exception(status, request.path)
-        response = HttpResponse(str(msg), status=status)
+        response = HttpResponse(str(forb), status=status)
     except NotFound as nf:
         status = 404
         log_exception(status, request.path)

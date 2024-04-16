@@ -214,8 +214,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'lrs',
     'oauth_provider',
-    'oauth2_provider.provider',
-    'oauth2_provider.provider.oauth2',
     'django.contrib.admin',
     'django_extensions',
     'jsonify',
