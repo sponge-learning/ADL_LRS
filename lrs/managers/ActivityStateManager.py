@@ -163,13 +163,14 @@ class ActivityStateManager():
             s.save()
 
     def get_state(self, activity_id, registration, state_id):
-        try:
-            if registration:
-                return self.Agent.activitystate_set.filter(state_id=state_id, activity_id=activity_id, registration_id=registration).order_by('-updated').first()
-            return self.Agent.activitystate_set.filter(state_id=state_id, activity_id=activity_id).order_by('-updated').first()
-        except ActivityState.DoesNotExist:
+        if registration:
+            state = self.Agent.activitystate_set.filter(state_id=state_id, activity_id=activity_id, registration_id=registration).order_by('-updated').first()
+        else:
+            state = self.Agent.activitystate_set.filter(state_id=state_id, activity_id=activity_id).order_by('-updated').first()
+        if not state:
             err_msg = 'There is no activity state associated with the id: %s' % state_id
             raise IDNotFoundError(err_msg)
+        return state
 
     def get_state_ids(self, activity_id, registration, since):
         state_set = self.get_state_set(activity_id, registration, since)
