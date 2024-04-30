@@ -19,7 +19,6 @@ from ..models import Agent
 from oauth_provider.utils import get_oauth_request, require_params
 from oauth_provider.decorators import CheckOauth
 from oauth_provider.store import store
-from oauth2_provider.provider.oauth2.models import AccessToken
 
 att_cache = caches['attachment_cache']
 
@@ -51,7 +50,7 @@ def parse(request, more_id=None):
     elif 'Authorization' in r_dict['headers']:
         # OAuth will always be dict, not http auth. Set required fields for oauth module and type for authentication
         # module
-        set_authorization(r_dict, request)     
+        raise BadRequest("Oauth not supported")
     elif 'Authorization' in request.body.decode('utf-8') or 'HTTP_AUTHORIZATION' in request.body.decode('utf-8'):
         # Authorization could be passed into body if cross origin request
         r_dict['auth']['type'] = 'http'
@@ -121,48 +120,6 @@ def parse(request, more_id=None):
     if more_id:
         r_dict['more_id'] = more_id
     return r_dict
-
-def set_authorization(r_dict, request):
-    auth_params = r_dict['headers']['Authorization']
-    # OAuth1 and basic http auth come in as string
-    r_dict['auth']['endpoint'] = get_endpoint(request)
-    if auth_params[:6] == 'OAuth ':
-        oauth_request = get_oauth_request(request)
-        
-        # Returns HttpBadRequest if missing any params
-        missing = require_params(oauth_request)            
-        if missing:
-            raise missing
-
-        check = CheckOauth()
-        e_type, error = check.check_access_token(request)
-
-        if e_type and error:
-            if e_type == 'auth':
-                raise OauthUnauthorized(error)
-            else:
-                raise OauthBadRequest(error)
-
-        # Consumer and token should be clean by now
-        consumer = store.get_consumer(request, oauth_request, oauth_request['oauth_consumer_key'])
-        token = store.get_access_token(request, oauth_request, consumer, oauth_request.get_parameter('oauth_token'))
-        
-        # Set consumer and token for authentication piece
-        r_dict['auth']['oauth_consumer'] = consumer
-        r_dict['auth']['oauth_token'] = token
-        r_dict['auth']['type'] = 'oauth'
-    elif auth_params[:7] == 'Bearer ':
-        try:
-            access_token = AccessToken.objects.get(token=auth_params[7:])
-        except AccessToken.DoesNotExist:
-            raise OauthUnauthorized("Access Token does not exist")
-        else:
-            if access_token.get_expire_delta() <= 0:
-                raise OauthUnauthorized('Access Token has expired')
-            r_dict['auth']['oauth_token'] = access_token
-            r_dict['auth']['type'] = 'oauth2'
-    else:        
-        r_dict['auth']['type'] = 'http'    
 
 
 def get_endpoint(request):
