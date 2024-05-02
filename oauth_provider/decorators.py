@@ -1,6 +1,6 @@
 import oauth2 as oauth
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from .responses import INVALID_PARAMS_RESPONSE, INVALID_CONSUMER_RESPONSE, COULD_NOT_VERIFY_OAUTH_REQUEST_RESPONSE, INVALID_SCOPE_RESPONSE
 from .utils import send_oauth_error, get_oauth_request, verify_oauth_request
