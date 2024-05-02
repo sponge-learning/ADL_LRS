@@ -566,4 +566,4 @@ def handle_request(request, more_id=None):
 
 def log_exception(path, ex):
     logger.info("\nException while processing: %s" % path)
-    logger.warning(ex, exc_info=True)
+    logger.exception(ex)
