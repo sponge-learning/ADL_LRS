@@ -50,34 +50,21 @@ class ActivityStateManager():
     @transaction.atomic
     def post_state(self, request_dict):
         registration = request_dict['params'].get('registration', None)
-        created = False
         if registration:
-            s = ActivityState.objects.filter(state_id=request_dict['params']['stateId'], agent=self.Agent,
-                activity_id=request_dict['params']['activityId'], registration_id=request_dict['params']['registration']
-                ).order_by('-updated').first()
-            if not s:
-                s = ActivityState.objects.create(state_id=request_dict['params']['stateId'], agent=self.Agent,
+            s, created = ActivityState.objects.get_or_create(state_id=request_dict['params']['stateId'], agent=self.Agent,
                 activity_id=request_dict['params']['activityId'], registration_id=request_dict['params']['registration'])
-                created = True
         else:
-            s = ActivityState.objects.filter(state_id=request_dict['params']['stateId'], agent=self.Agent,
-                activity_id=request_dict['params']['activityId']).order_by('-updated').first()
-            if not s:
-                s = ActivityState.objects.create(state_id=request_dict['params']['stateId'], agent=self.Agent,
+            s, created = ActivityState.objects.get_or_create(state_id=request_dict['params']['stateId'], agent=self.Agent,
                 activity_id=request_dict['params']['activityId'])
-                created = True
         
         if "application/json" not in request_dict['headers']['CONTENT_TYPE']:
             try:
                 post_state = ContentFile(request_dict['state'].read())
             except:
                 try:
-                    post_state = ContentFile(request_dict['state'].encode())
+                    post_state = ContentFile(request_dict['state'])
                 except:
-                    try:
-                        post_state = ContentFile(request_dict['state'])
-                    except:
-                        post_state = ContentFile(str(request_dict['state']))
+                    post_state = ContentFile(str(request_dict['state']))
             self.save_non_json_state(s, post_state, request_dict)
         else:
             post_state = request_dict['state']
@@ -107,34 +94,21 @@ class ActivityStateManager():
     @transaction.atomic
     def put_state(self, request_dict):
         registration = request_dict['params'].get('registration', None)
-        created = False
         if registration:
-            s = ActivityState.objects.filter(state_id=request_dict['params']['stateId'], agent=self.Agent,
-                activity_id=request_dict['params']['activityId'], registration_id=request_dict['params']['registration']
-                ).order_by('-updated').first()
-            if not s:
-                s = ActivityState.objects.create(state_id=request_dict['params']['stateId'], agent=self.Agent,
+            s, created = ActivityState.objects.get_or_create(state_id=request_dict['params']['stateId'], agent=self.Agent,
                 activity_id=request_dict['params']['activityId'], registration_id=request_dict['params']['registration'])
-                created = True
         else:
-            s = ActivityState.objects.filter(state_id=request_dict['params']['stateId'], agent=self.Agent,
-                activity_id=request_dict['params']['activityId']).order_by('-updated').first()
-            if not s:
-                s = ActivityState.objects.create(state_id=request_dict['params']['stateId'], agent=self.Agent,
+            s, created = ActivityState.objects.get_or_create(state_id=request_dict['params']['stateId'], agent=self.Agent,
                 activity_id=request_dict['params']['activityId'])
-                created = True
         
         if "application/json" not in request_dict['headers']['CONTENT_TYPE']:
             try:
                 post_state = ContentFile(request_dict['state'].read())
             except:
                 try:
-                    post_state = ContentFile(request_dict['state'].encode())
+                    post_state = ContentFile(request_dict['state'])
                 except:
-                    try:
-                        post_state = ContentFile(request_dict['state'])
-                    except:
-                        post_state = ContentFile(str(request_dict['state']))
+                    post_state = ContentFile(str(request_dict['state']))
             
             # If a state already existed with the profileId and activityId
             if not created:
@@ -163,14 +137,13 @@ class ActivityStateManager():
             s.save()
 
     def get_state(self, activity_id, registration, state_id):
-        if registration:
-            state = self.Agent.activitystate_set.filter(state_id=state_id, activity_id=activity_id, registration_id=registration).order_by('-updated').first()
-        else:
-            state = self.Agent.activitystate_set.filter(state_id=state_id, activity_id=activity_id).order_by('-updated').first()
-        if not state:
+        try:
+            if registration:
+                return self.Agent.activitystate_set.get(state_id=state_id, activity_id=activity_id, registration_id=registration)
+            return self.Agent.activitystate_set.get(state_id=state_id, activity_id=activity_id)
+        except ActivityState.DoesNotExist:
             err_msg = 'There is no activity state associated with the id: %s' % state_id
             raise IDNotFoundError(err_msg)
-        return state
 
     def get_state_ids(self, activity_id, registration, since):
         state_set = self.get_state_set(activity_id, registration, since)
