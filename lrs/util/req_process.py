@@ -152,7 +152,7 @@ def statements_post(req_dict):
 def statements_put(req_dict):
     auth = req_dict['auth']
     process_statements(req_dict['body'], auth, req_dict['headers']['X-Experience-API-Version'])
-    return HttpResponse("No Content", status=204)
+    return HttpResponse("", status=204)
 
 def statements_more_get(req_dict):
     stmt_result, attachments = get_more_statement_request(req_dict['more_id'])     
