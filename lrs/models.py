@@ -761,7 +761,7 @@ class Statement(models.Model):
         related_name="object_of_statement",
         null=True,
         on_delete=models.SET_NULL,
-        db_index=True
+        db_index=False
     )
     object_activity = models.ForeignKey(
         Activity,
@@ -775,14 +775,14 @@ class Statement(models.Model):
         related_name="object_of_statement",
         null=True,
         on_delete=models.SET_NULL,
-        db_index=True
+        db_index=False
     )
     object_statementref = models.ForeignKey(
         StatementRef,
         related_name="object_of_statement",
         null=True,
         on_delete=models.SET_NULL,
-        db_index=True
+        db_index=False
     )
     actor = models.ForeignKey(
         Agent,
@@ -858,7 +858,7 @@ class Statement(models.Model):
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
-        db_index=True,
+        db_index=False,
         related_name='statement_context_instructor'
     )
     context_team = models.ForeignKey(
@@ -866,6 +866,7 @@ class Statement(models.Model):
         blank=True,
         null=True,
         on_delete=models.SET_NULL,
+        db_index=False,
         related_name="statement_context_team"
     )
     context_revision = models.TextField(
