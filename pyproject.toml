@@ -8,7 +8,7 @@ version = "0.1.0"
 authors = []
 description = ""
 readme = "readme.md"
-packages = [{include = "lrs"}, {include = "adl_lrs"}]
+packages = [{include = "lrs"}, {include = "adl_lrs"}, {include = "oauth_provider"}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
