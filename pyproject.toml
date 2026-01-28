@@ -14,7 +14,7 @@ packages = [{include = "lrs"}, {include = "adl_lrs"}, {include = "oauth_provider
 python = "^3.10"
 django = "~4.2.10"
 bcoding = "~1.5"
-pycryptodome = "~3.12.0"
+pycryptodome = "~3.19.1"
 oauth2 = "~1.9.0.post1"
 shortuuid = "~0.4.2"
 django-jsonify = "~0.3.0"
