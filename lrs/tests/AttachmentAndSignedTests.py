@@ -5,7 +5,7 @@ import urllib.request, urllib.parse, urllib.error
 import hashlib
 import os
 
-from datetime import datetime
+from datetime import datetime, timezone
 from email import message_from_string
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
@@ -14,7 +14,6 @@ from email.mime.image import MIMEImage
 
 from django.test import TestCase
 from django.urls import reverse
-from django.utils.timezone import utc
 from django.conf import settings
 
 from ..models import Statement, StatementAttachment
@@ -41,7 +40,7 @@ class AttachmentAndSignedTests(TestCase):
         form2 = {"username":self.username2, "email":self.email2,"password":self.password2,"password2":self.password2}
         self.client.post(reverse(register),form2, X_Experience_API_Version=settings.XAPI_VERSION)
 
-        self.firstTime = str(datetime.utcnow().replace(tzinfo=utc).isoformat())
+        self.firstTime = str(datetime.utcnow().replace(tzinfo=timezone.utc).isoformat())
         self.guid1 = str(uuid.uuid1())
        
     def tearDown(self):

@@ -3,7 +3,7 @@ import json
 
 from django.core.files.base import ContentFile
 from django.db import transaction
-from django.utils.timezone import utc
+from datetime import timezone
 
 from ..models import ActivityState
 from ..exceptions import IDNotFoundError, ParamError
@@ -21,7 +21,7 @@ class ActivityStateManager():
         if 'updated' in request_dict['headers'] and request_dict['headers']['updated']:
             s.updated = request_dict['headers']['updated']
         else:
-            s.updated = datetime.datetime.utcnow().replace(tzinfo=utc)
+            s.updated = datetime.datetime.utcnow().replace(tzinfo=timezone.utc)
         
         # Go to beginning of file
         state.seek(0)
@@ -101,7 +101,7 @@ class ActivityStateManager():
             if 'updated' in request_dict['headers'] and request_dict['headers']['updated']:
                 s.updated = request_dict['headers']['updated']
             else:
-                s.updated = datetime.datetime.utcnow().replace(tzinfo=utc)
+                s.updated = datetime.datetime.utcnow().replace(tzinfo=timezone.utc)
             s.save()
         
     @transaction.atomic
@@ -159,7 +159,7 @@ class ActivityStateManager():
             if 'updated' in request_dict['headers'] and request_dict['headers']['updated']:
                 s.updated = request_dict['headers']['updated']
             else:
-                s.updated = datetime.datetime.utcnow().replace(tzinfo=utc)
+                s.updated = datetime.datetime.utcnow().replace(tzinfo=timezone.utc)
             s.save()
 
     def get_state(self, activity_id, registration, state_id):

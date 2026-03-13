@@ -8,7 +8,7 @@ from datetime import datetime
 from django.http import HttpResponse, HttpResponseNotFound
 from django.conf import settings
 from django.db import transaction
-from django.utils.timezone import utc
+from datetime import timezone
 from .util import convert_to_dict
 from .retrieve_statement import complex_get, get_more_statement_request
 from ..models import Statement, StatementAttachment, Agent, Activity
@@ -40,7 +40,7 @@ def process_statements(stmts, auth, version):
                             if isinstance(v, dict):
                                 st['object']['context']['contextActivities'][k] = [v]
 
-                st['stored'] = str(datetime.utcnow().replace(tzinfo=utc).isoformat())
+                st['stored'] = str(datetime.utcnow().replace(tzinfo=timezone.utc).isoformat())
 
                 if not 'timestamp' in st:
                     st['timestamp'] = st['stored']
@@ -75,7 +75,7 @@ def process_statements(stmts, auth, version):
                         stmts['object']['context']['contextActivities'][k] = [v]
 
         # Handle single POST
-        stmts['stored'] = str(datetime.utcnow().replace(tzinfo=utc).isoformat())
+        stmts['stored'] = str(datetime.utcnow().replace(tzinfo=timezone.utc).isoformat())
 
         if not 'timestamp' in stmts:
             stmts['timestamp'] = stmts['stored']

@@ -13,5 +13,4 @@ RUN pipx install poetry --python=$(which python)  # https://stackoverflow.com/a/
 
 RUN mkdir '/logs/'
 COPY . /app
-# --without-hashes  is only needed if we have requirements installed from git
-RUN poetry export --without-hashes -f requirements.txt | pip install -r /dev/stdin
+RUN poetry install --no-interaction --no-ansi
