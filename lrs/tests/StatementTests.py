@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 from django.urls import reverse
-from django.utils.timezone import utc
+from datetime import timezone
 from django.conf import settings
 
 from ..models import Statement, Activity, Agent, Verb, SubStatement
@@ -36,7 +36,7 @@ class StatementTests(TestCase):
         form2 = {"username":self.username2, "email":self.email2,"password":self.password2,"password2":self.password2}
         self.client.post(reverse(register),form2, X_Experience_API_Version=settings.XAPI_VERSION)
 
-        self.firstTime = str(datetime.utcnow().replace(tzinfo=utc).isoformat())
+        self.firstTime = str(datetime.utcnow().replace(tzinfo=timezone.utc).isoformat())
         self.guid1 = str(uuid.uuid1())
 
     def bunchostmts(self):
@@ -154,7 +154,7 @@ class StatementTests(TestCase):
         stmt_payload = self.existStmt1
         self.putresponse1 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse1.status_code, 204)
-        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=2)).replace(tzinfo=utc).isoformat()))
+        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=2)).replace(tzinfo=timezone.utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid1).update(stored=time)
 
 
@@ -163,7 +163,7 @@ class StatementTests(TestCase):
         stmt_payload = self.existStmt3
         self.putresponse3 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse3.status_code, 204)
-        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=3)).replace(tzinfo=utc).isoformat()))
+        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=3)).replace(tzinfo=timezone.utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid3).update(stored=time)
 
         
@@ -172,17 +172,17 @@ class StatementTests(TestCase):
         stmt_payload = self.existStmt4
         self.putresponse4 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse4.status_code, 204)
-        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=4)).replace(tzinfo=utc).isoformat()))
+        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=4)).replace(tzinfo=timezone.utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid4).update(stored=time)
 
-        self.secondTime = str((datetime.utcnow()+timedelta(seconds=4)).replace(tzinfo=utc).isoformat())
+        self.secondTime = str((datetime.utcnow()+timedelta(seconds=4)).replace(tzinfo=timezone.utc).isoformat())
         
         param = {"statementId":self.guid2}
         path = "%s?%s" % (reverse(statements), urllib.parse.urlencode(param))
         stmt_payload = self.existStmt2
         self.putresponse2 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)       
         self.assertEqual(self.putresponse2.status_code, 204)
-        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=6)).replace(tzinfo=utc).isoformat()))
+        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=6)).replace(tzinfo=timezone.utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid2).update(stored=time)
 
 
@@ -191,7 +191,7 @@ class StatementTests(TestCase):
         stmt_payload = self.existStmt5
         self.putresponse5 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse5.status_code, 204)
-        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=7)).replace(tzinfo=utc).isoformat()))
+        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=7)).replace(tzinfo=timezone.utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid5).update(stored=time)
         
 
@@ -200,7 +200,7 @@ class StatementTests(TestCase):
         stmt_payload = self.existStmt6
         self.putresponse6 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse6.status_code, 204)
-        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=8)).replace(tzinfo=utc).isoformat()))
+        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=8)).replace(tzinfo=timezone.utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid6).update(stored=time)
 
         
@@ -209,7 +209,7 @@ class StatementTests(TestCase):
         stmt_payload = self.existStmt7        
         self.putresponse7 = self.client.put(path, stmt_payload,  content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse7.status_code, 204)
-        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=9)).replace(tzinfo=utc).isoformat()))
+        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=9)).replace(tzinfo=timezone.utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid7).update(stored=time)
         
 
@@ -218,7 +218,7 @@ class StatementTests(TestCase):
         stmt_payload = self.existStmt8        
         self.putresponse8 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse8.status_code, 204)
-        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=10)).replace(tzinfo=utc).isoformat()))
+        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=10)).replace(tzinfo=timezone.utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid8).update(stored=time)
         
         param = {"statementId": self.guid9}
@@ -226,7 +226,7 @@ class StatementTests(TestCase):
         stmt_payload = self.existStmt9        
         self.putresponse9 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse9.status_code, 204)
-        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=11)).replace(tzinfo=utc).isoformat()))
+        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=11)).replace(tzinfo=timezone.utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid9).update(stored=time)
 
         param = {"statementId": self.guid10}
@@ -234,7 +234,7 @@ class StatementTests(TestCase):
         stmt_payload = self.existStmt10        
         self.putresponse10 = self.client.put(path, stmt_payload, content_type="application/json", Authorization=self.auth, X_Experience_API_Version=settings.XAPI_VERSION)
         self.assertEqual(self.putresponse10.status_code, 204)
-        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=11)).replace(tzinfo=utc).isoformat()))
+        time = retrieve_statement.convert_to_utc(str((datetime.utcnow()+timedelta(seconds=11)).replace(tzinfo=timezone.utc).isoformat()))
         stmt = Statement.objects.filter(statement_id=self.guid10).update(stored=time)
 
     def test_invalid_result_fields(self):

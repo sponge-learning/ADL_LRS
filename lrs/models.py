@@ -1,14 +1,13 @@
 import json
 import uuid
 from datetime import datetime
-
+from datetime import timezone
 from django.db.models.query import QuerySet
 from jsonfield import JSONField
 
 from django.conf import settings
 from django.db import models
 from django.db import transaction
-from django.utils.timezone import utc
 
 from oauth_provider.consts import MAX_URL_LENGTH
 
@@ -487,7 +486,7 @@ class ActivityProfile(models.Model):
         super(ActivityProfile, self).delete(*args, **kwargs)
 
 def now():
-    return datetime.utcnow().replace(tzinfo=utc).isoformat()
+    return datetime.utcnow().replace(tzinfo=timezone.utc).isoformat()
 
 class SubStatement(models.Model):
     object_agent = models.ForeignKey(

@@ -4,7 +4,7 @@ import json
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.utils.timezone import utc
+from datetime import timezone
 
 from ..models import ActivityProfile
 from ..exceptions import IDNotFoundError, ParamError
@@ -22,7 +22,7 @@ class ActivityProfileManager():
         if 'updated' in request_dict['headers'] and request_dict['headers']['updated']:
             p.updated = request_dict['headers']['updated']
         else:
-            p.updated = datetime.datetime.utcnow().replace(tzinfo=utc)
+            p.updated = datetime.datetime.utcnow().replace(tzinfo=timezone.utc)
 
         #Go to beginning of file
         profile.seek(0)
@@ -69,7 +69,7 @@ class ActivityProfileManager():
             if 'updated' in request_dict['headers'] and request_dict['headers']['updated']:
                 p.updated = request_dict['headers']['updated']
             else:
-                p.updated = datetime.datetime.utcnow().replace(tzinfo=utc)
+                p.updated = datetime.datetime.utcnow().replace(tzinfo=timezone.utc)
             p.save()
 
     @transaction.atomic
@@ -114,7 +114,7 @@ class ActivityProfileManager():
             if 'updated' in request_dict['headers'] and request_dict['headers']['updated']:
                 p.updated = request_dict['headers']['updated']
             else:
-                p.updated = datetime.datetime.utcnow().replace(tzinfo=utc)
+                p.updated = datetime.datetime.utcnow().replace(tzinfo=timezone.utc)
             p.save()
 
     def get_profile(self, profileId, activityId):
