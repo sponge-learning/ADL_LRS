@@ -1,4 +1,5 @@
 import datetime
+import hashlib
 import json
 
 from django.core.files.base import ContentFile
@@ -8,6 +9,15 @@ from datetime import timezone
 from ..models import ActivityState
 from ..exceptions import IDNotFoundError, ParamError
 from ..util import etag
+
+def non_json_state_filename(s, suffix):
+    # The activity id is an IRI, so it can hold "/" and be any length. Used raw, the
+    # storage reads every "/" as a directory and the last path component can be too
+    # short to truncate under the FileField's max_length (SuspiciousFileOperation).
+    # A sha1 of it is always 40 hex characters. Rows already stored keep the name
+    # saved on them.
+    activity_hash = hashlib.sha1(s.activity_id.encode('utf-8')).hexdigest()
+    return "%s_%s_%s" % (s.agent_id, activity_hash, suffix)
 
 class ActivityStateManager():
     def __init__(self, agent):
@@ -25,7 +35,7 @@ class ActivityStateManager():
         
         # Go to beginning of file
         state.seek(0)
-        fn = "%s_%s_%s" % (s.agent_id, s.activity_id, request_dict.get('filename', s.id))
+        fn = non_json_state_filename(s, request_dict.get('filename', s.id))
         s.state.save(fn, state)
 
         s.save()
