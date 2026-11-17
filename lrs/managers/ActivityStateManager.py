@@ -66,6 +66,9 @@ class ActivityStateManager():
     @transaction.atomic
     def save_non_json_state(self, s, state, request_dict):
         content = state.read()
+        # A text-backed file reads as str; the size cap, NUL check and storage need bytes.
+        if isinstance(content, str):
+            content = content.encode('utf-8')
         s.content_type = request_dict['headers']['CONTENT_TYPE']
         s.etag = etag.create_tag(content)
 
@@ -151,6 +154,11 @@ class ActivityStateManager():
                 s.etag = etag.create_tag(post_state)
             # If incoming state is application/json and if a state already existed with the same agent, stateId, actId, and/or registration
             else:
+                # Only a JSON document can be merged into. Text state is kept in
+                # json_state too, so without this a text document that happens to
+                # parse as a JSON object would be merged into and stay text.
+                if s.state or "application/json" not in s.content_type:
+                    raise ParamError("A JSON document cannot be merged into a state document that is not JSON.")
                 orig_state = json.loads(s.json_state)
                 post_state = json.loads(post_state)
                 if not isinstance(post_state, dict):
