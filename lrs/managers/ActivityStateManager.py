@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import json
+import secrets
 
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -10,14 +11,53 @@ from ..models import ActivityState
 from ..exceptions import IDNotFoundError, ParamError
 from ..util import etag
 
-def non_json_state_filename(s, suffix):
+#: Text state up to this many UTF-8 bytes is kept on the row, in json_state, instead of
+#: in a file. A state PUT is the LRS's busiest write, and a file meant a storage delete
+#: and upload on every save. The cap is in UTF-8 bytes (64 KiB), sized for SCORM 2004's
+#: 64,000-character suspend_data, the largest bookmark a course is built to send, when
+#: that text is ASCII. Multi-byte text over the byte cap takes the file path, as does
+#: text holding a NUL (which a Postgres text column rejects).
+DB_TEXT_STATE_MAX_BYTES = 64 * 1024
+
+
+def text_state_for_db(content):
+    """The text to store on the row for these state bytes, or None if they need a file."""
+    if len(content) > DB_TEXT_STATE_MAX_BYTES or b"\x00" in content:
+        return None
+    try:
+        return content.decode('utf-8')
+    except UnicodeDecodeError:
+        return None
+
+
+def delete_file_on_commit(field_file):
+    """
+    Delete a state's stored file once the transaction commits, and clear the field.
+
+    Deleting inside the transaction would lose the state if the save then rolled back.
+    robust=True keeps a storage error from turning a committed save into an error; the
+    object is left behind and nothing reads it.
+    """
+    storage, name = field_file.storage, field_file.name
+    transaction.on_commit(lambda: storage.delete(name), robust=True)
+    setattr(field_file.instance, field_file.field.attname, None)
+
+
+def non_json_state_filename(s):
     # The activity id is an IRI, so it can hold "/" and be any length. Used raw, the
     # storage reads every "/" as a directory and the last path component can be too
     # short to truncate under the FileField's max_length (SuspiciousFileOperation).
     # A sha1 of it is always 40 hex characters. Rows already stored keep the name
     # saved on them.
-    activity_hash = hashlib.sha1(s.activity_id.encode('utf-8')).hexdigest()
-    return "%s_%s_%s" % (s.agent_id, activity_hash, suffix)
+    #
+    # The name also ends in a random token, so every save writes a new name. A
+    # concurrent save's post-commit delete of the old name can then never hit the file
+    # this save wrote, and a save that rolls back leaves the old file intact. The sha1
+    # is cut to 32 hex characters to keep "activity_state/" + name within the
+    # FileField's max_length (100) with the token added.
+    activity_hash = hashlib.sha1(s.activity_id.encode('utf-8')).hexdigest()[:32]
+    return "%s_%s_%s_%s" % (s.agent_id, activity_hash, s.id, secrets.token_hex(4))
+
 
 class ActivityStateManager():
     def __init__(self, agent):
@@ -25,19 +65,35 @@ class ActivityStateManager():
 
     @transaction.atomic
     def save_non_json_state(self, s, state, request_dict):
+        content = state.read()
+        # A text-backed file reads as str; the size cap, NUL check and storage need bytes.
+        if isinstance(content, str):
+            content = content.encode('utf-8')
         s.content_type = request_dict['headers']['CONTENT_TYPE']
-        s.etag = etag.create_tag(state.read())
+        s.etag = etag.create_tag(content)
 
         if 'updated' in request_dict['headers'] and request_dict['headers']['updated']:
             s.updated = request_dict['headers']['updated']
         else:
             s.updated = datetime.datetime.utcnow().replace(tzinfo=timezone.utc)
-        
-        # Go to beginning of file
-        state.seek(0)
-        fn = non_json_state_filename(s, request_dict.get('filename', s.id))
-        s.state.save(fn, state)
 
+        text = text_state_for_db(content)
+        if text is not None:
+            # Readers take the file when there is one, so a row holding its text must
+            # not keep a file (one left by an earlier save, or by an older release).
+            s.json_state = text
+            if s.state:
+                delete_file_on_commit(s.state)
+        else:
+            # The old file is deleted only after the commit (and only if the new file
+            # has another name), so a rolled-back save leaves it in place.
+            old_storage, old_name = s.state.storage, (s.state.name if s.state else None)
+            s.state.save(non_json_state_filename(s), ContentFile(content), save=False)
+            s.json_state = ''
+            if old_name and old_name != s.state.name:
+                transaction.on_commit(lambda: old_storage.delete(old_name), robust=True)
+
+        # One UPDATE: FieldFile.delete and FieldFile.save would each save the row too.
         s.save()
 
     def get_state_set(self, activity_id, registration, since):
@@ -98,6 +154,11 @@ class ActivityStateManager():
                 s.etag = etag.create_tag(post_state)
             # If incoming state is application/json and if a state already existed with the same agent, stateId, actId, and/or registration
             else:
+                # Only a JSON document can be merged into. Text state is kept in
+                # json_state too, so without this a text document that happens to
+                # parse as a JSON object would be merged into and stay text.
+                if s.state or "application/json" not in s.content_type:
+                    raise ParamError("A JSON document cannot be merged into a state document that is not JSON.")
                 orig_state = json.loads(s.json_state)
                 post_state = json.loads(post_state)
                 if not isinstance(post_state, dict):
@@ -149,17 +210,15 @@ class ActivityStateManager():
             # If a state already existed with the profileId and activityId
             if not created:
                 etag.check_preconditions(request_dict, s)
-                if s.state:
-                    try:
-                        s.state.delete()
-                    except OSError:
-                        # probably was json before
-                        s.json_state = {}
             self.save_non_json_state(s, post_state, request_dict)
         # State being PUT is json
         else:
             if not created:
                 etag.check_preconditions(request_dict, s)
+                # Readers take the file when there is one, so drop a file left by an
+                # earlier non-JSON save or the GET would keep answering with it.
+                if s.state:
+                    delete_file_on_commit(s.state)
             the_state = request_dict['state']
             s.json_state = the_state
             s.content_type = request_dict['headers']['CONTENT_TYPE']

@@ -4,6 +4,7 @@
 #   python -m django test lrs/tests -t lrs/tests -p ActivityStateFilenameTests.py
 import shutil
 import tempfile
+from unittest import mock
 
 from django.core.files.base import ContentFile
 from django.test import TestCase, override_settings
@@ -17,6 +18,9 @@ ACTIVITY_ID = "https://lms.example.com/cmi5/%s/au/0" % TITLE
 STATE_ID = "bookmark"
 
 
+# Text state is kept on the row unless it is over the size cap; a cap of 0 sends every
+# text PUT to a file, which is the path these tests are about.
+@mock.patch('lrs.managers.ActivityStateManager.DB_TEXT_STATE_MAX_BYTES', 0)
 class ActivityStateFilenameTests(TestCase):
 
     @classmethod
@@ -37,16 +41,24 @@ class ActivityStateFilenameTests(TestCase):
         self.manager = ActivityStateManager(self.agent)
 
     def put_text_state(self, activity_id, content):
-        self.manager.put_state({
-            'params': {'stateId': STATE_ID, 'activityId': activity_id},
-            'headers': {'CONTENT_TYPE': 'text/plain'},
-            'state': content,
-        })
+        with self.captureOnCommitCallbacks(execute=True):
+            self.manager.put_state({
+                'params': {'stateId': STATE_ID, 'activityId': activity_id},
+                'headers': {'CONTENT_TYPE': 'text/plain'},
+                'state': content,
+            })
         return self.manager.get_state(activity_id, None, STATE_ID)
+
+    def assert_bounded_name(self, s):
+        prefix = "%s/%s_" % (ACTIVITY_STATE_UPLOAD_TO, s.agent_id)
+        self.assertTrue(s.state.name.startswith(prefix), s.state.name)
+        base = s.state.name[len(ACTIVITY_STATE_UPLOAD_TO) + 1:]
+        self.assertNotIn("/", base)
+        self.assertRegex(base, r"_%s_[0-9a-f]{8}$" % s.id)
 
     def test_filename_has_no_slash_and_fits_the_field(self):
         s = ActivityState(id=2 ** 63 - 1, agent_id=2 ** 63 - 1, activity_id=ACTIVITY_ID)
-        fn = non_json_state_filename(s, s.id)
+        fn = non_json_state_filename(s)
 
         self.assertNotIn("/", fn)
         max_length = ActivityState._meta.get_field('state').max_length
@@ -55,12 +67,18 @@ class ActivityStateFilenameTests(TestCase):
     def test_put_text_state_for_a_long_slash_bearing_activity_id(self):
         s = self.put_text_state(ACTIVITY_ID, "lesson-3")
 
-        self.assertEqual(s.state.name, "%s/%s" % (ACTIVITY_STATE_UPLOAD_TO, non_json_state_filename(s, s.id)))
+        self.assert_bounded_name(s)
+        first_name = s.state.name
         s.state.open()
         self.assertEqual(s.state.read(), b"lesson-3")
+        s.state.close()
 
-        # A second PUT replaces the stored text.
+        # A second PUT replaces the stored text, under a new name; the old file is
+        # deleted once the transaction commits.
         s = self.put_text_state(ACTIVITY_ID, "lesson-4")
+        self.assert_bounded_name(s)
+        self.assertNotEqual(s.state.name, first_name)
+        self.assertFalse(s.state.storage.exists(first_name))
         s.state.open()
         self.assertEqual(s.state.read(), b"lesson-4")
 
@@ -81,6 +99,62 @@ class ActivityStateFilenameTests(TestCase):
         # The next PUT deletes the old file and saves under the bounded name.
         s = self.put_text_state(activity_id, "new-bookmark")
         self.assertFalse(s.state.storage.exists(stored_name))
-        self.assertEqual(s.state.name, "%s/%s" % (ACTIVITY_STATE_UPLOAD_TO, non_json_state_filename(s, s.id)))
+        self.assert_bounded_name(s)
         s.state.open()
         self.assertEqual(s.state.read(), b"new-bookmark")
+
+
+class ActivityStateTextOnTheRowTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ActivityStateTextOnTheRowTests, cls).setUpClass()
+        cls.media_root = tempfile.mkdtemp()
+        cls.media_override = override_settings(MEDIA_ROOT=cls.media_root)
+        cls.media_override.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.media_override.disable()
+        shutil.rmtree(cls.media_root, ignore_errors=True)
+        super(ActivityStateTextOnTheRowTests, cls).tearDownClass()
+
+    def setUp(self):
+        self.agent = Agent.objects.retrieve_or_create(mbox="mailto:test@example.com")[0]
+        self.manager = ActivityStateManager(self.agent)
+
+    def put_state(self, content, content_type='text/plain'):
+        with self.captureOnCommitCallbacks(execute=True):
+            self.manager.put_state({
+                'params': {'stateId': STATE_ID, 'activityId': ACTIVITY_ID},
+                'headers': {'CONTENT_TYPE': content_type},
+                'state': content,
+            })
+        return self.manager.get_state(ACTIVITY_ID, None, STATE_ID)
+
+    def test_text_state_is_stored_on_the_row(self):
+        s = self.put_state("lesson-3")
+
+        self.assertFalse(s.state)
+        self.assertEqual(s.json_state, "lesson-3")
+        self.assertEqual(s.content_type, "text/plain")
+
+    def test_a_file_from_an_earlier_save_is_deleted_once_the_text_is_on_the_row(self):
+        s = ActivityState.objects.create(state_id=STATE_ID, agent=self.agent, activity_id=ACTIVITY_ID,
+            content_type='text/plain')
+        s.state.save(non_json_state_filename(s), ContentFile(b"old-bookmark"))
+        stored_name = s.state.name
+
+        s = self.put_state("new-bookmark")
+
+        self.assertFalse(s.state)
+        self.assertEqual(s.json_state, "new-bookmark")
+        self.assertFalse(s.state.storage.exists(stored_name))
+
+    def test_text_holding_a_nul_goes_to_a_file(self):
+        s = self.put_state("a\x00b")
+
+        self.assertTrue(s.state)
+        self.assertEqual(s.json_state, "")
+        s.state.open()
+        self.assertEqual(s.state.read(), b"a\x00b")
