@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import json
+import secrets
 
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -12,10 +13,10 @@ from ..util import etag
 
 #: Text state up to this many UTF-8 bytes is kept on the row, in json_state, instead of
 #: in a file. A state PUT is the LRS's busiest write, and a file meant a storage delete
-#: and upload on every save. The cap matches SCORM 2004's 64,000-character suspend_data,
-#: the largest bookmark a course is built to send, so a row is never rewritten with an
-#: outsized value. Larger text, or text holding a NUL (which a Postgres text column
-#: rejects), still goes to a file.
+#: and upload on every save. The cap is in UTF-8 bytes (64 KiB), sized for SCORM 2004's
+#: 64,000-character suspend_data, the largest bookmark a course is built to send, when
+#: that text is ASCII. Multi-byte text over the byte cap takes the file path, as does
+#: text holding a NUL (which a Postgres text column rejects).
 DB_TEXT_STATE_MAX_BYTES = 64 * 1024
 
 
@@ -39,17 +40,24 @@ def delete_file_on_commit(field_file):
     """
     storage, name = field_file.storage, field_file.name
     transaction.on_commit(lambda: storage.delete(name), robust=True)
-    field_file.instance.state = None
+    setattr(field_file.instance, field_file.field.attname, None)
 
 
-def non_json_state_filename(s, suffix):
+def non_json_state_filename(s):
     # The activity id is an IRI, so it can hold "/" and be any length. Used raw, the
     # storage reads every "/" as a directory and the last path component can be too
     # short to truncate under the FileField's max_length (SuspiciousFileOperation).
     # A sha1 of it is always 40 hex characters. Rows already stored keep the name
     # saved on them.
-    activity_hash = hashlib.sha1(s.activity_id.encode('utf-8')).hexdigest()
-    return "%s_%s_%s" % (s.agent_id, activity_hash, suffix)
+    #
+    # The name also ends in a random token, so every save writes a new name. A
+    # concurrent save's post-commit delete of the old name can then never hit the file
+    # this save wrote, and a save that rolls back leaves the old file intact. The sha1
+    # is cut to 32 hex characters to keep "activity_state/" + name within the
+    # FileField's max_length (100) with the token added.
+    activity_hash = hashlib.sha1(s.activity_id.encode('utf-8')).hexdigest()[:32]
+    return "%s_%s_%s_%s" % (s.agent_id, activity_hash, s.id, secrets.token_hex(4))
+
 
 class ActivityStateManager():
     def __init__(self, agent):
@@ -74,15 +82,13 @@ class ActivityStateManager():
             if s.state:
                 delete_file_on_commit(s.state)
         else:
-            if s.state:
-                try:
-                    s.state.delete(save=False)
-                except OSError:
-                    # Already gone from storage; the save below names the new file.
-                    pass
-            fn =non_json_state_filename(s, request_dict.get('filename', s.id))
-            s.state.save(fn, ContentFile(content), save=False)
+            # The old file is deleted only after the commit (and only if the new file
+            # has another name), so a rolled-back save leaves it in place.
+            old_storage, old_name = s.state.storage, (s.state.name if s.state else None)
+            s.state.save(non_json_state_filename(s), ContentFile(content), save=False)
             s.json_state = ''
+            if old_name and old_name != s.state.name:
+                transaction.on_commit(lambda: old_storage.delete(old_name), robust=True)
 
         # One UPDATE: FieldFile.delete and FieldFile.save would each save the row too.
         s.save()
