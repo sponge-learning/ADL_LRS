@@ -12,9 +12,11 @@ from ..util import etag
 
 #: Text state up to this many UTF-8 bytes is kept on the row, in json_state, instead of
 #: in a file. A state PUT is the LRS's busiest write, and a file meant a storage delete
-#: and upload on every save. Larger text, or text holding a NUL (which a Postgres text
-#: column rejects), still goes to a file.
-DB_TEXT_STATE_MAX_BYTES = 1024 * 1024
+#: and upload on every save. The cap matches SCORM 2004's 64,000-character suspend_data,
+#: the largest bookmark a course is built to send, so a row is never rewritten with an
+#: outsized value. Larger text, or text holding a NUL (which a Postgres text column
+#: rejects), still goes to a file.
+DB_TEXT_STATE_MAX_BYTES = 64 * 1024
 
 
 def text_state_for_db(content):
