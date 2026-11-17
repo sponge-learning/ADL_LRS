@@ -10,6 +10,36 @@ from ..models import ActivityState
 from ..exceptions import IDNotFoundError, ParamError
 from ..util import etag
 
+#: Text state up to this many UTF-8 bytes is kept on the row, in json_state, instead of
+#: in a file. A state PUT is the LRS's busiest write, and a file meant a storage delete
+#: and upload on every save. Larger text, or text holding a NUL (which a Postgres text
+#: column rejects), still goes to a file.
+DB_TEXT_STATE_MAX_BYTES = 1024 * 1024
+
+
+def text_state_for_db(content):
+    """The text to store on the row for these state bytes, or None if they need a file."""
+    if len(content) > DB_TEXT_STATE_MAX_BYTES or b"\x00" in content:
+        return None
+    try:
+        return content.decode('utf-8')
+    except UnicodeDecodeError:
+        return None
+
+
+def delete_file_on_commit(field_file):
+    """
+    Delete a state's stored file once the transaction commits, and clear the field.
+
+    Deleting inside the transaction would lose the state if the save then rolled back.
+    robust=True keeps a storage error from turning a committed save into an error; the
+    object is left behind and nothing reads it.
+    """
+    storage, name = field_file.storage, field_file.name
+    transaction.on_commit(lambda: storage.delete(name), robust=True)
+    field_file.instance.state = None
+
+
 def non_json_state_filename(s, suffix):
     # The activity id is an IRI, so it can hold "/" and be any length. Used raw, the
     # storage reads every "/" as a directory and the last path component can be too
@@ -25,19 +55,34 @@ class ActivityStateManager():
 
     @transaction.atomic
     def save_non_json_state(self, s, state, request_dict):
+        content = state.read()
         s.content_type = request_dict['headers']['CONTENT_TYPE']
-        s.etag = etag.create_tag(state.read())
+        s.etag = etag.create_tag(content)
 
         if 'updated' in request_dict['headers'] and request_dict['headers']['updated']:
             s.updated = request_dict['headers']['updated']
         else:
             s.updated = datetime.datetime.utcnow().replace(tzinfo=timezone.utc)
-        
-        # Go to beginning of file
-        state.seek(0)
-        fn = non_json_state_filename(s, request_dict.get('filename', s.id))
-        s.state.save(fn, state)
 
+        text = text_state_for_db(content)
+        if text is not None:
+            # Readers take the file when there is one, so a row holding its text must
+            # not keep a file (one left by an earlier save, or by an older release).
+            s.json_state = text
+            if s.state:
+                delete_file_on_commit(s.state)
+        else:
+            if s.state:
+                try:
+                    s.state.delete(save=False)
+                except OSError:
+                    # Already gone from storage; the save below names the new file.
+                    pass
+            fn =non_json_state_filename(s, request_dict.get('filename', s.id))
+            s.state.save(fn, ContentFile(content), save=False)
+            s.json_state = ''
+
+        # One UPDATE: FieldFile.delete and FieldFile.save would each save the row too.
         s.save()
 
     def get_state_set(self, activity_id, registration, since):
@@ -149,17 +194,15 @@ class ActivityStateManager():
             # If a state already existed with the profileId and activityId
             if not created:
                 etag.check_preconditions(request_dict, s)
-                if s.state:
-                    try:
-                        s.state.delete()
-                    except OSError:
-                        # probably was json before
-                        s.json_state = {}
             self.save_non_json_state(s, post_state, request_dict)
         # State being PUT is json
         else:
             if not created:
                 etag.check_preconditions(request_dict, s)
+                # Readers take the file when there is one, so drop a file left by an
+                # earlier non-JSON save or the GET would keep answering with it.
+                if s.state:
+                    delete_file_on_commit(s.state)
             the_state = request_dict['state']
             s.json_state = the_state
             s.content_type = request_dict['headers']['CONTENT_TYPE']

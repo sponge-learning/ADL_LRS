@@ -4,6 +4,7 @@
 #   python -m django test lrs/tests -t lrs/tests -p ActivityStateFilenameTests.py
 import shutil
 import tempfile
+from unittest import mock
 
 from django.core.files.base import ContentFile
 from django.test import TestCase, override_settings
@@ -17,6 +18,9 @@ ACTIVITY_ID = "https://lms.example.com/cmi5/%s/au/0" % TITLE
 STATE_ID = "bookmark"
 
 
+# Text state is kept on the row unless it is over the size cap; a cap of 0 sends every
+# text PUT to a file, which is the path these tests are about.
+@mock.patch('lrs.managers.ActivityStateManager.DB_TEXT_STATE_MAX_BYTES', 0)
 class ActivityStateFilenameTests(TestCase):
 
     @classmethod
@@ -84,3 +88,59 @@ class ActivityStateFilenameTests(TestCase):
         self.assertEqual(s.state.name, "%s/%s" % (ACTIVITY_STATE_UPLOAD_TO, non_json_state_filename(s, s.id)))
         s.state.open()
         self.assertEqual(s.state.read(), b"new-bookmark")
+
+
+class ActivityStateTextOnTheRowTests(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ActivityStateTextOnTheRowTests, cls).setUpClass()
+        cls.media_root = tempfile.mkdtemp()
+        cls.media_override = override_settings(MEDIA_ROOT=cls.media_root)
+        cls.media_override.enable()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.media_override.disable()
+        shutil.rmtree(cls.media_root, ignore_errors=True)
+        super(ActivityStateTextOnTheRowTests, cls).tearDownClass()
+
+    def setUp(self):
+        self.agent = Agent.objects.retrieve_or_create(mbox="mailto:test@example.com")[0]
+        self.manager = ActivityStateManager(self.agent)
+
+    def put_state(self, content, content_type='text/plain'):
+        with self.captureOnCommitCallbacks(execute=True):
+            self.manager.put_state({
+                'params': {'stateId': STATE_ID, 'activityId': ACTIVITY_ID},
+                'headers': {'CONTENT_TYPE': content_type},
+                'state': content,
+            })
+        return self.manager.get_state(ACTIVITY_ID, None, STATE_ID)
+
+    def test_text_state_is_stored_on_the_row(self):
+        s = self.put_state("lesson-3")
+
+        self.assertFalse(s.state)
+        self.assertEqual(s.json_state, "lesson-3")
+        self.assertEqual(s.content_type, "text/plain")
+
+    def test_a_file_from_an_earlier_save_is_deleted_once_the_text_is_on_the_row(self):
+        s = ActivityState.objects.create(state_id=STATE_ID, agent=self.agent, activity_id=ACTIVITY_ID,
+            content_type='text/plain')
+        s.state.save(non_json_state_filename(s, s.id), ContentFile(b"old-bookmark"))
+        stored_name = s.state.name
+
+        s = self.put_state("new-bookmark")
+
+        self.assertFalse(s.state)
+        self.assertEqual(s.json_state, "new-bookmark")
+        self.assertFalse(s.state.storage.exists(stored_name))
+
+    def test_text_holding_a_nul_goes_to_a_file(self):
+        s = self.put_state("a\x00b")
+
+        self.assertTrue(s.state)
+        self.assertEqual(s.json_state, "")
+        s.state.open()
+        self.assertEqual(s.state.read(), b"a\x00b")
